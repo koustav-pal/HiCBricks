@@ -43,17 +43,17 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
             if(is.null(BinTable)){
                 stop("Variable Bintable cannot be empty. Binning information must be provided at startup")
             }
-            
+            # Read in the binning table
             cat("Reading Bintable:",BinTable,"\n")
             Bintable <- Read_bintable(Filename=BinTable,read.delim=bin.delim,exec=exec,
                         col.index=col.index,strand=strand,names=names,chromosomes=ChromNames,
                         impose.discontinuity=impose.discontinuity)
-
+            # Create the 0 level directories in the HDF file
             h5createFile(HDF.File)
             for (Folder in Root.folders) {
-                CreateGroups(Groups = Folder, File = HDF.File)
+                CreateGroups(Groups = Create_Path(Folder), File = HDF.File)
             }
-
+            # Add the chromosome information into the metadata column
             Chrom.lengths <- get_chrom_info(bin.table = Bintable, chrom = ChromosomeList, FUN = length, col.name = 'chr')
             Chrom.sizes <- get_chrom_info(bin.table = Bintable, chrom = ChromosomeList, FUN = max, col.name = 'end')
             Chrom.info.df <- data.frame(chr = names(Chrom.lengths),
@@ -61,47 +61,28 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                 size = as.vector(Chrom.sizes))
             # Create metadata chromosome groups
             Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['metadata'],
-                Reference.object$metadata.chrom.dataset()), object = Chrom.info.df)
-
+                Reference.object$metadata.chrom.dataset), object = Chrom.info.df)
+            # Add the chromosome information into the metadata column
             # Create matrices groups
             for (chrom1 in ChromosomeList) {
-                CreateGroups(Groups = c(Root.folders['matrices'],chrom1), File = HDF.File)
+                CreateGroups(Groups = Create_Path(c(Root.folders['matrices'],chrom1)), File = HDF.File)
                 for (chrom2 in ChromosomeList) {
-                    CreateGroups(Groups = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File)
-                    # h5createAttribute(obj = file.path(Root.folders['matrices'],chrom1,chrom2),file = HDF.File,
-                    #     attr = "Filename", dims = 1)
-                    # h5createAttribute(obj = file.path(Root.folders['matrices'],chrom1,chrom2),file = HDF.File,
-                    #     attr = "Done", dims = 1)
-                    Dims <-c(length(Chrom1.ranges),length(Chrom2.ranges))
+                    Chrom2.path <- Create_Path(c(Root.folders['matrices'],chrom1,chrom2))
+                    CreateGroups(Groups = Chrom2.path, File = HDF.File)
+                    CreateAttributes(Path = Chrom2.path, File = HDF.File, 
+                        Attributes = Reference.object$matrices.chrom.attributes)
+                    Dims <-c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"],Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
                     if(is.null(ChunkSize)){
                         ChunkSize <- ceiling(Dims/100)  
                     }
-                    h5createDataset(file=Chrom1.Group, dataset=Chrom2, dims=Dims, 
-                        maxdims = Dims, H5type="H5T_NATIVE_DOUBLE", chunk = ChunkSize,
-                        level = 6, fillValue=0, showWarnings = TRUE)
+                    CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
+                        name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
                 }
             }
-            Matrices.HDF <- H5Gopen(h5loc=HDF.Handler, name=Root.folders['matrices'])
-            for (Chrom1 in ChromosomeList) {
-                H5Gcreate(h5loc=Matrices.HDF, name=Chrom1)
-                private$Matrix.range[[Chrom1]] <- list()
-                Chrom1.Group <- H5Gopen(h5loc=Matrices.HDF, name=Chrom1)
-                Chrom1.ranges <- self$GetRangesByChromosome(RangeKey=private$Bintable.Key,Chrom=Chrom1)
-                for (Chrom2 in self$ChromosomeList) {
-                    private$Matrix.range[[Chrom1]][[Chrom2]] <- c(0,0)
-                    Chrom2.ranges <- self$GetRangesByChromosome(RangeKey=private$Bintable.Key,Chrom=Chrom2)
-                    # ChunkSize = floor(chunk.size)
-                    Dims <-c(length(Chrom1.ranges),length(Chrom2.ranges))
-                    if(is.null(ChunkSize)){
-                        ChunkSize <- ceiling(Dims/100)  
-                    }
-                    h5createDataset(file=Chrom1.Group, dataset=Chrom2, dims=Dims, 
-                        maxdims = Dims, H5type="H5T_NATIVE_DOUBLE", chunk = ChunkSize,
-                        level = 6, fillValue=0, showWarnings = TRUE)
-                }
-                H5Gclose(Chrom1.Group)
-            }
-            H5Gclose(Matrices.HDF)
+
+
+
+
             H5Fclose(HDF.Handler)
 }
 
@@ -111,7 +92,8 @@ Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
         stop("All arguments are required!")
     }
     Dirs <- Path[1:(length(Path)-1)]
-    Lego.handler <- ReturnH5GroupHandler(Groups = Dirs, File = Lego)
+    Path.to.group <- Create_Path(Dirs)
+    Lego.handler <- ReturnH5Handler(Path = Path.to.group, File = Lego)
     h5writeDataset.data.frame(h5loc = Lego.handler, 
         obj = Chrom.len.df, 
         name = Path[length(Path)])

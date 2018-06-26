@@ -6,6 +6,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.root = "Base.ranges",
         hdf.metadata.root = "Base.metadata",
         metadata.chrom.dataset = "chrominfo",
+        hdf.matrix.name = "matrix",
+        matrices.chrom.attributes = c("filename","done"),
         GetRootFolders = function(){
             Folders <- c(self$hdf.matrices.root, self$hdf.ranges.root, self$hdf.metadata.root)
             names(Folders) <- c('matrices','ranges','metadata')
