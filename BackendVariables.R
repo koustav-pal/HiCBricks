@@ -7,15 +7,21 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.metadata.root = "Base.metadata",
         metadata.chrom.dataset = "chrominfo",
         hdf.matrix.name = "matrix",
+        hdf.bintable.ranges.group = "Bintable",
+        hdf.other.ranges.group = "Other",
+        hdf.bintable.ranges.name = "ranges",
         matrices.chrom.attributes = c("filename","done"),
-        GetRootFolders = function(){
+        ranges.bintable.dataset = "bintable",
+        GetRootFolders = function() {
             Folders <- c(self$hdf.matrices.root, self$hdf.ranges.root, self$hdf.metadata.root)
             names(Folders) <- c('matrices','ranges','metadata')
             return(Folders)
         }
-        Get
-        },
-
+        GetBaseRangesFolders = function(){
+            Folders <- c(self$hdf.bintable.ranges.group, self$hdf.other.ranges.group)
+            names(Folders) <- c('Bintable','Other')
+            return(Folders)            
+        }
     ),
     private = list(
         Attribute.List=NA,

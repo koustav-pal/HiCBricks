@@ -6,7 +6,6 @@
 #           extent <dataset>
 #           bla bla datasets
 # Base.ranges <group>
-#   Names <dataset> containing the names of all the ranges tables listed under Base.ranges
 #   Bintable <group> containing binary attributes Strand, Names
 #       Names <dataset>
 #       ranges <dataset> based on value of attributes 3,4,5 column
@@ -45,9 +44,9 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
             }
             # Read in the binning table
             cat("Reading Bintable:",BinTable,"\n")
-            Bintable <- Read_bintable(Filename=BinTable,read.delim=bin.delim,exec=exec,
-                        col.index=col.index,strand=strand,names=names,chromosomes=ChromNames,
-                        impose.discontinuity=impose.discontinuity)
+            Bintable <- Read_bintable(Filename = BinTable, read.delim = bin.delim, exec = exec,
+                        col.index = col.index, strand = strand, names = names, chromosomes = ChromNames,
+                        impose.discontinuity = impose.discontinuity)
             # Create the 0 level directories in the HDF file
             h5createFile(HDF.File)
             for (Folder in Root.folders) {
@@ -62,6 +61,12 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
             # Create metadata chromosome groups
             Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['metadata'],
                 Reference.object$metadata.chrom.dataset), object = Chrom.info.df)
+            Base.ranges.folders <- Reference.object$GetBaseRangesFolders()
+            for (Folder in Base.ranges.folders) {
+                CreateGroups(Groups = Create_Path(c(Root.folders['ranges'],Folder)), File = HDF.File)
+            }
+            Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['ranges'],
+                Reference.object$ranges.bintable.dataset), object = Bintable)
             # Add the chromosome information into the metadata column
             # Create matrices groups
             for (chrom1 in ChromosomeList) {
@@ -79,10 +84,6 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                         name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
                 }
             }
-
-
-
-
             H5Fclose(HDF.Handler)
 }
 
