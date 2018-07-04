@@ -1,8 +1,21 @@
-Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat",
-    col.index=c(1,2,3),strand=NULL,names=NULL,chromosomes=NULL,
-    impose.discontinuity=TRUE){
-    is.stranded = FALSE
-    has.names = FALSE
+_ColIndexError_ <- function(x){
+    Error.col <- c("chr","start",NA,NA,NA,"more")
+    ColClasses <- c("character","numeric","numeric","character","character")
+    ColNames <- c("chr","start","end","strand","names")
+    Index.type.error <- c("index is missing.")
+    if(x < 3 | x > 5){
+        if(x > 5){
+            Index.type.error <- "indices were provided."
+        }
+        stop(paste("col.index expects as bare minimum chr,start,end.",Error.col[x],Second.part,"\n"))
+    }
+    Alist <- list("Names" = ColNames[1:x], "Classes" = ColClasses[1:x])
+    return(Alist)
+}
+
+
+Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,2,3), 
+    chromosomes=NULL, impose.discontinuity=TRUE){
     require(data.table)
     if(is.null(RangeKey)) {
         stop("Variable name not provided while reading table.")
@@ -10,33 +23,20 @@ Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat",
     if(is.null(exec)) {
         stop("exec is not allowed to be null")
     }
-    if(length(col.index) != 3){
-        stop("col.index must be of length 3, consisting of chr, start, end. 
-            strand and names can be specified using specific args.")
+    ColMetrics <- _ColIndexError_(length(col.index))
+    Colnames<-ColMetrics[["Names"]]
+    ColClasses<- ColMetrics[["Classes"]]
+    
+    Table <- Filename
+    if(class(Filename)=="character"){
+        Command <- paste(exec,Filename,sep=" ")
+        Table <- fread(input=Command, sep=read.delim,
+            stringsAsFactors=FALSE, verbose=FALSE, showProgress=FALSE, data.table=FALSE)
     }
-    Colnames<-c('chr','start','end')
-    colClasses=c("character","numeric","numeric")
-    Command <- paste(exec,Filename,sep=" ")
-    Table <- fread(input=Command, sep=read.delim,
-        stringsAsFactors=FALSE, verbose=FALSE, showProgress=FALSE, data.table=FALSE)
-
-    if(!is.null(strand)){
-        is.stranded <- TRUE
-        col.index <- c(col.index,strand)
-        Colnames <- c(Colnames,'strand')
-        colClasses <- c(colClasses,'character')
-    }
-    if(!is.null(names)){
-        has.names <- TRUE
-        col.index <- c(col.index,names)
-        Colnames <- c(Colnames,'names')
-        colClasses <- c(colClasses,'character')
-    }
-
     Ranges.table <- Table[,col.index]
-    
-    Validate_table(Table=Table,stranded=is.stranded,named=has.names,chrom=chromosomes)
-    
+    is.stranded <- col.index[4] != NA
+    has.names <- col.index[5] != NA
+    Validate_table(Table=Table,stranded=is.stranded,colClasses=ColClasses,named=has.names,chrom=chromosomes)
     if(impose.discontinuity){
         CheckContinuousRanges(Table=Ranges.table,StartCol=c("start"),EndCol=c("end"))
     }
@@ -61,6 +61,7 @@ Validate_table = function(Table=NULL,colnames=NULL,colClasses=NULL,col.index=NUL
         stop("start coordinates cannot be greater than end coordinates")
     }
 }
+
 CheckContinuousRanges = function(Table=NULL, StartCol=NULL, EndCol=NULL){
     Starts<-Table[,StartCol]
     Starts<-Starts[2:length(Starts)]
@@ -76,6 +77,6 @@ get_chrom_info <- function(bin.table = NULL, chrom = NULL, FUN = NULL, col.name 
     Info <- sapple(chrom,function(x){
         FUN(bin.table[,col.name][bin.table[,'chr']==x])
     }) 
-    names(Sizes) <- chrom
-    return(Sizes)
+    names(Info) <- chrom
+    return(Info)
 }

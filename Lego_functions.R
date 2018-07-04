@@ -15,19 +15,17 @@
 # chromosomes <dataset>
 
 CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
-        col.index=c(1,2,3), strand=NULL, names=NULL, impose.discontinuity=TRUE,
-        ChunkSize=NULL, Output.Filename=NULL, exec="cat", remove.existing=FALSE,
+        col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
+        Output.Filename=NULL, exec="cat", remove.existing=FALSE,
         sparse=FALSE, sparsity.compute.bins=100){
             require(rhdf5)
             H5close()
-
             Working.File <- normalizePath(Output.Filename)
 			Reference.object <- GenomicMatrix$new()
             Root.folders <- Reference.object$GetRootFolders()
             if(is.null(ChromNames) | length(ChromNames) == 0){
                 stop("Variable ChromNames cannot be empty")   
             }
-
             HDF.File <- file.path(Working.File)
             if(file.exists(HDF.File)){
                 if(remove.existing){
@@ -36,16 +34,14 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                     stop("Provided HDF file already exists. Please provide remove.existing = TRUE to overwrite it\n")
                 }
             }
-
             ChromosomeList<-ChromNames
-
             if(is.null(BinTable)){
                 stop("Variable Bintable cannot be empty. Binning information must be provided at startup")
             }
             # Read in the binning table
             cat("Reading Bintable:",BinTable,"\n")
             Bintable <- Read_bintable(Filename = BinTable, read.delim = bin.delim, exec = exec,
-                        col.index = col.index, strand = strand, names = names, chromosomes = ChromNames,
+                        col.index = col.index, chromosomes = ChromNames,
                         impose.discontinuity = impose.discontinuity)
             # Create the 0 level directories in the HDF file
             h5createFile(HDF.File)
@@ -78,7 +74,7 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                         Attributes = Reference.object$matrices.chrom.attributes)
                     Dims <-c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"],Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
                     if(is.null(ChunkSize)){
-                        ChunkSize <- ceiling(Dims/100)  
+                        ChunkSize <- ceiling(Dims/100)
                     }
                     CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
                         name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
@@ -86,6 +82,109 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
             }
             H5Fclose(HDF.Handler)
 }
+
+
+_ProcessLegoInfoTable_ <- function(LOCDIR = NULL, create.dir = NULL, create.recursively = NULL, remove.prior = NULL){
+    Reference.object <- GenomicMatrix$new()
+    InfoTable <- file.path(LOCDIR,paste(Basename,Reference.object$LegosInfoTable,sep = Reference.object$GeneralFileSeparator))
+    FileName <- _GenerateRandomName_()
+    BackingFile <- paste(FileName,"backingfile.bigmem",sep = Reference.object$GeneralFileSeparator)
+    if(!dir.exists(LOCDIR) & create.dir){
+        dir.create(LOCDIR, recursive = create.recursively)
+    }else if(!dir.exists(LOCDIR)){
+        stop(LOCDIR,"not found!\n")
+    }
+    if(file.exists(InfoTable)){
+        InfoTable.read <- read.table(file = InfoTable, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+        rownames(InfoTable.read) <- paste(InfoTable.read[,Reference.object$InfoTableHeader.chr1], 
+            InfoTable.read[,Reference.object$InfoTableHeader.chr2], sep = Reference.object$InfoTableIDSeparator)
+        Chrom.id <- paste(chr1, chr2, sep = Reference.object$InfoTableIDSeparator)
+        New.df <- data.frame(chr1, chr2, FileName, BackingFile)
+        colnames(New.df) <- Reference.object$InfoTableHeaders
+        rownames(New.df) <- Chrom.id
+        if(!(Chrom.id %in% rownames(InfoTable.read))) {
+            InfoTable.read <- rbind(InfoTable.read,New.df)
+        }else{
+            if(remove.prior){
+                Prior.file <- file.path(LOCDIR, InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.name])
+                Prior.backing.file <- file.path(LOCDIR, InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.backingfile])
+                if(file.exists(Prior.file)){
+                    file.remove(c(Prior.file,Prior.backing.file))
+                }
+            }
+            InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.name] <- FileName
+            InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.backingfile] <- BackingFile
+        }
+    }
+    return(InfoTable.read)
+}
+
+#### It should be done after the fist write 
+Lego_GetChromInfo(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Dataset <- h5read(name = Create_Path(c(Reference.object$hdf.metadata.root,Reference.object$metadata.chrom.dataset)),
+        File = Lego)
+    return(Dataset)
+}
+
+
+
+Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
+    create.dir = FALSE, create.recursively = FALSE,  exec = NULL, Dataset = NULL, 
+    delim = " ", remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
+
+    ListVars <- list(Lego = Lego, LOCDIR = LOCDIR, create.dir = create.dir, create.recursively = create.recursively, 
+        Basename = Basename, chr1 = chr1, chr2 = chr2, is.sparse = is.sparse, sparsity.bins = sparsity.bins, exec = exec, delim = delim, Dataset = Dataset, remove.prior = remove.prior)
+    sapply(1:length(ListVars),function(x){
+        if(length(ListVars[[x]]) > 1){
+            stop(names(ListVars[x]),"had length greater than 1.\n")
+        }
+    })
+    sapply(1:length(ListVars[c("Lego","LOCDIR","chr1","chr2","Basename","Dataset")]),function(x){
+        if(is.null(ListVars[[x]])){
+            stop(names(ListVars[x]),"has no value.\n")
+        }
+    })
+    Chrom.info.df <- Lego_GetChromInfo(Lego = Lego)
+    if(!(all(c(chr1, chr2) %in% Chrom.info.df[,"chr"]))){
+        stop("Provided chromosomes do not exist in the chrom table\n")
+    }
+    Chrom1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
+    Chrom2.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr2,"nrow"]
+    _ProcessMatrix_(Data = Dataset, delim = NULL, Matrix.file = Matrix.file.path, 
+        Backing.file = Matrix.backing.file.path, exec = exec, chr1.len = Chrom1.len, 
+        chr2.len = Chrom2.len, fix.num.rows.at = num.rows, is.sparse = is.sparse, 
+        sparsity.bins = sparsity.bins)
+}
+
+
+
+
+
+
+
+
+# Lego_LoadData <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
+#     create.dir = FALSE, create.recursively = FALSE, FormatAs = "NxNMatrix", 
+#     delim = " ", Dataset = NULL, remove.prior = FALSE, exec = NULL){
+    
+#     ListVars <- list(Lego = Lego, LOCDIR = LOCDIR, create.dir = create.dir, create.recursively = create.recursively, 
+#         Basename = Basename, FormatAs = FormatAs, chr1 = chr1, chr2 = chr2, exec = NULL, delim = delim, Dataset = Dataset, remove.prior = remove.prior)
+#     sapply(1:length(ListVars),function(x){
+#         if(length(ListVars[[x]]) > 1){
+#             stop(names(ListVars[x]),"had length greater than 1.\n")
+#         }
+#     })
+#     sapply(1:length(ListVars[c("Lego","LOCDIR","chr1","chr2","Basename","Dataset")]),function(x){
+#         if(is.null(ListVars[[x]])){
+#             stop(names(ListVars[x]),"has no value.\n")
+#         }
+#     })
+
+#     # Process and then return 0 
+    
+# }
+
 
 Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
     library(stringr)
@@ -96,22 +195,19 @@ Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
     Path.to.group <- Create_Path(Dirs)
     Lego.handler <- ReturnH5Handler(Path = Path.to.group, File = Lego)
     h5writeDataset.data.frame(h5loc = Lego.handler, 
-        obj = Chrom.len.df, 
+        obj = object, 
         name = Path[length(Path)])
     H5Fclose(Lego.handler)
 }
 
 
+# AddAttribute(Key=private$Bintable.Key,Value=normalizePath(BinTable))
 
 
-
-AddAttribute(Key=private$Bintable.Key,Value=normalizePath(BinTable))
-
-
-if(sparse){
-    if(length(sparsity.compute.bins)>1 | !is.numeric(sparsity.compute.bins)){
-        stop("sparsity.compute.bins expects numeric value of length 1\n")
-    }
-    private$ComputeSparsity=sparse
-    private$Sparsity.compute.bins=sparsity.compute.bins
-}
+# if(sparse){
+#     if(length(sparsity.compute.bins)>1 | !is.numeric(sparsity.compute.bins)){
+#         stop("sparsity.compute.bins expects numeric value of length 1\n")
+#     }
+#     private$ComputeSparsity=sparse
+#     private$Sparsity.compute.bins=sparsity.compute.bins
+# }
