@@ -15,109 +15,108 @@
 # chromosomes <dataset>
 
 CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
-        col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
-        Output.Filename=NULL, exec="cat", remove.existing=FALSE,
-        sparse=FALSE, sparsity.compute.bins=100){
-            require(rhdf5)
-            H5close()
-            Working.File <- normalizePath(Output.Filename)
-			Reference.object <- GenomicMatrix$new()
-            Root.folders <- Reference.object$GetRootFolders()
-            if(is.null(ChromNames) | length(ChromNames) == 0){
-                stop("Variable ChromNames cannot be empty")   
-            }
-            HDF.File <- file.path(Working.File)
-            if(file.exists(HDF.File)){
-                if(remove.existing){
-                    file.remove(HDF.File)
-                }else{
-                    stop("Provided HDF file already exists. Please provide remove.existing = TRUE to overwrite it\n")
-                }
-            }
-            ChromosomeList<-ChromNames
-            if(is.null(BinTable)){
-                stop("Variable Bintable cannot be empty. Binning information must be provided at startup")
-            }
-            # Read in the binning table
-            cat("Reading Bintable:",BinTable,"\n")
-            Bintable <- Read_bintable(Filename = BinTable, read.delim = bin.delim, exec = exec,
-                        col.index = col.index, chromosomes = ChromNames,
-                        impose.discontinuity = impose.discontinuity)
-            # Create the 0 level directories in the HDF file
-            h5createFile(HDF.File)
-            for (Folder in Root.folders) {
-                CreateGroups(Groups = Create_Path(Folder), File = HDF.File)
-            }
-            # Add the chromosome information into the metadata column
-            Chrom.lengths <- get_chrom_info(bin.table = Bintable, chrom = ChromosomeList, FUN = length, col.name = 'chr')
-            Chrom.sizes <- get_chrom_info(bin.table = Bintable, chrom = ChromosomeList, FUN = max, col.name = 'end')
-            Chrom.info.df <- data.frame(chr = names(Chrom.lengths),
-                nrow = as.vector(Chrom.lengths),
-                size = as.vector(Chrom.sizes))
-            # Create metadata chromosome groups
-            Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['metadata'],
-                Reference.object$metadata.chrom.dataset), object = Chrom.info.df)
-            Base.ranges.folders <- Reference.object$GetBaseRangesFolders()
-            for (Folder in Base.ranges.folders) {
-                CreateGroups(Groups = Create_Path(c(Root.folders['ranges'],Folder)), File = HDF.File)
-            }
-            Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['ranges'],
-                Reference.object$ranges.bintable.dataset), object = Bintable)
-            # Add the chromosome information into the metadata column
-            # Create matrices groups
-            for (chrom1 in ChromosomeList) {
-                CreateGroups(Groups = Create_Path(c(Root.folders['matrices'],chrom1)), File = HDF.File)
-                for (chrom2 in ChromosomeList) {
-                    Chrom2.path <- Create_Path(c(Root.folders['matrices'],chrom1,chrom2))
-                    CreateGroups(Groups = Chrom2.path, File = HDF.File)
-                    CreateAttributes(Path = Chrom2.path, File = HDF.File, 
-                        Attributes = Reference.object$matrices.chrom.attributes)
-                    Dims <-c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"],Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
-                    if(is.null(ChunkSize)){
-                        ChunkSize <- ceiling(Dims/100)
-                    }
-                    CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
-                        name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
-                }
-            }
-            H5Fclose(HDF.Handler)
-}
-
-
-_ProcessLegoInfoTable_ <- function(LOCDIR = NULL, create.dir = NULL, create.recursively = NULL, remove.prior = NULL){
-    Reference.object <- GenomicMatrix$new()
-    InfoTable <- file.path(LOCDIR,paste(Basename,Reference.object$LegosInfoTable,sep = Reference.object$GeneralFileSeparator))
-    FileName <- _GenerateRandomName_()
-    BackingFile <- paste(FileName,"backingfile.bigmem",sep = Reference.object$GeneralFileSeparator)
-    if(!dir.exists(LOCDIR) & create.dir){
-        dir.create(LOCDIR, recursive = create.recursively)
-    }else if(!dir.exists(LOCDIR)){
-        stop(LOCDIR,"not found!\n")
+    col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
+    Output.Filename=NULL, exec="cat", remove.existing=FALSE,
+    sparse=FALSE, sparsity.compute.bins=100){
+    require(rhdf5)
+    H5close()
+    Working.File <- normalizePath(Output.Filename)
+	Reference.object <- GenomicMatrix$new()
+    Root.folders <- Reference.object$GetRootFolders()
+    if(is.null(ChromNames) | length(ChromNames) == 0){
+        stop("Variable ChromNames cannot be empty")   
     }
-    if(file.exists(InfoTable)){
-        InfoTable.read <- read.table(file = InfoTable, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-        rownames(InfoTable.read) <- paste(InfoTable.read[,Reference.object$InfoTableHeader.chr1], 
-            InfoTable.read[,Reference.object$InfoTableHeader.chr2], sep = Reference.object$InfoTableIDSeparator)
-        Chrom.id <- paste(chr1, chr2, sep = Reference.object$InfoTableIDSeparator)
-        New.df <- data.frame(chr1, chr2, FileName, BackingFile)
-        colnames(New.df) <- Reference.object$InfoTableHeaders
-        rownames(New.df) <- Chrom.id
-        if(!(Chrom.id %in% rownames(InfoTable.read))) {
-            InfoTable.read <- rbind(InfoTable.read,New.df)
+    HDF.File <- file.path(Working.File)
+    if(file.exists(HDF.File)){
+        if(remove.existing){
+            file.remove(HDF.File)
         }else{
-            if(remove.prior){
-                Prior.file <- file.path(LOCDIR, InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.name])
-                Prior.backing.file <- file.path(LOCDIR, InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.backingfile])
-                if(file.exists(Prior.file)){
-                    file.remove(c(Prior.file,Prior.backing.file))
-                }
-            }
-            InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.name] <- FileName
-            InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.backingfile] <- BackingFile
+            stop("Provided HDF file already exists. Please provide remove.existing = TRUE to overwrite it\n")
         }
     }
-    return(InfoTable.read)
+    ChromosomeList<-ChromNames
+    if(is.null(BinTable)){
+        stop("Variable Bintable cannot be empty. Binning information must be provided at startup")
+    }
+    # Read in the binning table
+    cat("Reading Bintable:",BinTable,"\n")
+    Bintable <- Read_bintable(Filename = BinTable, read.delim = bin.delim, exec = exec,
+                col.index = col.index, chromosomes = ChromNames,
+                impose.discontinuity = impose.discontinuity)
+    # Create the 0 level directories in the HDF file
+    h5createFile(HDF.File)
+    for (Folder in Root.folders) {
+        CreateGroups(Groups = Create_Path(Folder), File = HDF.File)
+    }
+    # Add the chromosome information into the metadata column
+    Chrom.lengths <- get_chrom_info(bin.table = Bintable, chrom = ChromosomeList, FUN = length, col.name = 'chr')
+    Chrom.sizes <- get_chrom_info(bin.table = Bintable, chrom = ChromosomeList, FUN = max, col.name = 'end')
+    Chrom.info.df <- data.frame(chr = names(Chrom.lengths),
+        nrow = as.vector(Chrom.lengths),
+        size = as.vector(Chrom.sizes))
+    # Create metadata chromosome groups
+    Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['metadata'],
+        Reference.object$metadata.chrom.dataset), object = Chrom.info.df)
+    Base.ranges.folders <- Reference.object$GetBaseRangesFolders()
+    for (Folder in Base.ranges.folders) {
+        CreateGroups(Groups = Create_Path(c(Root.folders['ranges'],Folder)), File = HDF.File)
+    }
+    Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['ranges'],
+        Reference.object$ranges.bintable.dataset), object = Bintable)
+    # Add the chromosome information into the metadata column
+    # Create matrices groups
+    for (chrom1 in ChromosomeList) {
+        CreateGroups(Groups = Create_Path(c(Root.folders['matrices'],chrom1)), File = HDF.File)
+        for (chrom2 in ChromosomeList) {
+            Chrom2.path <- Create_Path(c(Root.folders['matrices'],chrom1,chrom2))
+            CreateGroups(Groups = Chrom2.path, File = HDF.File)
+            CreateAttributes(Path = Chrom2.path, File = HDF.File, 
+                Attributes = Reference.object$matrices.chrom.attributes)
+            Dims <-c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"],Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
+            if(is.null(ChunkSize)){
+                ChunkSize <- ceiling(Dims/100)
+            }
+            CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
+                name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
+        }
+    }
+    H5Fclose(HDF.Handler)
 }
+
+# _ProcessLegoInfoTable_ <- function(LOCDIR = NULL, create.dir = NULL, create.recursively = NULL, remove.prior = NULL){
+#     Reference.object <- GenomicMatrix$new()
+#     InfoTable <- file.path(LOCDIR,paste(Basename,Reference.object$LegosInfoTable,sep = Reference.object$GeneralFileSeparator))
+#     FileName <- _GenerateRandomName_()
+#     BackingFile <- paste(FileName,"backingfile.bigmem",sep = Reference.object$GeneralFileSeparator)
+#     if(!dir.exists(LOCDIR) & create.dir){
+#         dir.create(LOCDIR, recursive = create.recursively)
+#     }else if(!dir.exists(LOCDIR)){
+#         stop(LOCDIR,"not found!\n")
+#     }
+#     if(file.exists(InfoTable)){
+#         InfoTable.read <- read.table(file = InfoTable, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+#         rownames(InfoTable.read) <- paste(InfoTable.read[,Reference.object$InfoTableHeader.chr1], 
+#             InfoTable.read[,Reference.object$InfoTableHeader.chr2], sep = Reference.object$InfoTableIDSeparator)
+#         Chrom.id <- paste(chr1, chr2, sep = Reference.object$InfoTableIDSeparator)
+#         New.df <- data.frame(chr1, chr2, FileName, BackingFile)
+#         colnames(New.df) <- Reference.object$InfoTableHeaders
+#         rownames(New.df) <- Chrom.id
+#         if(!(Chrom.id %in% rownames(InfoTable.read))) {
+#             InfoTable.read <- rbind(InfoTable.read,New.df)
+#         }else{
+#             if(remove.prior){
+#                 Prior.file <- file.path(LOCDIR, InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.name])
+#                 Prior.backing.file <- file.path(LOCDIR, InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.backingfile])
+#                 if(file.exists(Prior.file)){
+#                     file.remove(c(Prior.file,Prior.backing.file))
+#                 }
+#             }
+#             InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.name] <- FileName
+#             InfoTable.read[Chrom.id,Reference.object$InfoTableHeader.backingfile] <- BackingFile
+#         }
+#     }
+#     return(InfoTable.read)
+# }
 
 #### It should be done after the fist write 
 Lego_GetChromInfo(Lego = NULL){
@@ -127,14 +126,13 @@ Lego_GetChromInfo(Lego = NULL){
     return(Dataset)
 }
 
-
-
 Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
     create.dir = FALSE, create.recursively = FALSE,  exec = NULL, Dataset = NULL, 
     delim = " ", remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
 
     ListVars <- list(Lego = Lego, LOCDIR = LOCDIR, create.dir = create.dir, create.recursively = create.recursively, 
-        Basename = Basename, chr1 = chr1, chr2 = chr2, is.sparse = is.sparse, sparsity.bins = sparsity.bins, exec = exec, delim = delim, Dataset = Dataset, remove.prior = remove.prior)
+        Basename = Basename, chr1 = chr1, chr2 = chr2, is.sparse = is.sparse, sparsity.bins = sparsity.bins, 
+        exec = exec, delim = delim, Dataset = Dataset, remove.prior = remove.prior)
     sapply(1:length(ListVars),function(x){
         if(length(ListVars[[x]]) > 1){
             stop(names(ListVars[x]),"had length greater than 1.\n")
@@ -152,9 +150,8 @@ Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL
     Chrom1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
     Chrom2.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr2,"nrow"]
     _ProcessMatrix_(Data = Dataset, delim = NULL, Matrix.file = Matrix.file.path, 
-        Backing.file = Matrix.backing.file.path, exec = exec, chr1.len = Chrom1.len, 
-        chr2.len = Chrom2.len, fix.num.rows.at = num.rows, is.sparse = is.sparse, 
-        sparsity.bins = sparsity.bins)
+        exec = exec, chr1.len = Chrom1.len, chr2.len = Chrom2.len, 
+        fix.num.rows.at = num.rows, is.sparse = is.sparse, sparsity.bins = sparsity.bins)
 }
 
 

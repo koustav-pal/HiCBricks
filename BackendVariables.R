@@ -63,8 +63,8 @@ _GenerateRandomName_ <- function(){
     return(HashString)
 }
 
-_ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, chr1.len = NULL, 
-    chr2.len = NULL, fix.num.rows.at = NULL, is.sparse = NULL, sparsity.bins = NULL){
+_ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, DatasetHandle = NULL,
+    chr1.len = NULL, chr2.len = NULL, fix.num.rows.at = NULL, is.sparse = NULL, sparsity.bins = NULL){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
     PercentGTZero = function(x){
@@ -95,15 +95,11 @@ _ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, chr1.le
     Command <- paste(exec,Read.file,sep=" ")
     Start.row <- 0
     Path.to.file <- file.path(private$Output.Directory,private$Output.Filename)
-    Chrom1.ranges <- self$GetRangesByChromosome(RangeKey=private$Bintable.Key,Chrom=Chromosome1)
-    Chrom2.ranges <- self$GetRangesByChromosome(RangeKey=private$Bintable.Key,Chrom=Chromosome2)
-    Chrom1.len <- length(Chrom1.ranges)
-    Chrom2.len <- length(Chrom2.ranges)
     Chrom1.Group <- private$ReturnH5GroupHandler(Groups=c(private$hdf.matrices,Chromosome1))
     Cumulative.data <- NULL
     Cumulative.distances.data <- NULL
     Cumulative.indices <- NULL
-    NumLines <- private$FindLineNumbers(Row.len=Chrom1.len,Col.len=Chrom2.len)
+    NumLines <- private$FindLineNumbers(Row.len=chr1.len,Col.len=chr2.len)
     if(NumLines <= fix.num.rows.at){
         NumLines <- fix.num.rows.at
     }
@@ -167,7 +163,6 @@ _ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, chr1.le
             Start.row <- Start.row+Count[1]
             Cumulative.data <- NULL
             cat("Loaded ",Obj.size," bytes of data...\n")
-            
         }
         cat("Read ",(Skip+Iter),"records...\n")
         i<-i+1
