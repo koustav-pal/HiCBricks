@@ -14,7 +14,7 @@ Create_Path <- function(groups){
     for (x in groups) {
         Path.to.file <- file.path(Path.to.file,x)
     }
-    cat(Path.to.file,"\n")
+    # cat(Path.to.file,"\n")
     return(Path.to.file)
 }
 CreateGroups <- function(Group.path = NULL, File = NULL){

@@ -65,8 +65,8 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     for (Folder in Base.ranges.folders) {
         CreateGroups(Group.path = Create_Path(c(Root.folders['ranges'],Folder)), File = HDF.File)
     }
-    Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['ranges'],Reference.object$Base.ranges.folders['Bintable'],
-        Reference.object$ranges.dataset), object = Bintable)
+    Lego_WriteDataFrame(Lego = HDF.File, Path = c(Root.folders['ranges'],Base.ranges.folders['Bintable'],
+        Reference.object$hdf.ranges.dataset.name), object = Bintable)
     # Add the chromosome information into the metadata column
     # Create matrices groups
     for (chrom1 in ChromosomeList) {
@@ -123,12 +123,30 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
 # }
 
 #### It should be done after the fist write 
-Lego_GetChromInfo <- function(Lego = NULL){
+Lego_Get_ChromInfo <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
-    Dataset <- h5read(name = Create_Path(c(Reference.object$hdf.metadata.root,Reference.object$metadata.chrom.dataset)),
-        File = Lego)
+    Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
+        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, handler = FALSE)
     return(Dataset)
 }
+
+Lego_Get_Bintable <- function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, Reference.object$hdf.bintable.ranges.group)),
+        Lego = Lego, Name = Reference.object$hdf.ranges.dataset.name, handler = FALSE)
+    return(Dataset)
+}
+Lego_List_Matrices <- function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Group.Handle <- ReturnH5Handler(Path = Create_Path(c(Reference.object$hdf.matrices.root)),File = Lego)
+    Dataset <- h5read(name = Reference.object$metadata.chrom.dataset,
+        file = Group.Handle)
+    H5Gclose(Group.Handle)
+    return(Dataset)
+}
+
+
+
 
 Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
     create.dir = FALSE, create.recursively = FALSE,  exec = NULL, Dataset = NULL, 
@@ -186,26 +204,24 @@ Lego_attach_mcol <- function()
 
 
 
-# Lego_LoadData <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
-#     create.dir = FALSE, create.recursively = FALSE, FormatAs = "NxNMatrix", 
-#     delim = " ", Dataset = NULL, remove.prior = FALSE, exec = NULL){
+Lego_LoadMatrix <- function(Lego = NULL, chr1 = NULL, chr2 = NULL, FormatAs = "mxnMatrix", 
+    delim = " ", Dataset = NULL, exec = NULL){
     
-#     ListVars <- list(Lego = Lego, LOCDIR = LOCDIR, create.dir = create.dir, create.recursively = create.recursively, 
-#         Basename = Basename, FormatAs = FormatAs, chr1 = chr1, chr2 = chr2, exec = NULL, delim = delim, Dataset = Dataset, remove.prior = remove.prior)
-#     sapply(1:length(ListVars),function(x){
-#         if(length(ListVars[[x]]) > 1){
-#             stop(names(ListVars[x]),"had length greater than 1.\n")
-#         }
-#     })
-#     sapply(1:length(ListVars[c("Lego","LOCDIR","chr1","chr2","Basename","Dataset")]),function(x){
-#         if(is.null(ListVars[[x]])){
-#             stop(names(ListVars[x]),"has no value.\n")
-#         }
-#     })
+    ListVars <- list(Lego = Lego, FormatAs = FormatAs, chr1 = chr1, chr2 = chr2, exec = NULL, delim = delim, Dataset = Dataset)
+    sapply(1:length(ListVars),function(x){
+        if(length(ListVars[[x]]) > 1){
+            stop(names(ListVars[x]),"had length greater than 1.\n")
+        }
+    })
+    sapply(1:length(ListVars[c("Lego","chr1","chr2","Dataset")]),function(x){
+        if(is.null(ListVars[[x]])){
+            stop(names(ListVars[x]),"has no value.\n")
+        }
+    })
 
-#     # Process and then return 0 
+    # Process and then return 0 
     
-# }
+}
 
 
 Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
@@ -215,6 +231,7 @@ Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
     }
     Dirs <- Path[1:(length(Path)-1)]
     Path.to.group <- Create_Path(Dirs)
+    cat(Path.to.group,Path[length(Path)],"\n")
     Lego.handler <- ReturnH5Handler(Path = Path.to.group, File = Lego)
     h5writeDataset.data.frame(h5loc = Lego.handler, 
         obj = object, 

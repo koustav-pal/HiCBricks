@@ -56,35 +56,50 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     HashString <- digest(Seed,"crc32")
     return(HashString)
 }
+._Do_on_vector_PercentGTZero_ = function(x){
+    x[is.na(x) | is.infinite(x)] <- 0
+    LengthOfRow <- length(x)
+    LengthOfGTZero <- length(x[x!=0])
+    Fraction <- LengthOfGTZero/LengthOfRow
+    return(Fraction)
+}
+._Do_on_vector_ComputeRowSums_ = function(x){
+    x[is.na(x) | is.infinite(x)] <- 0
+    return(sum(x))
+}
+._Do_on_vector_ComputeMinMax_ = function(x){
+    x[is.na(x) | is.infinite(x)] <- 0
+    return(c(min(x),max(x)))
+}
+._Do_on_vector_SparsityIndex_ = function(x=NULL,index=NULL,sparsity.bins = NULL,length=NULL){
+    x[is.na(x) | is.infinite(x)] <- 0
+    Range <- (index-sparsity.bins):(index+sparsity.bins)
+    Range <- Range[Range>0 & Range<length]
+    Rows <- x[Range]
+    return(length(Rows[Rows!=0])/length(Rows))
+}
+
+._Lego_Get_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL, handler = FALSE){
+    Reference.object <- GenomicMatrix$new()
+    Group.Handle <- ReturnH5Handler(Path = Group.path,File = Lego)
+    if(is.null(Name)){
+        return(Group.Handle)
+    }
+    if(handler){
+        Dataset.Handle <- H5Dopen(name = Name, h5loc = Group.Handle)
+        return(Dataset.Handle)
+    }
+    Dataset <- h5read(name = Name, file = Group.Handle)
+    H5Gclose(Group.Handle)
+    return(Dataset)
+}
 
 ._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, DatasetHandle = NULL,
     chr1.len = NULL, chr2.len = NULL, fix.num.rows.at = NULL, is.sparse = NULL, sparsity.bins = NULL){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
-    PercentGTZero = function(x){
-        x[is.na(x) | is.infinite(x)] <- 0
-        LengthOfRow <- length(x)
-        LengthOfGTZero <- length(x[x!=0])
-        Fraction <- LengthOfGTZero/LengthOfRow
-        return(Fraction)
-    }
-    ComputeRowSums = function(x){
-        x[is.na(x) | is.infinite(x)] <- 0
-        return(sum(x))
-    }
-    ComputeMinMax = function(x){
-        x[is.na(x) | is.infinite(x)] <- 0
-        return(c(min(x),max(x)))
-    }
     if(is.sparse){
         Sparsity.bins = sparsity.bins
-        SparsityIndex = function(x=NULL,index=NULL,length=NULL){
-            x[is.na(x) | is.infinite(x)] <- 0
-            Range <- (index-Sparsity.bins):(index+Sparsity.bins)
-            Range <- Range[Range>0 & Range<length]
-            Rows <- x[Range]
-            return(length(Rows[Rows!=0])/length(Rows))
-        }
     }
     Command <- paste(exec,Read.file,sep=" ")
     Start.row <- 0
