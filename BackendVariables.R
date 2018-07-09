@@ -1,35 +1,28 @@
 require(R6)
 GenomicMatrix <- R6Class("GenomicMatrix",
     public = list (
-        initialize = function(){},
+        initialize = function(){
+
+        },
         hdf.matrices.root = "Base.matrices",
         hdf.ranges.root = "Base.ranges",
         hdf.metadata.root = "Base.metadata",
         metadata.chrom.dataset = "chrominfo",
         hdf.matrix.name = "matrix",
         hdf.bintable.ranges.group = "Bintable",
-        hdf.other.ranges.group = "Other",
-        hdf.bintable.ranges.name = "ranges",
+        hdf.ranges.dataset.name = "ranges",
         matrices.chrom.attributes = c("filename","done"),
         ranges.bintable.dataset = "bintable",
-        Legos.info.table = "hic-Legos-InfoTable.txt",
-        InfoTableHeader.backingfile = "backing.file",
-        InfoTableHeader.name = "filename",
-        InfoTableHeader.chr1 = "chr1",
-        InfoTableHeader.chr2 = "chr2",
-        InfoTableIDSeparator = "-",
         GeneralFileSeparator = "_",
         TerrificNumberOfHiCFormats = c("NxNMatrix","PAIRIX","Cooler","HOMER","CustomTable","AggregateFragments"),
-        InfoTableHeaders = c(self$InfoTableHeader.chr1, self$InfoTableHeader.chr2,
-            self$InfoTableHeader.name, self$InfoTableHeader.backingfile),
         GetRootFolders = function() {
             Folders <- c(self$hdf.matrices.root, self$hdf.ranges.root, self$hdf.metadata.root)
             names(Folders) <- c('matrices','ranges','metadata')
             return(Folders)
-        }
+        },
         GetBaseRangesFolders = function(){
-            Folders <- c(self$hdf.bintable.ranges.group, self$hdf.other.ranges.group)
-            names(Folders) <- c('Bintable','Other')
+            Folders <- c(self$hdf.bintable.ranges.group)
+            names(Folders) <- c('Bintable')
             return(Folders)            
         }
     ),
@@ -54,16 +47,17 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         NonStrandedColNames=c("chr","start","end"),
         Matrice.done = NA,
         Ranges.separator=":"
+    )
 )
 
-_GenerateRandomName_ <- function(){
+._GenerateRandomName_ <- function(){
     library("digest")
     Seed <- format(Sys.time(),"%Y-%m-%d_%H-%M-%S")
     HashString <- digest(Seed,"crc32")
     return(HashString)
 }
 
-_ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, DatasetHandle = NULL,
+._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, DatasetHandle = NULL,
     chr1.len = NULL, chr2.len = NULL, fix.num.rows.at = NULL, is.sparse = NULL, sparsity.bins = NULL){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
@@ -183,7 +177,7 @@ _ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, Dataset
     }
 }
 
-_ProcessMatrix_ = function(Read.file = NULL, delim=" ", exec= " ", fix.num.rows.at=2000,
+._ProcessMatrix_ = function(Read.file = NULL, delim=" ", exec= " ", fix.num.rows.at=2000,
     is.spa){
     require(data.table)
 
