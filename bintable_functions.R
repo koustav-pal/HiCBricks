@@ -3,13 +3,16 @@
     ColClasses <- c("character","integer","integer","character","character")
     ColNames <- c("chr","start","end","strand","names")
     Index.type.error <- c("index is missing.")
-    if(x < 3 | x > 5){
-        if(x > 5){
+    Norm.x <- (x - min(x))+1
+    Len.x <- length(Norm.x)
+
+    if(Len.x < 3 | Len.x > 5){
+        if(Len.x > 5){
             Index.type.error <- "indices were provided."
         }
         stop(paste("col.index expects as bare minimum chr,start,end.",Error.col[x],Second.part,"\n"))
     }
-    Alist <- list("Names" = ColNames[1:x], "Classes" = ColClasses[1:x])
+    Alist <- list("Names" = ColNames[Norm.x], "Classes" = ColClasses[Norm.x])
     return(Alist)
 }
 
@@ -20,7 +23,7 @@ Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,
     if(is.null(exec)) {
         stop("exec is not allowed to be null")
     }
-    ColMetrics <- ._ColIndexError_(length(col.index))
+    ColMetrics <- ._ColIndexError_(col.index)
     Colnames<-ColMetrics[["Names"]]
     ColClasses<- ColMetrics[["Classes"]]
     

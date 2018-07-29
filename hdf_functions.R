@@ -9,6 +9,13 @@ ReturnH5Handler = function(Path=NULL,File = NULL){
         Handle=Temp.connection&Path
         return(Handle)
 }
+CloseH5Con <- function(Handle = NULL, type = NULL){
+    if(on == "group"){
+        H5Gclose(Handle)
+    }else if(on == "dataset"){
+        H5Dclose(Handle)
+    }    
+}
 Create_Path <- function(groups){
    Path.to.file <- ""
     for (x in groups) {
@@ -34,19 +41,46 @@ CreateDataset <- function(Path = NULL, File = NULL, name = NULL, dims = NULL, ma
         level = compression_level, fillValue = fill_with, showWarnings = warnings)
     H5Gclose(H5Handler)
 }
-CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_type = "character", on = "group"){
+CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_types = NULL, on = "group",
+    dims = 1, maxdims = 1){
     Lego.handler <- ReturnH5Handler(Path = Path,File = File)
-    dtype_id <- "H5T_NATIVE_CHAR"
-    if(data_type != "character"){
-        stop("For now we are not considering non-character attributes.\n")
+    for (i in 1:length(Attributes)) {
+        An.attribute <- Attributes[i]
+        data_type <- data_types[i]
+        MaxLen <- NULL
+        if(data_type == "character"){
+            ## If you can write a 280 char tweet, you can constrain yourself to 280 chars here as well.
+            ## It's not too small, its actually larger than the linux filename limit. So Pssssssstttttt!!!!
+            MaxLen <- 280
+        }
+        h5createAttribute(obj = Lego.handler, attr = An.attribute, storage.mode = data_type,
+            dims = 1, maxdims = 1, size = MaxLen)
     }
-    for (An.attribute in Attributes) {
-        H5Acreate(h5obj = Lego.handler, name = An.attribute, dtype_id = dtype_id, 
-            h5space = H5Screate_simple(dims = c(1),maxdims = c(1)))
+    CloseH5Con(Handle = Lego.handler, type = on)
+}
+
+WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values = NULL, on = "group"){
+    if(length(Attributes) != length(values)){
+        stop("length of Attributes and value does not match")
     }
-    if(on == "group"){
-        H5Gclose(Lego.handler)
-    }else if(on == "dataset"){
-        H5Dclose(Lego.handler)
+    Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+    for (i in 1:length(Attributes)) {
+        value <- values[i]
+        An.attribute <- Attributes[i]
+        h5writeAttribute(attr = value, h5obj = Lego.handler, name = An.attribute)
     }
+    CloseH5Con(Handle = Lego.handler, type = on)
+}
+
+GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "group"){
+    Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+    Attribute.val <- sapply(Attributes, function(An.attribute){
+        if(!H5Aexists(h5obj = Lego.handler, name = An.attribute)){
+            CloseH5Con(Handle = Lego.handler, type = on)
+            stop(An.attribute,"not found.\n")
+        }
+        h5readAttributes(file = Lego.handler, h5obj = Lego.handler, name = An.attribute)        
+    })
+    CloseH5Con(Handle = Lego.handler, type = on)
+    return(Attribute.val)
 }
