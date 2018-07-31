@@ -1,7 +1,7 @@
 # HDF structure
 # Base.matrices <group>
 #   chromsome <group>
-#       chromosome <group> Attributes FileName, Done
+#       chromosome <group> Attributes FileName, extent, Done
 #           matrix <dataset>
 #           extent <dataset>
 #           bla bla datasets
@@ -88,13 +88,22 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
             CreateAttributes(Path = Chrom2.path, File = HDF.File, 
                 Attributes = Reference.object$matrices.chrom.attributes,
                 data_types = Reference.object$matrices.chrom.attributes.dtype,
+                dims = Reference.object$matrices.chrom.attributes.dims,
+                maxdims = NULL,
                 on = "group")
             Dims <- c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"], Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
             if(is.null(ChunkSize)){
                 ChunkSize <- ceiling(Dims/100)
             }
+            Array.dim <-Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"]
             CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
                 name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
+            CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
+                name = Reference.object$hdf.matrix.coverage, dims = Array.dim, maxdims = Array.dim)
+            CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
+                name = Reference.object$hdf.matrix.sparsity, dims = Array.dim, maxdims = Array.dim)
+            CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
+                name = Reference.object$hdf.matrix.RowSums, dims = Array.dim, maxdims = Array.dim)
         }
     }
 }
@@ -149,21 +158,30 @@ Lego_Get_Bintable <- function(Lego = NULL, as.ranges = FALSE){
     if(!as.ranges){
         return(Dataset)
     }
-    if()
     Dataset.ranges <- MakeGRangesObject(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
+    return(Dataset.ranges)
 }
 
 Lego_List_Matrices <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
-    Group.Handle <- ReturnH5Handler(Path = Create_Path(c(Reference.object$hdf.matrices.root)),File = Lego)
-    Dataset <- h5read(name = Reference.object$metadata.chrom.dataset,
-        file = Group.Handle)
-    H5Gclose(Group.Handle)
-    return(Dataset)
+    ChromInfo <- Lego_Get_ChromInfo(Lego = Lego)
+    chr1.list <- lapply(ChromInfo[,"chr"], function(chr1){
+        chr2.list <- lapply(ChromInfo[,"chr"], function(chr2){
+            Colnames <- Reference.object$matrices.chrom.attributes
+            Values <- GetAttributes(Path = Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2)),
+                File = Lego, Attributes = Colnames, on = "group")
+            temp.df <- data.frame(chr1,chr2,cbind(Values))
+            colnames(temp.df) <- c("chr1","chr2",Colnames)
+            # All.cols <- colnames(temp.df)
+            # Filter <- all(as.matrix(temp.df[,Colnames[is.logical(Values)]]))
+            # temp.df[!Filter,All.cols[!(All.cols %in% c("chr1","chr2",Colnames[is.logical(Values)]))]] <- NA
+            temp.df
+        })
+        chr2.df <- do.call(rbind,chr2.list)
+    })
+    Matrix.list.df <- do.call(rbind,chr1.list)
+    return(Matrix.list.df)
 }
-
-
-
 
 Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
     create.dir = FALSE, create.recursively = FALSE,  exec = NULL, Dataset = NULL, 
@@ -209,20 +227,12 @@ Lego_GetRanges <- function(Lego = NULL, chr = NULL, rangekey = NULL){
         stop("rangekey and Lego cannot remain empty!\n")
     }
     Lego_Get_Bintable(Lego = Lego)
-
 }
-
 
 Lego_attach_mcol <- function()
 
-
-
-
-
-
 Lego_LoadMatrix <- function(Lego = NULL, chr1 = NULL, chr2 = NULL, FormatAs = "mxnMatrix", 
     delim = " ", Dataset = NULL, exec = NULL){
-    
     ListVars <- list(Lego = Lego, FormatAs = FormatAs, chr1 = chr1, chr2 = chr2, exec = NULL, delim = delim, Dataset = Dataset)
     sapply(1:length(ListVars),function(x){
         if(length(ListVars[[x]]) > 1){
@@ -234,11 +244,7 @@ Lego_LoadMatrix <- function(Lego = NULL, chr1 = NULL, chr2 = NULL, FormatAs = "m
             stop(names(ListVars[x]),"has no value.\n")
         }
     })
-
-    # Process and then return 0 
-    
 }
-
 
 Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
     library(stringr)

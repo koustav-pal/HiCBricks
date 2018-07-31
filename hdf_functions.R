@@ -43,18 +43,29 @@ CreateDataset <- function(Path = NULL, File = NULL, name = NULL, dims = NULL, ma
 }
 CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_types = NULL, on = "group",
     dims = 1, maxdims = 1){
+    if(is.null(Attributes) | is.null(data_types)){
+        stop("Attributes and data_type cannot take NULL values")
+    }
     Lego.handler <- ReturnH5Handler(Path = Path,File = File)
     for (i in 1:length(Attributes)) {
         An.attribute <- Attributes[i]
         data_type <- data_types[i]
+        if(!is.null(dims)){
+            dims <- dims[[i]]
+            if(!is.null(maxdims)){
+                maxdims <- maxdims[[i]]
+            }else{
+                maxdims <- dims
+            }
+        }
         MaxLen <- NULL
         if(data_type == "character"){
             ## If you can write a 280 char tweet, you can constrain yourself to 280 chars here as well.
-            ## It's not too small, its actually larger than the linux filename limit. So Pssssssstttttt!!!!
+            ## It's not too small, its actually larger than the linux filename limit.
             MaxLen <- 280
         }
         h5createAttribute(obj = Lego.handler, attr = An.attribute, storage.mode = data_type,
-            dims = 1, maxdims = 1, size = MaxLen)
+            dims = dims, maxdims = maxdims, size = MaxLen)
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }
@@ -83,4 +94,17 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "gro
     })
     CloseH5Con(Handle = Lego.handler, type = on)
     return(Attribute.val)
+}
+
+InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
+    Start = NULL, Stride = NULL, Count = NULL){
+    DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, Name = Name, handler = TRUE)
+    if(!is.null(Index)){
+        h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, index=Index)
+    }else if(!is.null(Count) & !is.null(Stride) & !is.null(Start)){
+        h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, start=Start, stride=Stride, count=Count)
+    }else{
+        stop("FetchFromDataset expects one of Start, Stride, Count if Index is NULL")
+    }
+    private$Flush.HDF()
 }
