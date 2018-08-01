@@ -14,9 +14,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.matrix.sparsity = "sparsity",
         hdf.bintable.ranges.group = "Bintable",
         hdf.ranges.dataset.name = "ranges",
-        matrices.chrom.attributes = c("filename","extent","done"),
-        matrices.chrom.attributes.dtype = c("character","numeric","logical"),
-        matrices.chrom.attributes.dims = list(1,c(1,2),1),
+        matrices.chrom.attributes = c("filename","min","max","done"),
+        matrices.chrom.attributes.dtype = c("character","numeric","numeric","logical"),
+        matrices.chrom.attributes.dims = list(1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
         GeneralFileSeparator = "_",
@@ -85,20 +85,98 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     return(length(Rows[Rows!=0])/length(Rows))
 }
 
-._Lego_Get_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL, handler = FALSE){
+._Lego_Get_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL,
+    Index = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
+    Block.list = NULL, return.what = "group_handle"){
     Reference.object <- GenomicMatrix$new()
-    Group.Handle <- ReturnH5Handler(Path = Group.path,File = Lego)
-    if(is.null(Name)){
+    Group.Handle <- ReturnH5Handler(Path = Group.path, File = Lego)
+    if(return.what == "group_handle"){
         return(Group.Handle)
     }
-    if(handler){
+    if(is.null(Name)){
+        stop("Name cannot be NULL\n")
+    }
+    if(return.what == "dataset_handle"){
         Dataset.Handle <- H5Dopen(name = Name, h5loc = Group.Handle)
+        H5Gclose(Group.Handle)
         return(Dataset.Handle)
     }
-    Dataset <- h5read(name = Name, file = Group.Handle)
-    H5Gclose(Group.Handle)
-    return(Dataset)
+    if(return.what == "data"){
+        if(!is.null(Index)){
+            Dataset <- h5read(name = Name, file = Group.Handle, index = Index)
+            H5Gclose(Group.Handle)
+            return(Dataset)
+        }else{
+            ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
+            if(any(sapply(ListOfArgs,!is.list))){
+                stop("Start, Stride, Count, Block must be of type list.\n")
+            }
+            if(unique(sapply(ListOfArgs,length))!=1){
+                stop("Start, Stride, Count, Block must have same length.\n")
+            }
+            Dataset.handler <-  H5Dopen(name = Name, h5loc = Group.Handle)
+            Dataset.dataspace <- H5Dget_space(Dataset.handler)
+            for (i in 1:length(Start.list)) {
+                Start <- Start.list[[i]]
+                Stride <- Stride.list[[i]]
+                Count <- Count.list[[i]]
+                Block <- Block.list[[i]]
+                if(i == 1){
+                    Hyperslab.type <- "H5S_SELECT_SET"
+                }else{
+                    Hyperslab.type <- "H5S_SELECT_OR"
+                }
+                Dataset.hyperslab <- H5Sselect_hyperslab(Dataset.dataspace,op = Hyperslab.type,
+                    start = Start, stride = Stride, count = Count, block = Block)
+            }
+            data.dataspace <- H5Screate_simple()
+
+        }
+        H5Gclose(Group.Handle)
+        return(Dataset)
+    }
 }
+
+._Lego_Put_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL, data = NULL,
+    Index = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, Block.list = NULL){
+    Reference.object <- GenomicMatrix$new()
+    if(!is.null(Index)){
+        Group.handler <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Name, return.what = "group_handle")
+        h5writeDataset(obj=data, h5loc=Group.handler, name=Name, index=Index)
+        H5Gclose(Group.handler)
+    }else {
+        ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
+        if(any(sapply(ListOfArgs,!is.list))){
+            stop("Start, Stride, Count, Block must be of type list.\n")
+        }
+        if(unique(sapply(ListOfArgs,length))!=1){
+            stop("Start, Stride, Count, Block must have same length.\n")
+        }
+        if(!is.vector(data)){
+            stop("data should be a vector, when working with Start, Stride, Count, Block.\n")            
+        }
+        # data.hyperslab <- H5Sselect_hyperslab(data.dataspace)
+        Dataset.handler <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Name, return.what = "dataset_handle")
+        for (i in 1:length(Start.list)) {
+            Start <- Start.list[[i]]
+            Stride <- Stride.list[[i]]
+            Count <- Count.list[[i]]
+            Block <- Block.list[[i]]
+            Dataset.dataspace <- H5Dget_space(Dataset.handler)
+            if(i == 1){
+                Hyperslab.type <- "H5S_SELECT_SET"
+            }else{
+                Hyperslab.type <- "H5S_SELECT_OR"
+            }
+            Dataset.hyperslab <- H5Sselect_hyperslab(Dataset.dataspace,op = Hyperslab.type,
+                start = Start, stride = Stride, count = Count, block = Block)
+        }
+        data.dataspace <- H5Screate_simple(dims = c(max(Start.list),))
+        H5Dread()
+    }
+}
+
+
 
 ._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, DatasetHandle = NULL,
     chr1.len = NULL, chr2.len = NULL, fix.num.rows.at = NULL, is.sparse = NULL, sparsity.bins = NULL){
@@ -163,7 +241,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             Matrix.range[1] <- Row.extent[1]
         }
         if(Matrix.range[2] < Row.extent[2] | is.na(Matrix.range[2])){
-            Matrix.range[2] <- Row.extent[2]  
+            Matrix.range[2] <- Row.extent[2]
         }
         Cumulative.data <- rbind(Cumulative.data,Matrix)
         Obj.size <- object.size(Cumulative.data)
@@ -173,7 +251,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
             cat("Inserting Data at location:",Start[1],"\n")
             cat("Data length:",Count[1],"\n")
-            private$InsertIntoDataset(Connection=Chrom1.Group,
+            InsertIntoDataset(Connection=Chrom1.Group,
                 Chrom=Chromosome2,Data=Cumulative.data,Start=Start,Stride=Stride,Count=Count)
             Start.row <- Start.row+Count[1]
             Cumulative.data <- NULL

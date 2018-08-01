@@ -1,10 +1,11 @@
 # HDF structure
 # Base.matrices <group>
 #   chromsome <group>
-#       chromosome <group> Attributes FileName, extent, Done
+#       chromosome <group> Attributes FileName, Min, Max, Done
 #           matrix <dataset>
-#           extent <dataset>
-#           bla bla datasets
+#           bin.coverage <dataset>
+#           row.sums <dataset>
+#           sparsity <dataset>
 # Base.ranges <group>
 #   Bintable <group> containing binary attributes Strand, Names
 #       Names <dataset>
@@ -144,24 +145,6 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
 # }
 
 #### It should be done after the fist write 
-Lego_Get_ChromInfo <- function(Lego = NULL){
-    Reference.object <- GenomicMatrix$new()
-    Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
-        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, handler = FALSE)
-    return(Dataset)
-}
-
-Lego_Get_Bintable <- function(Lego = NULL, as.ranges = FALSE){
-    Reference.object <- GenomicMatrix$new()
-    Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, Reference.object$hdf.bintable.ranges.group)),
-        Lego = Lego, Name = Reference.object$hdf.ranges.dataset.name, handler = FALSE)
-    if(!as.ranges){
-        return(Dataset)
-    }
-    Dataset.ranges <- MakeGRangesObject(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
-    return(Dataset.ranges)
-}
-
 Lego_List_Matrices <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     ChromInfo <- Lego_Get_ChromInfo(Lego = Lego)
@@ -172,9 +155,6 @@ Lego_List_Matrices <- function(Lego = NULL){
                 File = Lego, Attributes = Colnames, on = "group")
             temp.df <- data.frame(chr1,chr2,cbind(Values))
             colnames(temp.df) <- c("chr1","chr2",Colnames)
-            # All.cols <- colnames(temp.df)
-            # Filter <- all(as.matrix(temp.df[,Colnames[is.logical(Values)]]))
-            # temp.df[!Filter,All.cols[!(All.cols %in% c("chr1","chr2",Colnames[is.logical(Values)]))]] <- NA
             temp.df
         })
         chr2.df <- do.call(rbind,chr2.list)
@@ -211,6 +191,25 @@ Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL
         fix.num.rows.at = num.rows, is.sparse = is.sparse, sparsity.bins = sparsity.bins)
 }
 
+
+Lego_Get_ChromInfo <- function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
+        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, handler = FALSE)
+    return(Dataset)
+}
+
+Lego_Get_Bintable <- function(Lego = NULL, as.ranges = FALSE){
+    Reference.object <- GenomicMatrix$new()
+    Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, Reference.object$hdf.bintable.ranges.group)),
+        Lego = Lego, Name = Reference.object$hdf.ranges.dataset.name, handler = FALSE)
+    if(!as.ranges){
+        return(Dataset)
+    }
+    Dataset.ranges <- MakeGRangesObject(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
+    return(Dataset.ranges)
+}
+
 Lego_ListRangeKeys <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     Handler <- ReturnH5Handler(Path = Create_Path(Reference.object$hdf.ranges.root),File = Lego)
@@ -218,18 +217,54 @@ Lego_ListRangeKeys <- function(Lego = NULL){
     return(GroupList)
 }
 
-Lego_GetRanges <- function(Lego = NULL, chr = NULL, rangekey = NULL){
-    Reference.object <- GenomicMatrix$new()
-    if(is.null(chr)){
-        GetAll <- TRUE
+Lego_RangeKey_exists <- function(Lego = NULL, rangekey = NULL){
+    Keys <- Lego_ListRangeKeys(Lego = Lego)
+    return(rangekey %in% Keys)
+}
+
+Lego_list_Ranges_mcols <- function(Lego = NULL, rangekey = NULL){
+    RangeKeys <- Lego_ListRangeKeys(Lego = Lego)
+    if(!is.null(rangekey)){
+        if(!Lego_RangeKey_exists(Lego = Lego, rangekey = rangekey)){
+            stop("rangekey not found!")
+        }
+        RangeKeys <- RangeKeys[RangeKeys %in% rangekey]
     }
+    mcol.list <- lapply(RangeKeys,function(x){
+        Handler <- ReturnH5Handler(Path = Create_Path(Reference.object$hdf.ranges.root,x),File = Lego)
+        GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)
+        data.frame(rangekey = x, m.col = GroupList)
+    })
+    mcol.df <- do.call(rbind,mcol.list)
+    mcol.df <- mcol.df[mcol.df$m.col != "ranges",]
+    if(nrow(mcol.df)==0){
+        mcol.df <- NA
+    }
+    return(mcol.df)
+}
+
+Lego_GetRanges <- function(Lego = NULL, chr = NULL, rangekey = NULL, as.ranges = FALSE, attach_cols = NULL){
+    Reference.object <- GenomicMatrix$new()
     if(is.null(rangekey) | is.null(Lego)){
         stop("rangekey and Lego cannot remain empty!\n")
     }
-    Lego_Get_Bintable(Lego = Lego)
+    if(!Lego_RangeKey_exists(Lego = Lego, rangekey = rangekey)){
+        stop("rangekey not found!")
+    }
+    Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
+        Lego = Lego, Name = Reference.object$hdf.ranges.dataset.name, return.what = "data")
+    if(!is.null(chr)){
+        ChromInfo.df <- Lego_Get_ChromInfo(Lego = Lego)
+        if(!(chr %in% ChromInfo.df$chr)){
+            stop("chr not found!")
+        }
+        Dataset <- Dataset[Dataset$chr == chr,]
+    }
+    if(as.ranges){
+        Dataset <- MakeGRangesObject(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
+    }
+    return(Dataset)
 }
-
-Lego_attach_mcol <- function()
 
 Lego_LoadMatrix <- function(Lego = NULL, chr1 = NULL, chr2 = NULL, FormatAs = "mxnMatrix", 
     delim = " ", Dataset = NULL, exec = NULL){
@@ -260,7 +295,60 @@ Lego_WriteDataFrame <- function(Lego = NULL, Path = NULL, object = NULL){
         name = Path[length(Path)])
     H5Gclose(Lego.handler)
 }
-
+Lego_matrix_exists <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    return(chr1 %in% Matrix.list$chr1 & chr2 %in% Matrix.list$chr2)
+}
+Lego_matrix_isDone <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("chr1 chr2 pairs were not found\n")
+    }
+    return(Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])
+}
+Lego_matrix_minmax <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("chr1 chr2 pairs were not found\n")
+    }
+    Filter <- Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2
+    Extent <- c(Matrix.list[Filter, "min"],Matrix.list[Filter, "max"])
+    return(Extent)
+}
+Lego_matrix_filename <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("chr1 chr2 pairs were not found\n")
+    }
+    Filter <- Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2
+    Extent <- Matrix.list[Filter, "filename"]
+    return(Extent)
+}
+Lego_GetValuesByDistance <- function(Lego = NULL, chr = NULL, distance  = NULL,
+    constrain.region=NULL,batch.size=500,FUN=NULL){
+    if(any(sapply(list(Lego,chr1,chr2,distance),is.null))) {
+        stop("Lego, chr, distance cannot be NULL.\n")
+    }
+    Reference.object <- GenomicMatrix$new()
+    ChromInfo <- Lego_Get_ChromInfo(Lego = Lego)
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr, chr2 = chr)){
+        stop("Chromosome is not listed in this HDF file.")
+    }
+    if(any(c(Lego,chr,distance) > 1)){
+        stop("Lego, chr and distance can only have values of length 1.\n")
+    }
+    Nrow <- (ChromInfo[ChromInfo$chr == chr,"nrow"]-1)
+    if(any(distance > Nrow,distance < 0)){
+        stop("Distance must range between 0 and",Nrow,"\n")   
+    }
+    Root.folders <- Reference.object$GetRootFolders()
+    Path <- Create_Path(c(Root.folders['matrices'],chr,chr))
+    # Preparing Start stride and
+}
 
 # AddAttribute(Key=private$Bintable.Key,Value=normalizePath(BinTable))
 
