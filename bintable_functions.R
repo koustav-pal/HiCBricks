@@ -16,7 +16,6 @@
     return(Alist)
 }
 
-
 Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,2,3), 
     chromosomes=NULL, impose.discontinuity=TRUE){
     require(data.table)
@@ -64,6 +63,9 @@ Validate_table = function(Table=NULL,colnames=NULL,colClasses=NULL,col.index=NUL
     if( any( Table[,'start'] > Table[,'end'] ) ){
         stop("start coordinates cannot be greater than end coordinates")
     }
+    if( is.unsorted(Table[,'chr']) ){
+        stop("Table must be sorted by chromosome!")
+    }
 }
 
 CheckContinuousRanges = function(Table=NULL, StartCol=NULL, EndCol=NULL){
@@ -78,6 +80,9 @@ CheckContinuousRanges = function(Table=NULL, StartCol=NULL, EndCol=NULL){
 }
 
 get_chrom_info <- function(bin.table = NULL, chrom = NULL, FUN = NULL, col.name = NULL){
+    if(is.null(chrom)){
+        chrom <- unique(bin.table[,"chr"])
+    }
     Info <- sapply(chrom,function(x){
         FUN(bin.table[bin.table[,'chr']==x,col.name])
     })

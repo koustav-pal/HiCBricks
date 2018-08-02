@@ -14,12 +14,21 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.matrix.sparsity = "sparsity",
         hdf.bintable.ranges.group = "Bintable",
         hdf.ranges.dataset.name = "ranges",
+        hdf.ranges.offset.name = "offset",
+        hdf.ranges.chr.name = "chr.names",
+        hdf.ranges.lengths.name = "lengths",
+        Max.vector.size=104857600,
+        hdf.ranges.protected.names = function(){
+            Protect <- c(self$hdf.ranges.dataset.name, self$hdf.ranges.lengths.name, 
+                self$hdf.ranges.chr.name, self$hdf.ranges.offset.name)
+        }
         matrices.chrom.attributes = c("filename","min","max","done"),
         matrices.chrom.attributes.dtype = c("character","numeric","numeric","logical"),
         matrices.chrom.attributes.dims = list(1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
         GeneralFileSeparator = "_",
+        Ranges.separator=":",
         TerrificNumberOfHiCFormats = c("NxNMatrix","PAIRIX","Cooler","HOMER","CustomTable","AggregateFragments"),
         GetRootFolders = function() {
             Folders <- c(self$hdf.matrices.root, self$hdf.ranges.root, self$hdf.metadata.root)
@@ -44,15 +53,15 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         HDF.Connection=NA,
         ComputeSparsity=FALSE,
         Sparsity.compute.bins=NA,
-        Max.vector.size=104857600,
+        
         Matrix.range=NA,
         Num.lines=1,
         hdf.root.folders=c("matrices","base.ranges.tables"),
         Protected.Ranges.Keys=c("Bintable"),
         Bintable.Key = "Bintable",
         NonStrandedColNames=c("chr","start","end"),
-        Matrice.done = NA,
-        Ranges.separator=":"
+        Matrice.done = NA
+        
     )
 )
 
@@ -86,8 +95,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
 }
 
 ._Lego_Get_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL,
-    Index = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
-    Block.list = NULL, return.what = "group_handle"){
+    Index = NULL, Start = NULL, Stride = NULL, Count = NULL, return.what = "group_handle"){
     Reference.object <- GenomicMatrix$new()
     Group.Handle <- ReturnH5Handler(Path = Group.path, File = Lego)
     if(return.what == "group_handle"){
@@ -103,83 +111,105 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     }
     if(return.what == "data"){
         if(!is.null(Index)){
-            Dataset <- h5read(name = Name, file = Group.Handle, index = Index)
+            Dataset <- h5read(name = Name, file = Group.Handle, index = Index, start = Start,
+                stride = Stride, count = Count)
             H5Gclose(Group.Handle)
             return(Dataset)
-        }else{
-            ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
-            if(any(sapply(ListOfArgs,!is.list))){
-                stop("Start, Stride, Count, Block must be of type list.\n")
-            }
-            if(unique(sapply(ListOfArgs,length))!=1){
-                stop("Start, Stride, Count, Block must have same length.\n")
-            }
-            Dataset.handler <-  H5Dopen(name = Name, h5loc = Group.Handle)
-            Dataset.dataspace <- H5Dget_space(Dataset.handler)
-            for (i in 1:length(Start.list)) {
-                Start <- Start.list[[i]]
-                Stride <- Stride.list[[i]]
-                Count <- Count.list[[i]]
-                Block <- Block.list[[i]]
-                if(i == 1){
-                    Hyperslab.type <- "H5S_SELECT_SET"
-                }else{
-                    Hyperslab.type <- "H5S_SELECT_OR"
-                }
-                Dataset.hyperslab <- H5Sselect_hyperslab(Dataset.dataspace,op = Hyperslab.type,
-                    start = Start, stride = Stride, count = Count, block = Block)
-            }
-            data.dataspace <- H5Screate_simple()
-
         }
-        H5Gclose(Group.Handle)
         return(Dataset)
     }
 }
 
 ._Lego_Put_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL, data = NULL,
-    Index = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, Block.list = NULL){
+    Index = NULL, Start = NULL, Stride = NULL, Count = NULL, Block = NULL){
     Reference.object <- GenomicMatrix$new()
-    if(!is.null(Index)){
-        Group.handler <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Name, return.what = "group_handle")
-        h5writeDataset(obj=data, h5loc=Group.handler, name=Name, index=Index)
-        H5Gclose(Group.handler)
-    }else {
-        ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
-        if(any(sapply(ListOfArgs,!is.list))){
-            stop("Start, Stride, Count, Block must be of type list.\n")
-        }
-        if(unique(sapply(ListOfArgs,length))!=1){
-            stop("Start, Stride, Count, Block must have same length.\n")
-        }
-        if(!is.vector(data)){
-            stop("data should be a vector, when working with Start, Stride, Count, Block.\n")            
-        }
-        # data.hyperslab <- H5Sselect_hyperslab(data.dataspace)
-        Dataset.handler <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Name, return.what = "dataset_handle")
-        for (i in 1:length(Start.list)) {
-            Start <- Start.list[[i]]
-            Stride <- Stride.list[[i]]
-            Count <- Count.list[[i]]
-            Block <- Block.list[[i]]
-            Dataset.dataspace <- H5Dget_space(Dataset.handler)
-            if(i == 1){
-                Hyperslab.type <- "H5S_SELECT_SET"
-            }else{
-                Hyperslab.type <- "H5S_SELECT_OR"
-            }
-            Dataset.hyperslab <- H5Sselect_hyperslab(Dataset.dataspace,op = Hyperslab.type,
-                start = Start, stride = Stride, count = Count, block = Block)
-        }
-        data.dataspace <- H5Screate_simple(dims = c(max(Start.list),))
-        H5Dread()
+    Group.handler <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Name, return.what = "group_handle")
+    h5writeDataset(obj=data, h5loc=Group.handler, name=Name, index=Index, start = Start, stride = Stride, count = Count)
+    H5Gclose(Group.handler)
+}
+
+._Lego_do_on_ComplexSelection_ <- function(Group.path = NULL, Lego = NULL, Name = NULL,
+    Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
+    Block.list = NULL, do.what = "fetch"){
+    ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
+    if(any(sapply(ListOfArgs,!is.list))){
+        stop("Start, Stride, Count, Block must be of type list.\n")
+    }
+    if(unique(sapply(ListOfArgs,length))!=1){
+        stop("Start, Stride, Count, Block must have same length.\n")
+    }
+    if(!is.vector(data)){
+        stop("data should be a vector, when working with Start, Stride, Count, Block.\n")
     }
 }
 
+._Lego_WriteDataFrame_ <- function(Lego = NULL, Path = NULL, name = NULL, object = NULL){
+    library(stringr)
+    if(!(length(c(Lego,Path,name,object))>=4)){
+        stop("All arguments are required!")
+    }
+    Lego.handler <- ._Lego_Get_Something_(Group.path = Path, Lego = Lego, 
+        Name = name, return.what = "group_handle")
+    h5writeDataset.data.frame(h5loc = Lego.handler, 
+        obj = object,
+        name = name)
+    H5Gclose(Lego.handler)
+}
 
 
-._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, DatasetHandle = NULL,
-    chr1.len = NULL, chr2.len = NULL, fix.num.rows.at = NULL, is.sparse = NULL, sparsity.bins = NULL){
+._Lego_WriteArray_ <- function(Lego = NULL, Path = NULL, name = NULL, object = NULL){
+    library(stringr)
+    if(!(length(c(Lego,Path,name,object))>=4)){
+        stop("All arguments are required!")
+    }
+    Lego.handler <- ._Lego_Get_Something_(Group.path = Path, Lego = Lego, 
+        Name = name, return.what = "group_handle")
+    h5writeDataset.array(h5loc = Lego.handler, 
+            obj = object, 
+            name = name)
+    H5Gclose(Lego.handler)
+}
+
+._Lego_Add_Ranges_ = function(Group.path = NULL, Lego = NULL, name = NULL, ranges.df = NULL, mcol.list = NULL){
+    Reference.object <- GenomicMatrix$new()
+    ChrOffsetCols <- GenomicMatrix$hdf.ranges.protected.names()
+    ChrOffsetCols <- ChrOffsetCols[!(ChrOffsetCols %in% GenomicMatrix$hdf.ranges.dataset.name)]
+    if(any(!(ChrOffsetCols %in% names(mcol.list)))) {
+        Chrom.lengths <- get_chrom_info(bin.table = ranges.df, FUN = length, col.name = 'chr')
+        Chrom.sizes <- get_chrom_info(bin.table = ranges.df, FUN = max, col.name = 'end')
+        Chrom.info.df <- data.frame(chr = names(Chrom.lengths),
+            nrow = as.vector(Chrom.lengths),
+            size = as.vector(Chrom.sizes),stringsAsFactors = FALSE)
+        CumSums <- cumsum(Chrom.info.df[,"nrow"])
+        Starts <- c(1,CumSums[2:(length(CumSums)-1)]+1)
+        Temp.list <- list(
+            Starts,
+            Chrom.info.df[,"nrow"],
+            Chrom.info.df[,"chr"]
+            )
+        mcol.list <- c(mcol.list,Temp.list)
+    }
+    CreateGroups(Group.path = Group.path, File = HDF.File)
+    ._Lego_WriteDataFrame_(Lego = Lego, Path = Group.path, Name = name, object = ranges.df)
+    for (i in seq_along(mcol.list)) {
+        m.name <- names(mcol.list[i])
+        MCol <- mcol.list[[i]]
+        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = m.name, object = MCol)
+    }
+}
+
+._FindLineNumbers_ = function(Row.len=NULL,Col.len=NULL){
+    Reference.object <- GenomicMatrix$new()
+    pixel.mem <- 48
+    row.pixel.mem <- pixel.mem * Col.len
+    Batch.size <-  floor(Reference.object$Max.vector.size/row.pixel.mem) 
+    Batch.size[Batch.size<1] <- 1
+    return(Batch.size)
+}
+
+
+._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, dataset.name = NULL,
+    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, num.cols = 2000, is.sparse = NULL, sparsity.bins = NULL){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
@@ -188,12 +218,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Command <- paste(exec,Read.file,sep=" ")
     Start.row <- 0
     Path.to.file <- file.path(private$Output.Directory,private$Output.Filename)
-    Chrom1.Group <- private$ReturnH5GroupHandler(Groups=c(private$hdf.matrices,Chromosome1))
     Cumulative.data <- NULL
     Cumulative.distances.data <- NULL
     Cumulative.indices <- NULL
     Matrix.range <- c(NA,NA)
-    NumLines <- private$FindLineNumbers(Row.len=chr1.len,Col.len=chr2.len)
+    NumLines <- GenomicMatrix$FindLineNumbers(Row.len=chr1.len,Col.len=chr2.len)
     if(NumLines <= fix.num.rows.at){
         NumLines <- fix.num.rows.at
     }
@@ -245,38 +274,23 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         }
         Cumulative.data <- rbind(Cumulative.data,Matrix)
         Obj.size <- object.size(Cumulative.data)
-        if(Obj.size>=private$Max.vector.size | i==length(Iterations)){
+        if(Obj.size >= Reference.object$Max.vector.size | i == length(Iterations)){
             Start <- c(Start.row+1,1) 
             Stride <- c(1,1)
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
             cat("Inserting Data at location:",Start[1],"\n")
             cat("Data length:",Count[1],"\n")
-            InsertIntoDataset(Connection=Chrom1.Group,
-                Chrom=Chromosome2,Data=Cumulative.data,Start=Start,Stride=Stride,Count=Count)
+            ._Lego_Put_Something_(Group.path=Group.path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
+                data = Cumulative.data, Start = Start, Stride = Stride, Count = Count)
             Start.row <- Start.row+Count[1]
             Cumulative.data <- NULL
             cat("Loaded ",Obj.size," bytes of data...\n")
         }
         cat("Read ",(Skip+Iter),"records...\n")
         i<-i+1
-        H5Gclose(Chrom1.Group)
-        private$CloseH5FileConnection()
-
-
-
-
-
-#         private$AddMetaDataToRanges(RangeKey=private$Bintable.Key,Chrom=Chromosome1,Column=Bin.coverage,
-#             Col.Name=paste(Chromosome2,"cov",sep="."),Replace=TRUE,na.function=as.numeric)
-#         # cat(length(Row.sums),"\n")
-#         private$AddMetaDataToRanges(RangeKey=private$Bintable.Key,Chrom=Chromosome1,Column=Row.sums,
-#             Col.Name=paste(Chromosome2,"sum",sep="."),Replace=TRUE,na.function=as.numeric)
-#         if((Chromosome1 == Chromosome2) & self$is.sparse()){
-#             private$AddMetaDataToRanges(RangeKey=private$Bintable.Key,Chrom=Chromosome1,Column=Sparsity.Index,
-#                 Col.Name=paste("sparsity","idx",sep="."),Replace=TRUE,na.function=as.numeric)
-
-
-
+        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
+        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
     }
 }
 
