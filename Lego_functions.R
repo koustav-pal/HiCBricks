@@ -93,26 +93,14 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     }
 }
 
-#### It should be done after the fist write 
-Lego_List_Matrices <- function(Lego = NULL){
+Lego_get_chrominfo <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
-    ChromInfo <- Lego_Get_ChromInfo(Lego = Lego)
-    chr1.list <- lapply(ChromInfo[,"chr"], function(chr1){
-        chr2.list <- lapply(ChromInfo[,"chr"], function(chr2){
-            Colnames <- Reference.object$matrices.chrom.attributes
-            Values <- GetAttributes(Path = Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2)),
-                File = Lego, Attributes = Colnames, on = "group")
-            temp.df <- data.frame(chr1,chr2,cbind(Values))
-            colnames(temp.df) <- c("chr1","chr2",Colnames)
-            temp.df
-        })
-        chr2.df <- do.call(rbind,chr2.list)
-    })
-    Matrix.list.df <- do.call(rbind,chr1.list)
-    return(Matrix.list.df)
+    Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
+        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, handler = FALSE)
+    return(Dataset)
 }
 
-Lego_MakeGRangesObject = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, Names=NULL){
+Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, Names=NULL){
     Reference.object <- GenomicMatrix$new()
     require(GenomicRanges)
     if(is.null(Names)){
@@ -137,6 +125,9 @@ Lego_add_ranges <- function(Lego = NULL, ranges = NULL, name = NULL){
     if(is.unsorted(Ranges.df$seqnames)){
         stop("Ranges must be sorted by chromosome!")
     }
+    if(Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
+        stop("rangekey already exists! Cannot proceed further! Please read the documentation to understand Why.")
+    }
     Metadata.Cols <- names(Ranges.df)[,c(4:ncol(Ranges.df))]
     Metadata.list <- lapply(Metadata.Cols,function(x){
         Ranges.df[,x]
@@ -146,19 +137,46 @@ Lego_add_ranges <- function(Lego = NULL, ranges = NULL, name = NULL){
         ranges.df = Ranges.df, mcol.list = Metadata.list)
 }
 
-Lego_Get_ChromInfo <- function(Lego = NULL){
+Lego_list_rangekeys <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
-    Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
-        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, handler = FALSE)
-    return(Dataset)
+    Handler <- ._Lego_Get_Something_(Group.path = Create_Path(Reference.object$hdf.ranges.root), 
+        Lego = Lego, return.what = "group_handle")
+    GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)
+    return(GroupList)
 }
 
-Lego_Get_Ranges <- function(Lego = NULL, chr = NULL, rangekey = NULL, as.ranges = FALSE, attach_cols = NULL){
+Lego_rangekey_exists <- function(Lego = NULL, rangekey = NULL){
+    Keys <- Lego_list_rangekeys(Lego = Lego)
+    return(rangekey %in% Keys)
+}
+
+Lego_list_ranges_mcols <- function(Lego = NULL, rangekey = NULL){
+    RangeKeys <- Lego_list_rangekeys(Lego = Lego)
+    if(!is.null(rangekey)){
+        if(!Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
+            stop("rangekey not found!")
+        }
+        RangeKeys <- RangeKeys[RangeKeys %in% rangekey]
+    }
+    mcol.list <- lapply(RangeKeys,function(x){
+        Handler <- ._Lego_Get_Something_(Group.path = Create_Path(Reference.object$hdf.ranges.root,x),File = Lego, return.what = "group_handle")
+        GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)
+        data.frame(rangekey = x, m.col = GroupList)
+    })
+    mcol.df <- do.call(rbind,mcol.list)
+    mcol.df <- mcol.df[!(mcol.df$m.col %in% Reference.object$hdf.ranges.protected.names()),]
+    if(nrow(mcol.df)==0){
+        mcol.df <- NA
+    }
+    return(mcol.df)
+}
+
+Lego_get_ranges <- function(Lego = NULL, chr = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(is.null(rangekey) | is.null(Lego)){
         stop("rangekey and Lego cannot remain empty!\n")
     }
-    if(!Lego_RangeKey_exists(Lego = Lego, rangekey = rangekey)){
+    if(!Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
         stop("rangekey not found!")
     }
     Start <- NULL
@@ -183,64 +201,60 @@ Lego_Get_Ranges <- function(Lego = NULL, chr = NULL, rangekey = NULL, as.ranges 
     Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
         Lego = Lego, Name = Reference.object$hdf.ranges.dataset.name, Start = Start, Stride = Stride,
         Count = Count, return.what = "data")
-    if(as.ranges){
-        Dataset <- MakeGRangesObject(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
+    Dataset <- Lego_make_ranges(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
+
+    MCols <- Lego_list_ranges_mcols(Lego = Lego, rangekey = rangekey)
+    if(!is.na(MCols)){
+        MCols.col <- MCols[,"m.col"]
+        m.start <- ifelse(is.null(Start),NULL,Start[1])
+        m.stride <- ifelse(is.null(Start),NULL,Stride[1])
+        m.count <- ifelse(is.null(Start),NULL,Count[1])
+        MCols.DF.list <- lapply(MCols.col,function(x){
+            Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
+                Lego = Lego, Name = x, Start = m.start, Stride = m.stride,
+                Count = m.count, return.what = "data")
+            DF <- DataFrame(Temp = Dataset)
+            colnames(DF) <- x
+            DF
+        })
+        MCols.DF <- do.call(cbind,MCols.DF.list)
+        mcols(Dataset) <- MCols.DF
     }
     return(Dataset)
 }
 
-Lego_Get_Bintable <- function(Lego = NULL, chr = NULL, as.ranges = TRUE){
-    Table <- Lego_Get_Ranges(Lego = Lego, chr = chr, rangekey = Reference.object$hdf.bintable.ranges.group, as.ranges = as.ranges)
+Lego_get_bintable <- function(Lego = NULL, chr = NULL){
+    Table <- Lego_get_ranges(Lego = Lego, chr = chr, rangekey = Reference.object$hdf.bintable.ranges.group)
     return(Table)
 }
 
-Lego_ListRangeKeys <- function(Lego = NULL){
-    Reference.object <- GenomicMatrix$new()
-    Handler <- ._Lego_Get_Something_(Group.path = Create_Path(Reference.object$hdf.ranges.root), 
-        Lego = Lego, return.what = "group_handle")
-    GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)
-    return(GroupList)
-}
-
-Lego_RangeKey_exists <- function(Lego = NULL, rangekey = NULL){
-    Keys <- Lego_ListRangeKeys(Lego = Lego)
-    return(rangekey %in% Keys)
-}
-
-Lego_list_Ranges_mcols <- function(Lego = NULL, rangekey = NULL){
-    RangeKeys <- Lego_ListRangeKeys(Lego = Lego)
-    if(!is.null(rangekey)){
-        if(!Lego_RangeKey_exists(Lego = Lego, rangekey = rangekey)){
-            stop("rangekey not found!")
-        }
-        RangeKeys <- RangeKeys[RangeKeys %in% rangekey]
-    }
-    mcol.list <- lapply(RangeKeys,function(x){
-        Handler <- ._Lego_Get_Something_(Group.path = Create_Path(Reference.object$hdf.ranges.root,x),File = Lego, return.what = "group_handle")
-        GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)
-        data.frame(rangekey = x, m.col = GroupList)
-    })
-    mcol.df <- do.call(rbind,mcol.list)
-    mcol.df <- mcol.df[!(mcol.df$m.col %in% Reference.object$hdf.ranges.protected.names()),]
-    if(nrow(mcol.df)==0){
-        mcol.df <- NA
-    }
-    return(mcol.df)
-}
-
-Lego_LoadMatrix <- function(Lego = NULL, chr1 = NULL, chr2 = NULL, FormatAs = "mxnMatrix", 
-    delim = " ", Dataset = NULL, exec = NULL){
-    ListVars <- list(Lego = Lego, FormatAs = FormatAs, chr1 = chr1, chr2 = chr2, exec = NULL, delim = delim, Dataset = Dataset)
+Lego_load_matrix <- function(Lego = NULL, chr1 = NULL, chr2 = NULL, file = NULL, delim = " ", exec = NULL,  
+    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
+    ListVars <- list(Lego = Lego, chr1 = chr1, chr2 = chr2, file = file, is.sparse = is.sparse, 
+        sparsity.bins = sparsity.bins, exec = exec, delim = delim, remove.prior = remove.prior)
     sapply(1:length(ListVars),function(x){
         if(length(ListVars[[x]]) > 1){
             stop(names(ListVars[x]),"had length greater than 1.\n")
         }
     })
-    sapply(1:length(ListVars[c("Lego","chr1","chr2","Dataset")]),function(x){
+    sapply(1:length(ListVars[c("Lego","chr1","chr2","file","exec")]),function(x){
         if(is.null(ListVars[[x]])){
             stop(names(ListVars[x]),"has no value.\n")
         }
     })
+    if(!Lego_matrix_exists(Lego = NULL, chr1 = chr1, chr2 = chr2)){
+        stop("Provided chromosomes do not exist in the chrom table\n")
+    }
+    if(Lego_matrix_isdone(Lego = NULL, chr1 = chr1, chr2 = chr2) && !remove.prior){
+        stop("A matrix was preloaded before. Use remove.priori = TRUE to force value replacement\n")
+    }
+    Chrom.info.df <- Lego_GetChromInfo(Lego = Lego)
+    Chrom1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
+    Chrom2.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr2,"nrow"]
+    
+    ._ProcessMatrix_(Data = Dataset, delim = delim, Matrix.file = Matrix.file.path, 
+        exec = exec, chr1.len = Chrom1.len, chr2.len = Chrom2.len, 
+        fix.num.rows.at = num.rows, is.sparse = is.sparse, sparsity.bins = sparsity.bins)
 }
 
 Lego_matrix_exists <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
@@ -250,7 +264,7 @@ Lego_matrix_exists <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
 }
 
 
-Lego_matrix_isDone <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+Lego_matrix_isdone <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
     Matrix.list <- Lego_List_Matrices(Lego = Lego)
     if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
@@ -258,7 +272,6 @@ Lego_matrix_isDone <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     }
     return(Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])
 }
-
 
 Lego_matrix_minmax <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -270,7 +283,6 @@ Lego_matrix_minmax <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Extent <- c(Matrix.list[Filter, "min"],Matrix.list[Filter, "max"])
     return(Extent)
 }
-
 
 Lego_matrix_filename <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -285,43 +297,13 @@ Lego_matrix_filename <- function(Lego = NULL, chr1 = NULL, chr2 = NULL){
 
 
 
-Lego_LoadMatrix <- function(Lego = NULL, LOCDIR = NULL, chr1 = NULL, chr2 = NULL, Basename = NULL, 
-    create.dir = FALSE, create.recursively = FALSE,  exec = NULL, Dataset = NULL, 
-    delim = " ", remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
-
-    ListVars <- list(Lego = Lego, LOCDIR = LOCDIR, create.dir = create.dir, create.recursively = create.recursively, 
-        Basename = Basename, chr1 = chr1, chr2 = chr2, is.sparse = is.sparse, sparsity.bins = sparsity.bins, 
-        exec = exec, delim = delim, Dataset = Dataset, remove.prior = remove.prior)
-    sapply(1:length(ListVars),function(x){
-        if(length(ListVars[[x]]) > 1){
-            stop(names(ListVars[x]),"had length greater than 1.\n")
-        }
-    })
-    sapply(1:length(ListVars[c("Lego","LOCDIR","chr1","chr2","Basename","Dataset")]),function(x){
-        if(is.null(ListVars[[x]])){
-            stop(names(ListVars[x]),"has no value.\n")
-        }
-    })
-    Chrom.info.df <- Lego_GetChromInfo(Lego = Lego)
-    if(!(all(c(chr1, chr2) %in% Chrom.info.df[,"chr"]))){
-        stop("Provided chromosomes do not exist in the chrom table\n")
-    }
-    Chrom1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
-    Chrom2.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr2,"nrow"]
-    _ProcessMatrix_(Data = Dataset, delim = NULL, Matrix.file = Matrix.file.path, 
-        exec = exec, chr1.len = Chrom1.len, chr2.len = Chrom2.len, 
-        fix.num.rows.at = num.rows, is.sparse = is.sparse, sparsity.bins = sparsity.bins)
-}
-
-
-
-Lego_GetValuesByDistance <- function(Lego = NULL, chr = NULL, distance  = NULL,
+Lego_get_values_by_distance <- function(Lego = NULL, chr = NULL, distance  = NULL,
     constrain.region=NULL,batch.size=500,FUN=NULL){
     if(any(sapply(list(Lego,chr1,chr2,distance),is.null))) {
         stop("Lego, chr, distance cannot be NULL.\n")
     }
     Reference.object <- GenomicMatrix$new()
-    ChromInfo <- Lego_Get_ChromInfo(Lego = Lego)
+    ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     if(!Lego_matrix_exists(Lego = Lego, chr1 = chr, chr2 = chr)){
         stop("Chromosome is not listed in this HDF file.")
     }

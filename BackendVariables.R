@@ -93,7 +93,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Rows <- x[Range]
     return(length(Rows[Rows!=0])/length(Rows))
 }
-
 ._Lego_Get_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL,
     Index = NULL, Start = NULL, Stride = NULL, Count = NULL, return.what = "group_handle"){
     Reference.object <- GenomicMatrix$new()
@@ -119,7 +118,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         return(Dataset)
     }
 }
-
 ._Lego_Put_Something_ <- function(Group.path = NULL, Lego = NULL, Name = NULL, data = NULL,
     Index = NULL, Start = NULL, Stride = NULL, Count = NULL, Block = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -127,7 +125,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     h5writeDataset(obj=data, h5loc=Group.handler, name=Name, index=Index, start = Start, stride = Stride, count = Count)
     H5Gclose(Group.handler)
 }
-
 ._Lego_do_on_ComplexSelection_ <- function(Group.path = NULL, Lego = NULL, Name = NULL,
     Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
     Block.list = NULL, do.what = "fetch"){
@@ -142,7 +139,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         stop("data should be a vector, when working with Start, Stride, Count, Block.\n")
     }
 }
-
 ._Lego_WriteDataFrame_ <- function(Lego = NULL, Path = NULL, name = NULL, object = NULL){
     library(stringr)
     if(!(length(c(Lego,Path,name,object))>=4)){
@@ -155,8 +151,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         name = name)
     H5Gclose(Lego.handler)
 }
-
-
 ._Lego_WriteArray_ <- function(Lego = NULL, Path = NULL, name = NULL, object = NULL){
     library(stringr)
     if(!(length(c(Lego,Path,name,object))>=4)){
@@ -169,7 +163,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             name = name)
     H5Gclose(Lego.handler)
 }
-
 ._Lego_Add_Ranges_ = function(Group.path = NULL, Lego = NULL, name = NULL, ranges.df = NULL, mcol.list = NULL){
     Reference.object <- GenomicMatrix$new()
     ChrOffsetCols <- GenomicMatrix$hdf.ranges.protected.names()
@@ -197,7 +190,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = m.name, object = MCol)
     }
 }
-
 ._FindLineNumbers_ = function(Row.len=NULL,Col.len=NULL){
     Reference.object <- GenomicMatrix$new()
     pixel.mem <- 48
@@ -207,9 +199,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     return(Batch.size)
 }
 
-
 ._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, dataset.name = NULL,
-    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, num.cols = 2000, is.sparse = NULL, sparsity.bins = NULL){
+    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, sparsity.bins = NULL){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
