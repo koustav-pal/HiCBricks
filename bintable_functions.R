@@ -86,7 +86,24 @@ get_chrom_info <- function(bin.table = NULL, chrom = NULL, FUN = NULL, col.name 
     Info <- sapply(chrom,function(x){
         FUN(bin.table[bin.table[,'chr']==x,col.name])
     })
-    cat(chrom,"\n")
+    # cat(chrom,"\n")
     names(Info) <- chrom
     return(Info)
+}
+
+Split_genomic_coordinates = function(Coordinate=NULL){
+    require(stringr)
+    Reference.object <- GenomicMatrix$new()
+    Sep <- Reference.object$Ranges.separator
+    Coord.Split<-stringr::str_split(pattern=Sep,string=Coordinate)
+    if(length(Coord.Split[[1]])!=3 | length(Coord.Split[[1]])!=3){
+        stop("Coordinate must be separated by :")
+    }
+    Chrom<-Coord.Split[[1]][1]
+    start<-as.numeric(Coord.Split[[1]][2])
+    stop<-as.numeric(Coord.Split[[1]][3])
+    if(any(class(Chrom)!="character" | class(start)!="numeric" | class(stop)!="numeric")){
+        stop("Provided chromosome,start,end do not match expected class definitions of character, numeric, numeric")
+    }
+    return(Coord.Split)
 }

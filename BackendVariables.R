@@ -21,10 +21,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.protected.names = function(){
             Protect <- c(self$hdf.ranges.dataset.name, self$hdf.ranges.lengths.name, 
                 self$hdf.ranges.chr.name, self$hdf.ranges.offset.name)
-        }
-        matrices.chrom.attributes = c("filename","min","max","done"),
-        matrices.chrom.attributes.dtype = c("character","numeric","numeric","logical"),
-        matrices.chrom.attributes.dims = list(1,1,1,1),
+            return(Protect)
+        },
+        matrices.chrom.attributes = c("filename","min","max","sparsity","done"),
+        matrices.chrom.attributes.dtype = c("character","numeric","numeric","logical","logical"),
+        matrices.chrom.attributes.dims = list(1,1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
         GeneralFileSeparator = "_",
@@ -109,12 +110,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         return(Dataset.Handle)
     }
     if(return.what == "data"){
-        if(!is.null(Index)){
-            Dataset <- h5read(name = Name, file = Group.Handle, index = Index, start = Start,
-                stride = Stride, count = Count)
-            H5Gclose(Group.Handle)
-            return(Dataset)
-        }
+        Dataset <- h5read(name = Name, file = Group.Handle, index = Index, start = Start,
+            stride = Stride, count = Count)
+        H5Gclose(Group.Handle)
         return(Dataset)
     }
 }
@@ -165,8 +163,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
 }
 ._Lego_Add_Ranges_ = function(Group.path = NULL, Lego = NULL, name = NULL, ranges.df = NULL, mcol.list = NULL){
     Reference.object <- GenomicMatrix$new()
-    ChrOffsetCols <- GenomicMatrix$hdf.ranges.protected.names()
-    ChrOffsetCols <- ChrOffsetCols[!(ChrOffsetCols %in% GenomicMatrix$hdf.ranges.dataset.name)]
+    ChrOffsetCols <- Reference.object$hdf.ranges.protected.names()
+    ChrOffsetCols <- ChrOffsetCols[!(ChrOffsetCols %in% Reference.object$hdf.ranges.dataset.name)]
     if(any(!(ChrOffsetCols %in% names(mcol.list)))) {
         Chrom.lengths <- get_chrom_info(bin.table = ranges.df, FUN = length, col.name = 'chr')
         Chrom.sizes <- get_chrom_info(bin.table = ranges.df, FUN = max, col.name = 'end')
@@ -174,16 +172,22 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             nrow = as.vector(Chrom.lengths),
             size = as.vector(Chrom.sizes),stringsAsFactors = FALSE)
         CumSums <- cumsum(Chrom.info.df[,"nrow"])
-        Starts <- c(1,CumSums[2:(length(CumSums)-1)]+1)
+        Starts <- c(1,CumSums[1:(length(CumSums)-1)]+1)
         Temp.list <- list(
             Starts,
             Chrom.info.df[,"nrow"],
             Chrom.info.df[,"chr"]
             )
         mcol.list <- c(mcol.list,Temp.list)
+        names(mcol.list) <- c(Reference.object$hdf.ranges.offset.name,
+            Reference.object$hdf.ranges.lengths.name,
+            Reference.object$hdf.ranges.chr.name)
     }
-    CreateGroups(Group.path = Group.path, File = HDF.File)
-    ._Lego_WriteDataFrame_(Lego = Lego, Path = Group.path, Name = name, object = ranges.df)
+    CreateGroups(Group.path = Group.path, File = Lego)
+    ._Lego_WriteDataFrame_(Lego = Lego, Path = Group.path, name = name, object = ranges.df)
+    if(is.null(names(mcol.list))){
+        stop("mcol.list must be a named list!\n")
+    }
     for (i in seq_along(mcol.list)) {
         m.name <- names(mcol.list[i])
         MCol <- mcol.list[[i]]
@@ -198,9 +202,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Batch.size[Batch.size<1] <- 1
     return(Batch.size)
 }
-
 ._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, dataset.name = NULL,
-    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, sparsity.bins = NULL){
+    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, distance = NULL, sparsity.bins = NULL){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
@@ -213,7 +216,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Cumulative.distances.data <- NULL
     Cumulative.indices <- NULL
     Matrix.range <- c(NA,NA)
-    NumLines <- GenomicMatrix$FindLineNumbers(Row.len=chr1.len,Col.len=chr2.len)
+    NumLines <- Reference.object$FindLineNumbers(Row.len=chr1.len,Col.len=chr2.len)
     if(NumLines <= fix.num.rows.at){
         NumLines <- fix.num.rows.at
     }
@@ -249,13 +252,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             Vec.sub <- Matrix[x,]
             ._Do_on_vector_ComputeRowSums_(Vec.sub)
         }))
-        if(self$is.sparse() & Chromosome1==Chromosome2){
-            Sparsity.Index <- c(Sparsity.Index,sapply(1:nrow(Matrix),function(x){
-                Vec.sub <- Matrix[x,]
-                sparsity.bin.idexes <- x + Skip
-                ._Do_on_vector_SparsityIndex_(x=Vec.sub,index=sparsity.bin.idexes,length=Chrom2.len)
-            }))
-        }
+        Sparsity.Index <- c(Sparsity.Index,sapply(1:nrow(Matrix),function(x){
+            Vec.sub <- Matrix[x,]
+            sparsity.bin.idexes <- x + Skip
+            ._Do_on_vector_SparsityIndex_(x=Vec.sub,index=sparsity.bin.idexes,length=Chrom2.len)
+        }))
         Row.extent <- ._Do_on_vector_ComputeMinMax_(Matrix)
         if(Matrix.range[1] > Row.extent[1] | is.na(Matrix.range[1])) {
             Matrix.range[1] <- Row.extent[1]
@@ -279,10 +280,13 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         }
         cat("Read ",(Skip+Iter),"records...\n")
         i<-i+1
-        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
-        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
     }
+    ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
+    ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+    ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
+    Attributes <- Reference.object$matrices.chrom.attributes
+    Attr.vals <- c(basename(Read.file),Matrix.range,is.sparse,TRUE)
+    WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
 }
 
 
