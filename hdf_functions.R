@@ -63,7 +63,6 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_t
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }
-
 WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values = NULL, on = "group"){
     if(length(Attributes) != length(values)){
         stop("length of Attributes and value does not match")
@@ -76,7 +75,6 @@ WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values 
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }
-
 GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "group"){
     Lego.handler <- ReturnH5Handler(Path = Path,File = File)
     Attribute.val <- sapply(Attributes, function(An.attribute){
@@ -84,12 +82,14 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "gro
             CloseH5Con(Handle = Lego.handler, type = on)
             stop(An.attribute,"not found.\n")
         }
-        h5readAttributes(file = Lego.handler, h5obj = Lego.handler, name = An.attribute)        
+        Attr.handle <- H5Aopen(h5obj = Lego.handler, name = An.attribute)
+        Attr.val <- H5Aread(Attr.handle)
+        H5Aclose(Attr.handle)
+        Attr.val
     })
     CloseH5Con(Handle = Lego.handler, type = on)
     return(Attribute.val)
 }
-
 InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
     Start = NULL, Stride = NULL, Count = NULL){
     DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, Name = Name, handler = TRUE)

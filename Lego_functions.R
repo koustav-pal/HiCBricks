@@ -21,8 +21,7 @@
 
 CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
-    Output.Filename=NULL, exec="cat", remove.existing=FALSE,
-    sparse=FALSE, sparsity.compute.bins=100){
+    Output.Filename=NULL, exec="cat", remove.existing=FALSE){
     require(rhdf5)
     H5close()
     Dir.path <- dirname(Output.Filename)
@@ -179,6 +178,29 @@ Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
     return(mcol.df)
 }
 
+Lego_list_matrices = function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    ChromInfo <- Lego_get_chrominfo(Lego = Lego)
+    chr1.list <- lapply(ChromInfo[,"chr"], function(chr1){
+        chr2.list <- lapply(ChromInfo[,"chr"], function(chr2){
+            Colnames <- Reference.object$matrices.chrom.attributes
+            Values <- GetAttributes(Path = Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2)),
+                File = Lego, Attributes = Colnames, on = "group")
+            temp.df <- data.frame(chr1,chr2,t(cbind(Values)))
+            colnames(temp.df) <- c("chr1","chr2",Colnames)
+            temp.df
+        })
+        chr2.df <- do.call(rbind,chr2.list)
+    })
+    Matrix.list.df <- do.call(rbind,chr1.list)
+    Matrix.list.df[,"done"] <- as.logical(as.integer(as.character(Matrix.list.df[,"done"])))
+    Matrix.list.df[,"sparsity"] <- as.numeric(as.character(Matrix.list.df[,"sparsity"]))
+    Matrix.list.df[,"min"] <- as.numeric(as.character(Matrix.list.df[,"min"]))
+    Matrix.list.df[,"max"] <- as.numeric(as.character(Matrix.list.df[,"max"]))
+    rownames(Matrix.list.df) <- NULL
+    return(Matrix.list.df)
+}
+
 Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(is.null(rangekey) | is.null(Lego)){
@@ -298,6 +320,7 @@ Lego_return_region_position = function(Lego = NULL, region=NULL, chr=NULL){
 
 Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, matrix.file = NULL, delim = " ", exec = NULL,  
     remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, distance = NULL, sparsity.bins = 100){
+    Reference.object <- GenomicMatrix$new()
     ListVars <- list(Lego = Lego, chr1 = chr1, chr2 = chr2, file = file, is.sparse = is.sparse, 
         sparsity.bins = sparsity.bins, exec = exec, delim = delim, distance = distance, remove.prior = remove.prior)
     sapply(1:length(ListVars),function(x){
@@ -310,39 +333,42 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, matrix.file =
             stop(names(ListVars[x]),"has no value.\n")
         }
     })
-    if(!Lego_matrix_exists(Lego = NULL, chr1 = chr1, chr2 = chr2)){
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
         stop("Provided chromosomes do not exist in the chrom table\n")
     }
-    if(Lego_matrix_isdone(Lego = NULL, chr1 = chr1, chr2 = chr2) && !remove.prior){
+    if(Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2) && !remove.prior){
         stop("A matrix was preloaded before. Use remove.priori = TRUE to force value replacement\n")
     }
-    Chrom.info.df <- Lego_GetChromInfo(Lego = Lego)
+    Chrom.info.df <- Lego_get_chrominfo(Lego = Lego)
     chr1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
     chr2.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr2,"nrow"]
-    ._ProcessMatrix_(Data = Dataset, delim = delim, Matrix.file = matrix.file, 
-        exec = exec, chr1.len = chr1.len, chr2.len = chr2.len, 
-        fix.num.rows.at = num.rows, is.sparse = is.sparse, distance = distance,
-        sparsity.bins = sparsity.bins)
-}
-
-Lego_matrix_exists = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
-    Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Lego_List_Matrices(Lego = Lego)
-    return(chr1 %in% Matrix.list$chr1 & chr2 %in% Matrix.list$chr2)
+    Group.path <- Create_Path(c(Reference.object$hdf.matrices.root,chr1,chr2))
+    compute.sparsity <- FALSE
+    if(is.sparse && chr1 == chr2){
+        compute.sparsity <- TRUE
+    }
+    ._ProcessMatrix_(Lego = Lego, Matrix.file = matrix.file, delim = delim, exec = exec, Group.path = Group.path, 
+        chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num.rows, is.sparse = is.sparse, 
+        compute.sparsity = compute.sparsity, distance = distance, sparsity.bins = sparsity.bins)
 }
 
 Lego_matrix_isdone = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    Matrix.list <- Lego_list_matrices(Lego = Lego)
     if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
         stop("chr1 chr2 pairs were not found\n")
     }
-    return(Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])
+    return(as.logical((Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])))
+}
+
+Lego_matrix_exists = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    ChromInfo.df <- Lego_get_chrominfo(Lego = Lego)
+    all(c(chr1,chr2) %in% ChromInfo.df[,"chr"])
 }
 
 Lego_matrix_minmax = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    Matrix.list <- Lego_list_matrices(Lego = Lego)
     if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
         stop("chr1 chr2 pairs were not found\n")
     }
@@ -353,7 +379,7 @@ Lego_matrix_minmax = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
 
 Lego_matrix_filename = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Lego_List_Matrices(Lego = Lego)
+    Matrix.list <- Lego_list_matrices(Lego = Lego)
     if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
         stop("chr1 chr2 pairs were not found\n")
     }

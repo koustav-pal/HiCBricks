@@ -201,40 +201,41 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Batch.size[Batch.size<1] <- 1
     return(Batch.size)
 }
-._ProcessMatrix_ <- function(Read.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, dataset.name = NULL,
-    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, distance = NULL, sparsity.bins = NULL){
+._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
+    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
+    distance = NULL, sparsity.bins = 100){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
-    Command <- paste(exec,Read.file,sep=" ")
+    Command <- paste(exec,Matrix.file,sep=" ")
     Start.row <- 0
-    Path.to.file <- file.path(private$Output.Directory,private$Output.Filename)
+    Path.to.file <- Lego
     Cumulative.data <- NULL
-    Cumulative.distances.data <- NULL
     Cumulative.indices <- NULL
     Matrix.range <- c(NA,NA)
-    NumLines <- Reference.object$FindLineNumbers(Row.len=chr1.len,Col.len=chr2.len)
-    if(NumLines <= fix.num.rows.at){
-        NumLines <- fix.num.rows.at
+    NumLines <- ._FindLineNumbers_(Row.len=chr1.len,Col.len=chr2.len)
+    if(NumLines <= num.rows){
+        NumLines <- num.rows
     }
-    if(Chrom1.len <= NumLines){
-        NumLines <- Chrom1.len
+    if(chr1.len <= NumLines){
+        NumLines <- chr1.len
     }
     Bin.coverage <- NULL
     Row.sums <- NULL
     Sparsity.Index <- NULL
-    Iterations.number <- Chrom1.len / NumLines
+    Iterations.number <- chr1.len / NumLines
     Iterations <- rep(NumLines,floor(Iterations.number))
+
     if(floor(Iterations.number)!=ceiling(Iterations.number)){
         cumulative <- sum(Iterations)
-        Iterations <- c(Iterations,(Chrom1.len-cumulative))
+        Iterations <- c(Iterations,(chr1.len-cumulative))
     }
     Skippity<-0
     if(length(Iterations)>1){
         Skippity.cumsum <- cumsum(Iterations)
-        Skippity <- c(0,Skippity.cumsum[1:(length(Skippity.cumsum)-1)])
+        Skippity <- c(0,Skippity.cumsum[-length(Skippity.cumsum)])
     }
     i<-1
     while(i<=length(Iterations)) {
@@ -251,11 +252,13 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             Vec.sub <- Matrix[x,]
             ._Do_on_vector_ComputeRowSums_(Vec.sub)
         }))
-        Sparsity.Index <- c(Sparsity.Index,sapply(1:nrow(Matrix),function(x){
-            Vec.sub <- Matrix[x,]
-            sparsity.bin.idexes <- x + Skip
-            ._Do_on_vector_SparsityIndex_(x=Vec.sub,index=sparsity.bin.idexes,length=Chrom2.len)
-        }))
+        if(compute.sparsity){
+            Sparsity.Index <- c(Sparsity.Index,sapply(1:nrow(Matrix),function(x){
+                Vec.sub <- Matrix[x,]
+                sparsity.bin.idexes <- sparsity.bins
+                ._Do_on_vector_SparsityIndex_(x=Vec.sub, index=x, sparsity.bins = sparsity.bins, length=chr2.len)
+            }))           
+        }
         Row.extent <- ._Do_on_vector_ComputeMinMax_(Matrix)
         if(Matrix.range[1] > Row.extent[1] | is.na(Matrix.range[1])) {
             Matrix.range[1] <- Row.extent[1]
@@ -282,9 +285,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     }
     ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
     ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
-    ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
+    if(compute.sparsity){
+        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
+    }
     Attributes <- Reference.object$matrices.chrom.attributes
-    Attr.vals <- c(basename(Read.file),Matrix.range,is.sparse,TRUE)
+    Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(TRUE))
     WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
 }
 
