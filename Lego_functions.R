@@ -69,28 +69,28 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     ._Lego_WriteDataFrame_(Lego = HDF.File, Path = c(Root.folders['metadata']), name = Reference.object$metadata.chrom.dataset, object = Chrom.info.df)
     ._Lego_Add_Ranges_(Group.path = Create_Path(c(Root.folders['ranges'],Reference.object$hdf.bintable.ranges.group)), Lego = HDF.File, 
         ranges.df = Bintable, name = Reference.object$hdf.ranges.dataset.name, mcol.list = NULL)
-    # # Create matrices groups
-    # for (chrom1 in ChromosomeList) {
-    #     CreateGroups(Group.path = Create_Path(c(Root.folders['matrices'],chrom1)), File = HDF.File)
-    #     for (chrom2 in ChromosomeList) {
-    #         chr2.path <- Create_Path(c(Root.folders['matrices'],chrom1,chrom2))
-    #         # cat(Chrom.info.df$chr,chrom1,chrom2,"\n")
-    #         CreateGroups(Group.path = chr2.path, File = HDF.File)
-    #         CreateAttributes(Path = chr2.path, File = HDF.File, 
-    #             Attributes = Reference.object$matrices.chrom.attributes,
-    #             data_types = Reference.object$matrices.chrom.attributes.dtype,
-    #             dims = Reference.object$matrices.chrom.attributes.dims,
-    #             maxdims = NULL,
-    #             on = "group")
-    #         Dims <- c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"], Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
-    #         if(is.null(ChunkSize)){
-    #             ChunkSize <- ceiling(Dims/100)
-    #         }
-    #         Array.dim <-Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"]
-    #         CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
-    #             name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
-    #     }
-    # }
+    # Create matrices groups
+    for (chrom1 in ChromosomeList) {
+        CreateGroups(Group.path = Create_Path(c(Root.folders['matrices'],chrom1)), File = HDF.File)
+        for (chrom2 in ChromosomeList) {
+            chr2.path <- Create_Path(c(Root.folders['matrices'],chrom1,chrom2))
+            # cat(Chrom.info.df$chr,chrom1,chrom2,"\n")
+            CreateGroups(Group.path = chr2.path, File = HDF.File)
+            CreateAttributes(Path = chr2.path, File = HDF.File, 
+                Attributes = Reference.object$matrices.chrom.attributes,
+                data_types = Reference.object$matrices.chrom.attributes.dtype,
+                dims = Reference.object$matrices.chrom.attributes.dims,
+                maxdims = NULL,
+                on = "group")
+            Dims <- c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"], Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
+            if(is.null(ChunkSize)){
+                ChunkSize <- ceiling(Dims/100)
+            }
+            Array.dim <-Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"]
+            CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2), File = HDF.File, 
+                name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
+        }
+    }
 }
 
 Lego_get_chrominfo <- function(Lego = NULL){

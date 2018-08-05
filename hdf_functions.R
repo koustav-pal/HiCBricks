@@ -10,9 +10,9 @@ ReturnH5Handler = function(Path=NULL,File = NULL){
         return(Handle)
 }
 CloseH5Con <- function(Handle = NULL, type = NULL){
-    if(on == "group"){
+    if(type == "group"){
         H5Gclose(Handle)
-    }else if(on == "dataset"){
+    }else if(type == "dataset"){
         H5Dclose(Handle)
     }    
 }
@@ -50,14 +50,8 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_t
     for (i in 1:length(Attributes)) {
         An.attribute <- Attributes[i]
         data_type <- data_types[i]
-        if(!is.null(dims)){
-            dims <- dims[[i]]
-            if(!is.null(maxdims)){
-                maxdims <- maxdims[[i]]
-            }else{
-                maxdims <- dims
-            }
-        }
+        dim <- ifelse(!is.null(dims),dims[[i]],NULL)
+        maxdim <- ifelse(!is.null(maxdims),maxdims[[i]],dim)
         MaxLen <- NULL
         if(data_type == "character"){
             ## If you can write a 280 char tweet, you can constrain yourself to 280 chars here as well.
@@ -65,7 +59,7 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_t
             MaxLen <- 280
         }
         h5createAttribute(obj = Lego.handler, attr = An.attribute, storage.mode = data_type,
-            dims = dims, maxdims = maxdims, size = MaxLen)
+            dims = dim, maxdims = maxdim, size = MaxLen)
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }

@@ -24,7 +24,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             return(Protect)
         },
         matrices.chrom.attributes = c("filename","min","max","sparsity","done"),
-        matrices.chrom.attributes.dtype = c("character","numeric","numeric","logical","logical"),
+        matrices.chrom.attributes.dtype = c("character","double","double","integer","integer"),
         matrices.chrom.attributes.dims = list(1,1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
