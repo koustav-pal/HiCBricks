@@ -96,7 +96,7 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
 Lego_get_chrominfo <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
-        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, handler = FALSE)
+        Lego = Lego, Name = Reference.object$metadata.chrom.dataset, return.what = "data")
     return(Dataset)
 }
 
@@ -116,7 +116,7 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, Names
     return(Object)
 }
 
-Lego_add_ranges = function(Lego = NULL, ranges = NULL, name = NULL){
+Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
         stop("Object of class Ranges expected")
@@ -128,13 +128,19 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, name = NULL){
     if(Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
         stop("rangekey already exists! Cannot proceed further! Please read the documentation to understand Why.")
     }
-    Metadata.Cols <- names(Ranges.df)[,c(4:ncol(Ranges.df))]
+    Metadata.Cols <- names(Ranges.df)[c(4:ncol(Ranges.df))]
     Metadata.list <- lapply(Metadata.Cols,function(x){
-        Ranges.df[,x]
+        if(is.factor(Ranges.df[,x])){
+            as.character(Ranges.df[,x])
+        }else{
+            Ranges.df[,x]
+        } 
     })
     names(Metadata.list) <- Metadata.Cols
-    ._Lego_Add_Ranges_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root,name)), Lego = Lego, 
-        ranges.df = Ranges.df, mcol.list = Metadata.list)
+    Ranges.df.coords <- Ranges.df[,c(1,2,3)]
+    colnames(Ranges.df.coords) <- Reference.object$NonStrandedColNames
+    ._Lego_Add_Ranges_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root,rangekey)), Lego = Lego, 
+        ranges.df = Ranges.df.coords, name = rangekey, mcol.list = Metadata.list)
 }
 
 Lego_list_rangekeys = function(Lego = NULL){
@@ -161,7 +167,8 @@ Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
     }
     mcol.list <- lapply(RangeKeys,function(x){
         Handler <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, x)), Lego = Lego, return.what = "group_handle")
-        GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)
+        GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)[,"name"]
+        H5Gclose(Handler)
         data.frame(rangekey = x, m.col = GroupList)
     })
     mcol.df <- do.call(rbind,mcol.list)
@@ -198,9 +205,6 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
         Start <- Starts[Which.one]
         Stride <- 1
         Count <- Lengths[Which.one]
-        cat(Start,"\n")
-        cat(Stride,"\n")
-        cat(Count,"\n")
     }
     Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
         Lego = Lego, Name = Reference.object$hdf.ranges.dataset.name, Start = Start, Stride = Stride,
@@ -208,8 +212,8 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     Dataset <- Lego_make_ranges(Chrom = Dataset[,'chr'], Start = Dataset[,'start'], End = Dataset[,'end'])
 
     MCols <- Lego_list_ranges_mcols(Lego = Lego, rangekey = rangekey)
-    if(!is.na(MCols)){
-        MCols.col <- MCols[,"m.col"]
+    if(class(MCols) == "data.frame"){
+        MCols.col <- as.character(MCols[,"m.col"])
         m.start <- ifelse(is.null(Start),NULL,Start[1])
         m.stride <- ifelse(is.null(Start),NULL,Stride[1])
         m.count <- ifelse(is.null(Start),NULL,Count[1])
@@ -228,18 +232,18 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
 }
 
 Lego_get_bintable = function(Lego = NULL, chr = NULL){
+    Reference.object <- GenomicMatrix$new()
     Table <- Lego_get_ranges(Lego = Lego, chr = chr, rangekey = Reference.object$hdf.bintable.ranges.group)
     return(Table)
 }
-
 
 Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = NULL,names = NULL,type = "any"){
     AllTypes<-c("any","within")
     if( any(!(type %in% AllTypes)) ){
         stop("type takes one of two arguments: c(\"any\",\"within\")")
     }
-    if(is.null(chr) | is.null(start) | is.null(end)){
-        stop("Chrom, start, end cannot be empty")
+    if(is.null(chr) | is.null(start) | is.null(end) | is.null(Lego)){
+        stop("Chrom, start, end and Lego cannot be empty")
     }
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     if(any(!(chr %in% ChromInfo[,'chr']))){
@@ -251,10 +255,10 @@ Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = N
     Unique.chromosomes <- unique(chr)
     OverlapByChromosome <- lapply(Unique.chromosomes,function(cur.chr){
         Filter <- chr==cur.chr
-        Cur.Chrom <- Chrom[Filter]
-        Cur.Start <- Start[Filter]
+        Cur.Chrom <- chr[Filter]
+        Cur.Start <- start[Filter]
         Cur.end <- end[Filter]
-        Cur.Names <- Names[Filter]
+        Cur.Names <- names[Filter]
         SubjectRanges <- Lego_get_bintable(Lego = Lego, chr = chr)
         if( any(!(Cur.end <= max(end(SubjectRanges)) & Cur.Start >= min(start(SubjectRanges)))) ){
             stop("Start or end is out of ranges for Bintable")
@@ -272,11 +276,11 @@ Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = N
             ListObj
             })
     })
-    names(OverlapByChromosome)<-UniqueChromosomes
+    names(OverlapByChromosome)<-Unique.chromosomes
     return(OverlapByChromosome)
 }
 
-Lego_return_region_position = function(region=NULL,chr=NULL){
+Lego_return_region_position = function(Lego = NULL, region=NULL, chr=NULL){
     if(!is.character(region) | length(region) > 1){
         stop("region must be a character vector of length 1")
     }
@@ -287,7 +291,7 @@ Lego_return_region_position = function(region=NULL,chr=NULL){
     if(chr!=Region.Chrom){
         stop("region chr and provided chr must be same.") 
     }
-    Region.Ranges<-Lego_fetch_range_index(Chrom=chr, Start=Region.start, end=Region.stop, type="within")
+    Region.Ranges<-Lego_fetch_range_index(Lego = Lego, chr=chr, start=Region.start, end=Region.stop, type="within")
     Vector.coordinates <- Region.Ranges[[chr]][[1]][["Indexes"]]
     return(Vector.coordinates)
 }

@@ -30,6 +30,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         ranges.bintable.dataset = "bintable",
         GeneralFileSeparator = "_",
         Ranges.separator=":",
+        NonStrandedColNames=c("chr","start","end"),
         TerrificNumberOfHiCFormats = c("NxNMatrix","PAIRIX","Cooler","HOMER","CustomTable","AggregateFragments"),
         GetRootFolders = function() {
             Folders <- c(self$hdf.matrices.root, self$hdf.ranges.root, self$hdf.metadata.root)
@@ -54,13 +55,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         HDF.Connection=NA,
         ComputeSparsity=FALSE,
         Sparsity.compute.bins=NA,
-        
         Matrix.range=NA,
         Num.lines=1,
         hdf.root.folders=c("matrices","base.ranges.tables"),
         Protected.Ranges.Keys=c("Bintable"),
         Bintable.Key = "Bintable",
-        NonStrandedColNames=c("chr","start","end"),
         Matrice.done = NA
         
     )
@@ -172,19 +171,19 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             nrow = as.vector(Chrom.lengths),
             size = as.vector(Chrom.sizes),stringsAsFactors = FALSE)
         CumSums <- cumsum(Chrom.info.df[,"nrow"])
-        Starts <- c(1,CumSums[1:(length(CumSums)-1)]+1)
+        Starts <- c(1,CumSums[-length(CumSums)]+1)
         Temp.list <- list(
             Starts,
             Chrom.info.df[,"nrow"],
             Chrom.info.df[,"chr"]
             )
-        mcol.list <- c(mcol.list,Temp.list)
-        names(mcol.list) <- c(Reference.object$hdf.ranges.offset.name,
+        names(Temp.list) <- c(Reference.object$hdf.ranges.offset.name,
             Reference.object$hdf.ranges.lengths.name,
             Reference.object$hdf.ranges.chr.name)
+        mcol.list <- c(mcol.list,Temp.list)
     }
     CreateGroups(Group.path = Group.path, File = Lego)
-    ._Lego_WriteDataFrame_(Lego = Lego, Path = Group.path, name = name, object = ranges.df)
+    ._Lego_WriteDataFrame_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.ranges.dataset.name, object = ranges.df)
     if(is.null(names(mcol.list))){
         stop("mcol.list must be a named list!\n")
     }
