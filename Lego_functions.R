@@ -390,7 +390,7 @@ Lego_matrix_filename = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
 
 Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL,
     constrain.region=NULL,batch.size=500,FUN=NULL){
-    if(any(sapply(list(Lego,chr1,chr2,distance),is.null))) {
+    if(any(sapply(list(Lego,chr,distance),is.null))) {
         stop("Lego, chr, distance cannot be NULL.\n")
     }
     Reference.object <- GenomicMatrix$new()
@@ -403,29 +403,29 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
     }
     Nrow <- (ChromInfo[ChromInfo$chr == chr,"nrow"]-1)
     if(any(distance > Nrow, distance < 0)){
-        stop("Distance must range between 0 and",Nrow,"\n")
+        stop("distance must range between 0 and",Nrow,"\n")
     }
     Root.folders <- Reference.object$GetRootFolders()
     Path <- Create_Path(c(Root.folders['matrices'],chr,chr))
     Vector.start <- 1
     Vector.stop <- ChromInfo[ChromInfo$chr==chr,"nrow"]
     if(!is.null(constrain.region)){
-        Vector.coordinates <- Lego_return_region_position(region=constrain.region, chr=chr)
+        Vector.coordinates <- Lego_return_region_position(Lego = Lego, region=constrain.region, chr=chr)
         if(is.null(Vector.coordinates)){
             stop("Overlap operation was unsuccessful! Please check coordinates ",Constrain.region)
         }
         Vector.start <- min(Vector.coordinates)
         Vector.stop <- max(Vector.coordinates)
     }
-    Starting.col <- Vector.start + Distance
-    Count <- ((Vector.stop - Vector.start) + 1) - Distance 
+    Starting.col <- Vector.start + distance
+    Count <- ((Vector.stop - Vector.start) + 1) - distance 
     tot.mat.extracted <- Count * Count
     # cat("Boo ",Count,"\n")
     Start <- c(Vector.start,Starting.col)
     Stride <- c(1,1)
     Counts <- Count
     CumSums <- 0
-    Groups <- c(private$hdf.matrices,Chrom)
+    Groups <- c(Reference.object$hdf.matrices.root,chr)
     if(Count > batch.size){
         repeated <- floor(Count/batch.size)
         Counts <- rep(batch.size,repeated)
@@ -439,7 +439,8 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
         Count <- Counts[x]
         Offset <- CumSums[x]
         cur.start <- Start+Offset
-        diag(._Lego_Get_Something_(Group.path = Path, Lego = Lego, Start= cur.start, Stride = Stride, Count = c(Count,Count), return.what = "data"))
+        diag(._Lego_Get_Something_(Group.path = Path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
+            Start= cur.start, Stride = Stride, Count = c(Count,Count), return.what = "data"))
     })
 
     DistancesVector <- do.call(c,DistancesVector.list)
@@ -451,7 +452,7 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
     # Preparing Start stride and
 }
 
-FetchMatrixWithinCoords = function(Lego = NULL, x.coords=NULL, y.coords=NULL, FUN=NULL){
+Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NULL, FUN=NULL){
     type <- "within"
     if( (is.null(x.coords)) | (is.null(y.coords)) ){
         stop("x.coords, y.coords and Lego cannot be NULL")
@@ -508,8 +509,8 @@ Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.v
     if(!Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2)){
         stop(chr1,chr2," matrix is yet to be loaded into the class.\n")
     }
-    chr1.len <- ChromInfo$nrow[ChromInfo$chr == chr1,]
-    chr2.len <- ChromInfo$nrow[ChromInfo$chr == chr2,]
+    chr1.len <- ChromInfo$nrow[ChromInfo$chr == chr1]
+    chr2.len <- ChromInfo$nrow[ChromInfo$chr == chr2]
     if(any(x.vector > chr1.len) | any(y.vector > chr2.len) | min(x.vector,y.vector) < 1 ) {
         stop("x.vector or y.vector falls outside the bounds of loaded Bintables") 
     }
@@ -607,7 +608,7 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
     Stride <- c(1,1)
     Count <- c(length(xaxis),length(yaxis))
 
-    Group.path <- Create_Path(Reference.object$hdf.matrices.root, chr1, chr2)
+    Group.path <- Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2))
     Vector <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
     Start = Start, Stride = Stride, Count = Count, return.what = "data")
     if(is.null(FUN)){
