@@ -10,9 +10,9 @@ ReturnH5Handler = function(Path=NULL,File = NULL){
         return(Handle)
 }
 CloseH5Con <- function(Handle = NULL, type = NULL){
-    if(on == "group"){
+    if(type == "group"){
         H5Gclose(Handle)
-    }else if(on == "dataset"){
+    }else if(type == "dataset"){
         H5Dclose(Handle)
     }    
 }
@@ -50,14 +50,8 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_t
     for (i in 1:length(Attributes)) {
         An.attribute <- Attributes[i]
         data_type <- data_types[i]
-        if(!is.null(dims)){
-            dims <- dims[[i]]
-            if(!is.null(maxdims)){
-                maxdims <- maxdims[[i]]
-            }else{
-                maxdims <- dims
-            }
-        }
+        dim <- ifelse(!is.null(dims),dims[[i]],NULL)
+        maxdim <- ifelse(!is.null(maxdims),maxdims[[i]],dim)
         MaxLen <- NULL
         if(data_type == "character"){
             ## If you can write a 280 char tweet, you can constrain yourself to 280 chars here as well.
@@ -65,11 +59,10 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, data_t
             MaxLen <- 280
         }
         h5createAttribute(obj = Lego.handler, attr = An.attribute, storage.mode = data_type,
-            dims = dims, maxdims = maxdims, size = MaxLen)
+            dims = dim, maxdims = maxdim, size = MaxLen)
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }
-
 WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values = NULL, on = "group"){
     if(length(Attributes) != length(values)){
         stop("length of Attributes and value does not match")
@@ -82,7 +75,6 @@ WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values 
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }
-
 GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "group"){
     Lego.handler <- ReturnH5Handler(Path = Path,File = File)
     Attribute.val <- sapply(Attributes, function(An.attribute){
@@ -90,12 +82,14 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "gro
             CloseH5Con(Handle = Lego.handler, type = on)
             stop(An.attribute,"not found.\n")
         }
-        h5readAttributes(file = Lego.handler, h5obj = Lego.handler, name = An.attribute)        
+        Attr.handle <- H5Aopen(h5obj = Lego.handler, name = An.attribute)
+        Attr.val <- H5Aread(Attr.handle)
+        H5Aclose(Attr.handle)
+        Attr.val
     })
     CloseH5Con(Handle = Lego.handler, type = on)
     return(Attribute.val)
 }
-
 InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
     Start = NULL, Stride = NULL, Count = NULL){
     DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, Name = Name, handler = TRUE)
