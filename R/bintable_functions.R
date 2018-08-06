@@ -55,6 +55,9 @@ Validate_table = function(Table=NULL,colnames=NULL,colClasses=NULL,col.index=NUL
     if(any( !(UniqueChromNames %in% chrom) )){
         stop("Some chromosome names are not defined in the chromosome table")
     }
+    if(any( !(chrom %in% UniqueChromNames) )){
+        stop("Some chromosome names are not defined in the chromosome table")
+    }
     if(any(!(Table[,'start'] %% 1 == 0)) | any(!(Table[,'end'] %% 1 == 0))) {
         stop("Genomic coordinates at col",col.index[2],"and",col.index[3],"cannot have float values")
     }

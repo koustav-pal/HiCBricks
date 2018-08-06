@@ -1,24 +1,93 @@
 # HDF structure
-# Base.matrices <group>
-#   chromsome <group>
-#       chromosome <group> Attributes FileName, Min, Max, Done
-#           matrix <dataset>
-#           bin.coverage <dataset>
-#           row.sums <dataset>
-#           sparsity <dataset>
-# Base.ranges <group>
-#   Bintable <group> containing binary attributes Strand, Names
-#       Names <dataset>
-#       ranges <dataset> based on value of attributes 3,4,5 column
-#       offsets <dataset>
-#       lengths <dataset>
-#       chr.names <dataset>
-#       BlaBla1 <dataset>
-#       BlaBla2 <dataset>
-#   Other <group>
-# Base.metadata <group>
-# chromosomes <dataset>
 
+#' Create the entire HDF5 structure and load the bintable
+#' 
+#' `CreateLego` creates the complete HDF5 on-disk data structure
+#' 
+#' This function creates the complete HDF data structure, loads the binning
+#' table associated to the Hi-C experiment and creates (for now) a 2D matrix
+#' layout for all chromosome pairs. **Please note**, the binning table must
+#' be a discontinuous one (first range end != secode range start), as ranges
+#' overlaps using the "any" form will routinely identify adjacent ranges with
+#' the same end and start to be in the overlap. Therefore, this criteria is 
+#' enforced as default behaviour.
+#' 
+#' @param ChromNames **Required**. 
+#' A character vector containing the chromosomes to be considered for the 
+#' dataset. This string is used to verify the presence of all chromosomes in the
+#' provided bitable. 
+#' 
+#' @param BinTable **Required**. 
+#' A string containing the path to the file to load as the binning table for the
+#' Hi-C experiment. The number of entries per chromosome defines the dimension 
+#' of the associated Hi-C data matrices. For example, if chr1 contains 250 
+#' entries in the binning table, the _cis_ Hi-C data matrix for chr1 will be
+#' expected to contain 250 rows and 250 cols. Similary, if the same binning
+#' table contained 150 entries for chr2, the _trans_ Hi-C matrices for chr1,chr2
+#' will be a matrix with dimension 250 rows and 150 cols.
+#' 
+#' There are no constraints on the bintable format. As long as the table is in a
+#' delimited format, the corresponding table columns can be outlined with the
+#' associated parameters. The columns of importance are chr, start and end.
+#' 
+#' It is recommended to always use binning tables where the end and start of 
+#' consecutive ranges are not the same. If they are the same, this may lead to
+#' **unexpected behaviour** when using the GenomicRanges "any" overlap function.
+#'
+#' @param Output.Filename **Required**.
+#' A string specifying the location and name of the HDF file to create. If path
+#' is not provided, it will be created in the current working directory.
+#' 
+#' @param bin.delim **Optional**. Default "\t".
+#' A character vector of length 1 specifying the delimiter used in the file 
+#' containing the binning table.
+#' 
+#' @param col.index **Optional**. Default "c(1,2,3)".
+#' A character vector of length 3 containing the indexes of the required columns
+#' in the binning table. the first index, corresponds to the chr column, the
+#' second to the start column and the third to the end column.
+#' 
+#' @param impose.discontinuity **Optional**. Default TRUE.
+#' If TRUE, this parameter ensures a check to make sure that required the end
+#' and start coordinates of consecutive entries are not the same per chromosome.
+#' 
+#' @param ChunkSize **Optional**.
+#' A numeric vector of length 1. If provided, the HDF dataset will use this 
+#' value as the chunk size, for all matrices. By default, the ChunkSize is 
+#' set to matrix dimensions/100. 
+#' 
+#' @param exec **Optional**. Default cat.
+#' A string specifying the program or expression to use for reading the file.
+#' For bz2 files, use bzcat and for gunzipped files use zcat.
+#' 
+#' @param remove.existing **Optional**. Default FALSE.
+#' If TRUE, will remove the HDF file with the same name and create a new one.
+#' By default, it will not replace existing files.
+#' 
+#' @details The structure of the HDF file is as follows: 
+#' The structure contains three major groups which are then hierarchically
+#' nested with other groups to finally lead to the corresponding datasets.  
+#' _Base.matrices_ **group**
+#'      _chromosome_ **group**
+#'          _chromosome_ **group**, **Attributes:** Filename, Min, Max, Done
+#'              matrix **dataset**
+#'              bin.coverage **dataset**
+#'              row.sums **dataset**
+#'              sparsity **dataset**
+#' _Base.ranges_ **group**
+#'      _Bintable_ **group**
+#'          ranges **dataset**
+#'          offsets **dataset**
+#'          lengths **dataset**
+#'          chr.names **dataset**
+#'      _YourRangesTable_ **group**
+#'          ranges **dataset**
+#'          offsets **dataset**
+#'          lengths **dataset**
+#'          chr.names **dataset**
+#' _Base.metadata_ **group**
+#'      chromosomes **dataset**
+#'      YourMetadataTable **dataset**
 CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
     Output.Filename=NULL, exec="cat", remove.existing=FALSE){
@@ -47,7 +116,7 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     # Read in the binning table
     cat("Reading Bintable:",BinTable,"\n")
     Bintable.list <- Read_bintable(Filename = BinTable, read.delim = bin.delim, exec = exec,
-                col.index = col.index, chromosomes = ChromNames,
+                col.index = col.index, chromosomes = ChromosomeList,
                 impose.discontinuity = impose.discontinuity)
     Bintable <- Bintable.list[['main.tab']]
     # Create the 0 level directories in the HDF file
@@ -92,6 +161,19 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     }
 }
 
+#' Get the chrominfo for the Hi-C experiment.
+#' 
+#' `Lego_get_chrominfo` fetches the associated chrominfo table for the 
+#' Lego (HDF) it is associated to. 
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @return A three column file containing chromosomes, nrows and length. 
+#' chromosomes corresponds to all chromosomes in the provided bintable, nrows
+#' corresponds to the number of entries in the bintable or dimension for that 
+#' chromosome in the Hi-C matrix. And length is the total bp length of the same
+#' chromosome (max value for that chromosome in the bintable).
 Lego_get_chrominfo <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
@@ -99,7 +181,32 @@ Lego_get_chrominfo <- function(Lego = NULL){
     return(Dataset)
 }
 
-Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, Names=NULL){
+
+#' Creates a ranges object from provided vectors.
+#' 
+#' `Lego_make_ranges` creates a GRanges object from the provided arguments
+#'  
+#' @param Chrom **Required**.
+#' A 1 dimensional character vector of size N specifying the chromosomes in the
+#' ranges.
+#' 
+#' @param Start **Required**.
+#' A 1 dimensional numeric vector of size N specifying the start positions in 
+#' the ranges.
+#' 
+#' @param End **Required**.
+#' A 1 dimensional numeric vector of size N specifying the end positions in 
+#' the ranges. Must be less than Start.
+#' 
+#' @param Strand **Optional**.
+#' A 1 dimensional character vector of size N specifying the strand of the 
+#' ranges. If not provided, this will be set to the default *.
+#' 
+#' @param Names **Optional**.
+#' A 1 dimensional character vector of size N specifying the names of the 
+#' ranges. If not provided, this will be set to the default chr:start:end.
+Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, 
+    Names=NULL){
     Reference.object <- GenomicMatrix$new()
     require(GenomicRanges)
     if(is.null(Names)){
@@ -115,6 +222,27 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, Names
     return(Object)
 }
 
+#' Perpetually store a ranges object in the Lego store.
+#' 
+#' `Lego_add_ranges` loads a GRanges object into the Lego store.
+#' 
+#' With this function it is possible to associate other ranges objects with the
+#' Lego store. If metadata columns are present, the are also loaded into the 
+#' Lego store. Although not explicitly asked for, the metadata columns should
+#' not be of type list as this may create complications down the line. We 
+#' ask for ranges objects, so if the same ranges object is later retrieved
+#' two additional columns will be present. These are the strand and width
+#' columns that are obtained when a ranges is converted into a data.frame. 
+#' Users can ignore these columns.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param ranges **Required**.
+#' An object of class ranges specifying the ranges to store in the Lego.
+#' 
+#' @param rangekey **Required**.
+#' The name to use for the object within the Lego store.
 Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
@@ -142,6 +270,14 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
         ranges.df = Ranges.df.coords, name = rangekey, mcol.list = Metadata.list)
 }
 
+#' List the ranges tables stored within the Lego.
+#' 
+#' `Lego_list_rangekeys` lists the names of all ranges associated to a Lego.
+#'  
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @return A one dimensional character vector of length x 
 Lego_list_rangekeys = function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     Handler <- ._Lego_Get_Something_(Group.path = Create_Path(Reference.object$hdf.ranges.root), 
@@ -150,11 +286,38 @@ Lego_list_rangekeys = function(Lego = NULL){
     return(GroupList)
 }
 
+#' Check to see if the Lego contains a ranges with a certain name.
+#' 
+#' `Lego_rangekey_exists` checks for the presence of a particular ranges with
+#' a certain name.
+#'  
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param rangekey **Required**.
+#' A string specifying the name of the ranges to check for.
+#' 
+#' @return A logical vector of length 1 with either TRUE or FALSE values. 
 Lego_rangekey_exists = function(Lego = NULL, rangekey = NULL){
     Keys <- Lego_list_rangekeys(Lego = Lego)
     return(rangekey %in% Keys)
 }
 
+#' Find out what metadata columns are associated to a ranges with a certain name
+#' 
+#' `Lego_list_ranges_mcols` will list the metadata columns of the specified
+#' ranges if it is present in the Lego store. 
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param rangekey **Optional**.
+#' A string specifying the name of the ranges. If not present, the metadata
+#' columns of all ranges will be listed. 
+#' 
+#' @return if no metadata columns are present, NA. If metadata columns are
+#' present, a data.frame object containing the name of the ranges and the 
+#' associated metadata column name.
 Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     RangeKeys <- Lego_list_rangekeys(Lego = Lego)
@@ -178,6 +341,20 @@ Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
     return(mcol.df)
 }
 
+#' List the matrix pairs present in the Lego store.
+#' 
+#' `Lego_list_matrices` will list all chromosomal pair matrices from the Lego
+#' store, with their associated filename, value range, done status and sparse 
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @return Returns a data.frame object with columns chr1, chr2 corresponding 
+#' to chromosome pairs, and the associated attributes. filename corresponds to
+#' the name of the file that was loaded for the pair. min and max specify the
+#' minimum and maximum values in the matrix, done is a logical value 
+#' specifying if a matrix has been loaded and sparsity specifies if a matrix
+#' is defined as a sparse matrix.
 Lego_list_matrices = function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
@@ -201,6 +378,28 @@ Lego_list_matrices = function(Lego = NULL){
     return(Matrix.list.df)
 }
 
+#' Fetch the ranges associated to a rangekey or chromosome.
+#' 
+#' `Lego_get_ranges` will get a ranges object if present in the Lego store and
+#' return a GRanges object.
+#' 
+#' If a rangekey is present, the ranges will be retrieve and a GRanges 
+#' constructed. Metadata columns will also be added. If these are rangekeys
+#' other than "Bintable", and had been added using Lego_add_ranges the width and
+#' Strand columns may appear as metadata columns. These will most likely be 
+#' artifacts from converting the original ranges object to a data.frame.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr **Optional**.
+#' A chr string specifying the chromosome to select from the ranges.
+#'
+#' @param rangekey **Required**.
+#' A string specifying the name of the ranges.
+#' 
+#' @return Returns a GRanges object with the associated metadata columns that
+#' may have been present in the Ranges object. 
 Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(is.null(rangekey) | is.null(Lego)){
@@ -253,12 +452,57 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     return(Dataset)
 }
 
+
+#' Returns the binning table associated to the Hi-C experiment.
+#' 
+#' `Lego_get_bintable` makes a call to Lego_get_ranges to retrieve the 
+#' binning table of the associated Lego store. This is equivalent to passing
+#' the argument rangekey = "bintable" in Lego_get_ranges
+#' 
+#' @seealso Lego_get_ranges
 Lego_get_bintable = function(Lego = NULL, chr = NULL){
     Reference.object <- GenomicMatrix$new()
     Table <- Lego_get_ranges(Lego = Lego, chr = chr, rangekey = Reference.object$hdf.bintable.ranges.group)
     return(Table)
 }
 
+#' Returns the position of the supplied ranges in the binning table associated 
+#' to the Hi-C experiment.
+#' 
+#' `Lego_fetch_range_index` constructs a ranges object and creates an overlap
+#' operation between the constructed ranges and the Hi-C experiment associated
+#' binning table finally returning a list of ranges with their corresponding 
+#' indices in the binning table.
+#'  
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr **Required**.
+#' A character vector of length N specifying the chromosomes to select from 
+#' the ranges.
+#' 
+#' @param start **Required**.
+#' A numeric vector of length N specifying the start positions in the chromosome
+#' 
+#' @param end **Required**.
+#' A numeric vector of length N specifying the end positions in the chromosome
+#' 
+#' @param names **Optional**.
+#' A character vector of length N specifying the names of the chromosomes. If
+#' absent, names will take the form chr:start:end.
+#' 
+#' @param type **Optional**. Default any
+#' Type of overlap operation to do. It should be one of two, any or within.
+#' any considers any overlap (atleast 1 bp) between the provided ranges and the 
+#' binning table.
+#' 
+#' @return Returns a named list corresponding to one entry for each unique
+#' chromosome present in the chr character vector. The list contains another
+#' list with length equal to the number of ranges present per chromosome.
+#' This list contains two named vectors, SubjectInfo and Indexes. 
+#' SubjectInfo contains a ranges created out of the vector from any given 
+#' position. Indexes contains a numeric vector corresponding to the rows/cols 
+#' overlapping the given ranges.  
 Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = NULL,names = NULL,type = "any"){
     AllTypes<-c("any","within")
     if( any(!(type %in% AllTypes)) ){
@@ -302,22 +546,81 @@ Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = N
     return(OverlapByChromosome)
 }
 
-Lego_return_region_position = function(Lego = NULL, region=NULL, chr=NULL){
+#' Provides the corresponding overlapping position from the bintable.
+#' 
+#' `Lego_return_region_position` takes as input a human-readable coordinate
+#' format of the form chr:start:end and outputs the overlapping bintable 
+#' positions. 
+#'  
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param region **Required**.
+#' A character vector of length 1 specifying the region to overlap. It must take
+#' the form chr:start:end.
+#' 
+#' @return Returns a 1 dimensional vector containing the position of the
+#' overlapping regions in the bintable associated the Lego store. 
+Lego_return_region_position = function(Lego = NULL, region=NULL){
     if(!is.character(region) | length(region) > 1){
         stop("region must be a character vector of length 1")
     }
     Coord.Split<- Split_genomic_coordinates(Coordinate=region)
-    Region.Chrom<-Coord.Split[[1]][1]
-    Region.start<-as.numeric(Coord.Split[[1]][2])
-    Region.stop<-as.numeric(Coord.Split[[1]][3])
-    if(chr!=Region.Chrom){
-        stop("region chr and provided chr must be same.") 
-    }
-    Region.Ranges<-Lego_fetch_range_index(Lego = Lego, chr=chr, start=Region.start, end=Region.stop, type="within")
+    region.chr<-Coord.Split[[1]][1]
+    region.start<-as.numeric(Coord.Split[[1]][2])
+    region.stop<-as.numeric(Coord.Split[[1]][3])
+    region.ranges<-Lego_fetch_range_index(Lego = Lego, chr=region.chr, start=region.start, end=region.stop, type="within")
     Vector.coordinates <- Region.Ranges[[chr]][[1]][["Indexes"]]
     return(Vector.coordinates)
 }
 
+#' Load a NxM dimensional matrix into the Lego store.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows of the matrix
+#' 
+#' @param chr2 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' columns of the matrix
+#' 
+#' @param matrix.file **Required**.
+#' A character vector of length 1 specifying the name of the file to load as a
+#' matrix into the Lego store. 
+#' 
+#' @param exec **Required**.
+#' A string specifying the program to use for reading the file. Use cat for txt
+#' files, for bz2 files use bzcat and for gz files zcat.
+#' 
+#' @param delim **Optional**. Default " "
+#' The delimiter of the matrix file.
+#' 
+#' @param remove.priori **Optional**. Default FALSE
+#' If a matrix was loaded before, it will not be replaced. Use remove.priori to
+#' override and replace the existing matrix.
+#' 
+#' @param num.rows **Optional**. Default 2000
+#' Number of rows to read, in each chunk.
+#' 
+#' @param distance **Optional**. Default NULL. Not implemented yet.
+#' For very high-resolution matrices, read times can become extremely slow and
+#' it does not make sense to load the entire matrix into the data structure, as
+#' after a certain distance, the matrix will become extremely sparse. If
+#' provided, only interactions upto a certain distance from the main diagonal
+#' will be loaded into the data structure.
+#' 
+#' @param is.sparse **Optional**. Default FALSE
+#' If true, designates the matrix as being a sparse matrix, and computes the
+#' sparsity.index. The sparsity index measures the proportion of non-zero rows
+#' or columns at a certain distance from the diagonal (100) in cis interaction
+#' matrices.
+#'
+#' @param sparsity.bins **Optional**. Default 100
+#' With regards to computing the sparsity.index, this parameter decides the 
+#' number of bins to scan from the diagonal. 
 Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, matrix.file = NULL, delim = " ", exec = NULL,  
     remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, distance = NULL, sparsity.bins = 100){
     Reference.object <- GenomicMatrix$new()
@@ -352,6 +655,21 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, matrix.file =
         compute.sparsity = compute.sparsity, distance = distance, sparsity.bins = sparsity.bins)
 }
 
+#' Check if a matrix has been loaded for a chromosome pair.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows of the matrix
+#' 
+#' @param chr2 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' columns of the matrix
+#' 
+#' @return Returns a logical vector of length 1, specifying if a matrix has
+#' been loaded or not.   
 Lego_matrix_isdone = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
     Matrix.list <- Lego_list_matrices(Lego = Lego)
@@ -361,11 +679,42 @@ Lego_matrix_isdone = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     return(as.logical((Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])))
 }
 
+#' Check if a chromosome pair exists. This helps if the user thinks that they
+#' may have made a mistake while creating the initial Lego file.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows of the matrix
+#' 
+#' @param chr2 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' columns of the matrix
+#' 
+#' @return Returns a logical vector of length 1, specifying if the matrix exists
+#' or not.
 Lego_matrix_exists = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     ChromInfo.df <- Lego_get_chrominfo(Lego = Lego)
     all(c(chr1,chr2) %in% ChromInfo.df[,"chr"])
 }
 
+#' Return the value range of the matrix
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows of the matrix
+#' 
+#' @param chr2 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' columns of the matrix
+#' 
+#' @return Returns a numeric vector of length 2, specifying the minimum and
+#' maximum finite real values in the matrix.
 Lego_matrix_minmax = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
     Matrix.list <- Lego_list_matrices(Lego = Lego)
@@ -377,6 +726,21 @@ Lego_matrix_minmax = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     return(Extent)
 }
 
+#' Return the filename of the loaded matrix
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows of the matrix
+#' 
+#' @param chr2 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' columns of the matrix
+#' 
+#' @return Returns a character vector of length 1 specifying the initial 
+#' filename of the matrix.
 Lego_matrix_filename = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
     Matrix.list <- Lego_list_matrices(Lego = Lego)
@@ -388,6 +752,35 @@ Lego_matrix_filename = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     return(Extent)
 }
 
+#' Return values separated by a certain distance.
+#' 
+#' `Lego_get_values_by_distance` can fetch values with or without transformation
+#' or subsetted by a certain distance.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr **Required**.
+#' A string specifying the chromosome for the cis Hi-C matrix from which values
+#' will be retrieved at a certain distance.
+#' 
+#' @param distance **Required**. 0 based.
+#' Fetch values separated by distance.
+#'
+#' @param constrain.region **Optional**.
+#' A character vector of length 1 with the form chr:start:end specifying the 
+#' region for which the distance values must be retrieved.
+#' 
+#' @param batch.size **Optional**. Default 500
+#' A numeric vector of length 1 specifying the size of the chunk to retrieve
+#' for diagonal selection.
+#' 
+#' @param FUN **Optional**.
+#' If provided a data transformation with FUN will be applied before values
+#' are returned.
+#' 
+#' @return Returns a numeric vector of length N depending on the presence of 
+#' constrain.region, FUN and distance from the main diagonal.
 Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL,
     constrain.region=NULL,batch.size=500,FUN=NULL){
     if(any(sapply(list(Lego,chr,distance),is.null))) {
@@ -452,6 +845,37 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
     # Preparing Start stride and
 }
 
+#' Return a matrix subset between two regions.
+#' 
+#' `Lego_get_matrix_within_coords` will fetch a matrix subset after creating an
+#' overlap operation between both regions and the bintable associated to the
+#' Lego store. This function calls Lego_get_matrix.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param x.coords **Required**.
+#' A string specifying the region to subset on the rows. It takes the form
+#' chr:start:end. An overlap operation with the associated bintable will be done
+#' to identify the bins to subset on the row
+#' 
+#' @param y.coords **Required**.
+#' A string specifying the region to subset on the rows. It takes the form
+#' chr:start:end. An overlap operation with the associated bintable will be done
+#' to identify the bins to subset on the column
+#' 
+#' @param constrain.region **Optional**.
+#' A character vector of length 1 with the form chr:start:end specifying the 
+#' region for which the distance values must be retrieved.
+#' 
+#' @param FUN **Optional**.
+#' If provided a data transformation with FUN will be applied before the matrix
+#' is returned.
+#' 
+#' @return Returns a matrix of dimension x.coords binned length by y.coords
+#' binned length. This may differ based on FUN.
+#' 
+#' @seealso Lego_get_matrix
 Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NULL, FUN=NULL){
     type <- "within"
     if( (is.null(x.coords)) | (is.null(y.coords)) ){
@@ -493,6 +917,33 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NU
     return(Matrix)
 }
 
+#' Return a matrix subset.
+#' 
+#' `Lego_get_matrix` will fetch a matrix subset between row values ranging from 
+#' min(x.vector) to max(x.vector) and column values ranging from min(x.vector) 
+#' to max(x.vector)
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A string specifying the chromosome to subset on the rows
+#' 
+#' @param chr2 **Required**.
+#' A string specifying the chromosome to subset on the columns
+#' 
+#' @param x.vector **Required**.
+#' A one-dimensional numeric vector specifying the the rows to subset. 
+#' 
+#' @param y.vector **Required**.
+#' A one-dimensional numeric vector specifying the the columns to subset. 
+#' 
+#' @param FUN **Optional**.
+#' If provided a data transformation with FUN will be applied before the matrix
+#' is returned.
+#' 
+#' @return Returns a matrix of dimension x.vector length by y.vector length. 
+#' This may differ based on the operations with FUN.
 Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.vector=NULL, FUN=NULL){
     # cat(" Rows: ",x.vector," Cols: ",y.vector,"\n")
     if(any(!(class(x.vector) %in% c("numeric","integer")) | !(class(y.vector) %in% c("numeric","integer")))){
@@ -522,7 +973,49 @@ Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.v
     }
 }
 
-Fetch_row_or_col_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vector=NULL, regions=NULL, FUN=NULL){
+#' Return a matrix subset.
+#' 
+#' `Lego_fetch_row_vector` will fetch any given rows from a matrix. If required,
+#' the rows can be subsetted on the columns and transformations applied.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A string specifying the chromosome to subset on the rows
+#' 
+#' @param chr2 **Required**.
+#' A string specifying the chromosome to subset on the columns
+#' 
+#' @param by **Required**. One of two possible values, "position" or "ranges"
+#' A one-dimensional numeric vector of length 1 specifying one of either 
+#' position or ranges. 
+#' 
+#' @param vector **Required**. 
+#' If by is position, a 1 dimensional numeric vector containing the rows to be
+#' extracted is expected. If by is ranges, a 1 dimensional numeric vector 
+#' containing the names of the bintable is expected. 
+#' This function does not do overlaps. Rather it returns any given row or column
+#' based on their position or names in the bintable.
+#' 
+#' @param regions **Optional**.
+#' A character vector of length vector is expected. Each element must be of the
+#' form chr:start:end. These regions will be converted back to their original
+#' positions and the corresponding rows will be subsetted by the corresponding 
+#' region element. If the length of regions does not match, the subset operation
+#' will not be done and all elements from the rows will be returned.
+#'
+#' @param flip **Optional**. Default FALSE
+#' If present, will flip everything. This is equivalent to selecting columns,
+#' and subsetting on the rows.
+#' 
+#' @param FUN **Optional**.
+#' If provided a data transformation with FUN will be applied before the matrix
+#' is returned.
+#' 
+#' @return Returns a matrix of dimension x.vector length by y.vector length. 
+#' This may differ based on the operations with FUN.
+Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vector=NULL, regions=NULL, flip = FALSE, FUN=NULL){
     Chrom.all <- c(chr1,chr2)
     if(is.null(chr1) | is.null(chr2) | is.null(by) | is.null(vector)) {
         stop("Either of chr1, chr2, by or vector were provided as NULL values")
@@ -553,7 +1046,10 @@ Fetch_row_or_col_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, v
     }
     chr1.ranges <- Lego_get_bintable(Lego = Lego, chr=chr1)
     chr2.ranges <- Lego_get_bintable(Lego = Lego, chr=chr2)
-
+    if(flip){
+        chr1.ranges <- Lego_get_bintable(Lego = Lego, chr=chr2)
+        chr2.ranges <- Lego_get_bintable(Lego = Lego, chr=chr1)
+    }
     if(by=="ranges"){
         if(any(!(vector %in% names(chr1.ranges)))){
             stop("All ranges not found in ",chr1," Bintable")
@@ -582,12 +1078,54 @@ Fetch_row_or_col_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, v
             y <- 1:length(chr2.ranges)
         }
         chr2.names <- names(chr2.ranges[y])
+        if(flip){
+            chr2.f <- chr1 
+            chr1 <- chr2
+            chr2 <- chr2.f
+            x1 <- y
+            y <- x
+            x <- x1
+        }
         Values <- Lego_get_vector_values(Lego = Lego, chr1=chr1, chr2=chr2, xaxis=x, yaxis=y, FUN=FUN)
         return(Values)
     }) 
     return(Vector.values)
 }
 
+#' Return a N dimensional vector selection.
+#' 
+#' `Lego_get_vector_values` is the base function being used by all other matrix
+#' retrieval functions.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A string specifying the chromosome to subset on the rows
+#' 
+#' @param chr2 **Required**.
+#' A string specifying the chromosome to subset on the columns
+#' 
+#' @param xaxis **Required**. 
+#' A 1 dimensional vector containing the rows to retrieve. Gaps in this vector 
+#' may result in unexpected behaviour as the values which are considered are 
+#' min(xaxis) and max(xaxis) for retrieval.
+#' 
+#' @param yaxis **Required**.
+#' A 1 dimensional vector containing the columns to retrieve. Gaps in this 
+#' vector may result in unexpected behaviour as the values which are considered
+#' are min(yaxis) and max(yaxis) for retrieval.
+#' 
+#' @param FUN **Optional**.
+#' If provided a data transformation with FUN will be applied before the matrix
+#' is returned.
+#' 
+#' @return Returns a vector of length yaxis if length of xaxis is 1. Else
+#' returns a matrix of dimension xaxis length by yaxis length.
+#'  
+#' @section Note: Whatever the length of xaxis or yaxis may be, the coordinates 
+#' under consideration will range from min(xaxis) to max(xaxis) on the rows or
+#' min(yaxis) to max(yaxis) on the columns.
 Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL, yaxis=NULL, FUN=NULL){
     Reference.object <- GenomicMatrix$new()
     if(is.null(chr1) | is.null(chr2)){
