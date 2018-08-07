@@ -10,7 +10,7 @@
 #' be a discontinuous one (first range end != secode range start), as ranges
 #' overlaps using the "any" form will routinely identify adjacent ranges with
 #' the same end and start to be in the overlap. Therefore, this criteria is 
-#' enforced as default behaviour. Test.
+#' enforced as default behaviour.
 #' 
 #' @param ChromNames **Required**. 
 #' A character vector containing the chromosomes to be considered for the 
