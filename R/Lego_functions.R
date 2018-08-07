@@ -570,7 +570,7 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
     region.start<-as.numeric(Coord.Split[[1]][2])
     region.stop<-as.numeric(Coord.Split[[1]][3])
     region.ranges<-Lego_fetch_range_index(Lego = Lego, chr=region.chr, start=region.start, end=region.stop, type="within")
-    Vector.coordinates <- Region.Ranges[[chr]][[1]][["Indexes"]]
+    Vector.coordinates <- region.ranges[[region.chr]][[1]][["Indexes"]]
     return(Vector.coordinates)
 }
 
@@ -886,7 +886,7 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NU
             "Setup an Iterator for more functionality")
     }
     if( class(x.coords)!="character" | class(y.coords)!="character" ){
-        stop("Two string variables were expected for x.coords & y.coords,\nfound XCoords class ", class(x.coords), " and YCoords class ", class(y.coords))
+        stop("Two string variables were expected for x.coords & y.coords,\nfound x.coords class ", class(x.coords), " and y.coords class ", class(y.coords))
     }
     XCoord.split <- Split_genomic_coordinates(Coordinate=x.coords)
     XCoord.Chrom <- XCoord.split[[1]][1]
