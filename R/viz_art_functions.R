@@ -1,5 +1,5 @@
 ._Figure_out_genomic_scale <- function(positions){
-	axis.labels <- sapply(positions,function(x){
+	axis.labels <- vapply(positions,function(x){
 		if(x > 1000000){
 			return(paste(round(x/1000000,1), "mb", sep = ""))
 		}
@@ -9,12 +9,23 @@
 		if(x > 1){
 			return(paste(x/1, "bp", sep = ""))
 		}
-	})
+	}, "")
 	return(axis.labels)
+}
+._Parse_genomic_coordinates <- function(a.list = NULL){
+	Reference.object <- GenomicMatrix$new()
+	parsed.string.list <- lapply(a.list,function(x){
+		Split.string <- Split_genomic_coordinates(Coordinate=x)
+		a.vector <- c(Split.string[[1]][1], Split.string[[1]][2], Split.string[[1]][3])
+		names(a.vector) <- Reference.object$NonStrandedColNames
+		a.vector
+	})
+	return(parsed.string.list)
 }
 
 Get_one_or_two_lego_regions <- function(Legos = NULL, x.coords = NULL, y.coords = NULL, distance = NULL, 
 	value.cap = NULL, FUN = NULL){
+	Reference.object <- GenomicMatrix$new()
 	if(length(Legos) > 2){
 		stop("Polygonal layouts have not been implemented yet! 
 			So for now we can only do two matrices at a time.\n")
@@ -39,7 +50,8 @@ Get_one_or_two_lego_regions <- function(Legos = NULL, x.coords = NULL, y.coords 
 		rownames(Matrix) <- Region.position.x
 		colnames(Matrix) <- Region.position.y
 		Matrix.df <- melt(Matrix)
-		colnames(Matrix.df) <- c('row','col','val')
+		colnames(Matrix.df) <- c("row","col","val")
+
 		if(!is.null(value.cap)){
 			capped.val <- quantile(Matrix.df$val,value.cap)
 			Matrix.df$val[Matrix.df$val > capped.val] <- capped.val
@@ -53,6 +65,7 @@ Get_one_or_two_lego_regions <- function(Legos = NULL, x.coords = NULL, y.coords 
 		}
 		Matrix.df.list[[i]] <- Matrix.df
 	}
+
 	Matrix.df <- do.call(rbind,Matrix.df.list)
 	if(length(Legos)==2){
 		Matrix.df <- Matrix.df[Matrix.df$keep,]
@@ -72,23 +85,18 @@ Make_axis_labels = function(Lego = NULL, chr = NULL, positions = NULL){
     return(coord.labs)
 }
 
-Format.tads <- function(){
-	
-}
-
-
-Make_colours <- function(palette = NULL, extrapolate.on = NULL){
+Make_colours <- function(palette = NULL, extrapolate.on = NULL, direction = 1){
     require(RColorBrewer)
     require(viridis)
     viridis.cols <- list("plasma" = plasma, "inferno" = inferno, "magma" = magma, "viridis" = viridis, "cividis" = cividis)
+    brewer.names <- rownames(brewer.pal.info)
+    brewer.pals <- brewer.pal.info$category 
+    brewer.names <- brewer.names[brewer.pals %in% c("div","seq")]
     if(length(palette)!=1){
     	stop("palette must be a string of length 1\n")
     }
-    if(!(palette %in% rownames(brewer.pal.info)) & !(palette %in% names(viridis.cols))){
-    	stop("palette must be a palette from RColorBrewer and Viridis.\n")
-    }
-    if(palette %in% rownames(brewer.pal.info) & !(brewer.pal.info[rownames(brewer.pal.info)==palette,"category"] %in% c("div","seq"))){
-    	stop("RColorBrewer palettes must be from the sequential or diverging list\n")
+    if(!(palette %in% brewer.names) & !(palette %in% names(viridis.cols))){
+    	stop("palette must be a palette from RColorBrewer diverging or sequential or Viridis.\n")
     }
     if(palette %in% rownames(brewer.pal.info)){
     	Category <- brewer.pal.info$category[rownames(brewer.pal.info) == palette]
@@ -97,7 +105,7 @@ Make_colours <- function(palette = NULL, extrapolate.on = NULL){
     	viridis.col.breaks <- 12
     	Do.viridis <- TRUE
     	viridis.fun <- viridis.cols[[palette]]
-    	Colours <- viridis.fun(n = viridis.col.breaks)
+    	Colours <- viridis.fun(n = viridis.col.breaks, direction = direction)
     }
 	if(!is.null(extrapolate.on)){
 		if(extrapolate.on > 100){
@@ -157,63 +165,251 @@ RotateHeatmap = function(Matrix=NULL, value.var=NULL, upper = FALSE){
 	return(Rotated.df)
 }
 
+Format.boundaries <- function(Legos = NULL, Ranges = NULL, group.col = NULL, 
+	cut.corners = NULL, colour.col = NULL, colours = NULL, region.chr = NULL, 
+	region.start = NULL, region.end = NULL, rotate = NULL){
+	Reference.object <- GenomicMatrix$new()
+	if(!is.null(group.col)){
+		Col.values <- unique(mcols(Ranges,group.col,use.names = TRUE)[[1]])		
+		if(!(length(Col.values) > 2 | class(Col.values)!="numeric"){
+			stop("group.col values must be numeric values of demarcating the two Lego objects.\n")
+		}
+	}
+
+
+	chr.ranges <- Ranges[seqnames(Ranges) %in% region.chr]
+	lapply(Legos,function(Lego){
+		chrs <- as.vector(seqnames(chr.ranges))
+		start <- start(chr.ranges)
+		end <- end(chr.ranges)
+		A.list <- Lego_fetch_range_index(Lego = Lego, chr = chrs, start = start, end = end)
+		Position.list <- A.list[[chr]]
+		check_if_only_one_ranges <- function(x){
+			length(x[["Indexes"]]) == 1
+		}
+		if(!all(vapply(Position.list, check_if_only_one_ranges, TRUE))){
+			stop("Provided ranges overlap with too many bins. Please make sure to have 
+				one range for each border.\n")
+		}
+		Range.positions <- vapply(Position.list,function(x){x[["Indexes"]]},1)
+		data.frame(Range.positions)
+	})
+	
+	if(rotate){
+
+	}
+
+	
+
+
+
+	Domain.df.list <- lapply(1:length(Region.domain.boundaries),function(x){
+	    Domain <- Region.domain.boundaries[x]
+	    My.Start <- ((start(Domain)-1)+(Binsize/2))
+	    Mid.bin <- (My.Start/Binsize) - ((Start - 1)/Binsize)
+	    Max.dist <- (Distance.limit/2)
+	    Dist.up <- Max.dist
+	    if((Mid.bin - (Max.dist*2)) < 0){
+	        Dist.up <- abs(0 - Mid.bin)/2
+	    }
+	    x1.start <- Mid.bin - Dist.up
+	    y1.start <- Dist.up
+	    x2.start <- Mid.bin
+	    y2.start <- 0
+	    End.line <- data.frame(x=c(x1.start,x2.start),
+	                y=c(y1.start,y2.start),
+	                category=c("Backwards differences","Backwards differences"),group=paste("TAD",x,"End",sep="."), type = Domain$status)
+	    Dist.down <- Max.dist
+	    if((Mid.bin + (Max.dist*2)) > Span){
+	        Dist.down <- (Span - Mid.bin)/2
+	    }
+	    x1.end <- Mid.bin
+	    y1.end <- 0
+	    x2.end <- Mid.bin + Dist.down
+	    y2.end <- Dist.down
+	    Start.line <- data.frame(x=c(x1.end,x2.end),
+	            y=c(y1.end,y2.end),
+	            category=c("Backwards differences","Backwards differences"),group=paste("TAD",x,"Start",sep="."), type = Domain$status)
+	    Lines <- rbind(End.line,Start.line)
+	    if(Domain$status=="Disappearing"){
+	        Lines$y <- Lines$y * -1
+	    }
+	    if(Domain$status=="Same"){
+	        Lines.2 <- Lines
+	        Lines.2$y <- Lines.2$y * -1
+	        Lines.2$group <- paste(Lines.2$group,"female",sep =".")
+	        Lines <- rbind(Lines, Lines.2)
+	    }
+	    Lines
+	})
+	Domain.df <- do.call(rbind,Domain.df.list)
+}
+
+Get_heatmap_theme <- function(x.axis=TRUE, y.axis=TRUE, 
+	x.axis.text = NULL, y.axis.text = NULL, text.size = 10, 
+	x.axis.text.size = 10, y.axis.text.size = 10,
+	legend.title.text.size = 8, legend.text.size = 8, title.size = 10,
+	legend.key.width = unit(3,"cm"), legend.key.height = unit(0.5,"cm")){
+	if(!x.axis){
+		x.axis.ticks <- element_blank()
+		x.axis.text <- element_blank()
+	}else{
+		x.axis.ticks <-element_line(colour = "#000000")
+		x.axis.text <- element_text(colour = "#000000", size = x.axis.text.size)
+	}
+	if(!y.axis){
+		y.axis.ticks <- element_blank()
+		y.axis.text <- element_blank()
+	}else{
+		y.axis.ticks <-element_line(colour = "#000000")
+		y.axis.text <- element_text(colour = "#000000", size = y.axis.text.size)
+	}
+    Lego_theme <- theme_bw() + theme(text = element_text(size=text.size),
+				plot.background=element_blank(),
+				panel.grid.minor=element_blank(),
+				panel.grid.major=element_blank(),
+				panel.background = element_blank(),
+				axis.title.x=x.axis.text,
+				axis.title.y=y.axis.text,
+				axis.text.x = x.axis.text,
+				axis.text.y = x.axis.text,
+				axis.ticks.x = x.axis.ticks,
+				axis.ticks.y = y.axis.ticks,
+				legend.position="bottom",
+				legend.key.height = legend.key.height,
+				legend.key.width = legend.key.width,
+				legend.title=element_text(size=legend.title.text.size),
+				legend.text=element_text(size=legend.text.size),
+				plot.title=element_text(size=title.size))
+    return(Lego_theme)
+}
+
+Get_heatmap_titles <- function(title = NULL, x.axis.title = NULL, y.axis.title = NULL, 
+	legend.title = NULL, x.coords = NULL, y.coords = NULL, rotate = NULL){
+	if(is.null(legend.title)){
+		legend.title <- "Signal"
+	}
+	if(is.null(x.axis.title)){
+		x.axis.title <- paste("Genomic position",x.coords,sep = " ")
+	}
+	if(is.null(y.axis.title)){
+		y.axis.title <- paste("Genomic position",y.coords,sep = " ")
+	}
+	if(is.null(title)){
+		title <- paste(x.coords,y.coords,sep = "-")
+	}
+	if(rotate){
+		y.axis.title <- "distance in bins"
+	}
+	Labels <- c(x.axis.title, y.axis.title, title, legend.title)
+	names(Labels) <- c("x.axis","y.axis","title","legend")
+	return(Labels)
+}
+
+make_axis_coord_breaks <- function(from = NULL, to = NULL, how.many = NULL, two.sample = FALSE){
+	Breaks <- round(seq(from,to, length.out = how.many))
+	if(two.sample){
+		Breaks <- unique(c(rev(Breaks)*-1,Breaks))
+	}
+	return(Breaks)
+}
+
+rescale_values_for_colours <- function(Object = NULL, two.sample = FALSE){
+    require(scales)
+	Object$rescale <- 0
+	if(two.sample){
+    	Object$rescale[Object$dist >= 0] <- rescale(Object$val[Object$dist >= 0]*-1,c(0,0.5))
+    	Object$rescale[Object$dist <= 0] <- rescale((Object$val[Object$dist <= 0]),c(0.5,1))
+	}else{
+		Object$rescale <- rescale(Object$val,c(0,1))
+	}
+	return(Object$rescale)
+}
+
+make_colour_breaks <- function(Object = NULL, how.many = NULL, two.sample = NULL){
+	values <- Object[,'rescale']
+	distances <- Object[,'dist']
+	if(two.sample){
+		Value.dist.1 <- seq(min(values[distances >= 0]), max(values[distances >= 0]), length.out = how.many)
+		Value.dist.2 <- seq(min(values[distances <= 0]), max(values[distances <= 0]), length.out = how.many)
+		Value.dist <- unique(c(Value.dist.1,Value.dist.2))
+
+	}else{
+		Value.dist <- seq(min(values),max(values),length.out = how.many)
+	}
+	return(Value.dist)
+}
+
+get_legend_breaks <- function(Object = NULL, mid.val = 0.5, how.many = 5, value.cap = NULL, colours = NULL, two.sample = NULL){
+	Len <- length(values)
+	values <- Object[,'rescale']
+	distances <- Object[,'dist']
+	original.values <- Object[,'val']
+	Upper.tri <- distances >= 0
+	Lower.tri <- distances <= 0
+	if(two.sample){
+		Colour.breaks.1 <- seq(min(values),mid.val,length.out = 3)
+		Colour.labs.1 <- round(seq(max(original.values[Upper.tri]), min(original.values[Upper.tri]), length.out = 3), 2)
+		Colour.breaks.2 <- seq(mid.val,max(values),length.out = 3)
+		Colour.labs.2 <- round(seq(min(original.values[Lower.tri]),max(original.values[Lower.tri]),length.out = 3),2)
+		Colour.labs <- round(c(Colour.labs.1,Colour.labs.2[2:length(Colour.labs.2)]),2)
+		Colour.breaks <- unique(c(Colour.breaks.1,Colour.breaks.2))
+		Colours <- c(rev(colours),colours)
+    	if(!is.null(value.cap)){
+	    	Colour.labs[1] <- paste(">",Colour.labs[1],sep = "")
+	    	Colour.labs[length(Colour.labs)] <- paste(">",Colour.labs[length(Colour.labs)],sep = "")
+    	}
+    	cat(Colour.labs,"\n")
+	}else{
+    	Colour.breaks <- seq(min(values),max(values),length.out = 5)
+    	Colour.labs <- round(seq(min(original.values),max(original.values),length.out = 5),2)
+    	if(!is.null(value.cap)){
+	    	Colour.labs[length(Colour.labs)] <- paste(">",Colour.labs[length(Colour.labs)], sep = "")
+    	}
+    	Colours <- colours
+	}
+	return(list("cols" = Colours, "col.breaks" = Colour.breaks, "col.labs" = Colour.labs))
+}
+
 Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, y.coords = NULL, 
 	FUN = NULL, value.cap = NULL, distance = NULL, rotate = FALSE, x.axis = TRUE, x.axis.title = NULL,
 	y.axis = TRUE, y.axis.title = NULL, title = NULL, legend.title = NULL, return.object=FALSE,
-	x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL, extrapolate.on = NULL, x.axis.text.size = 10, 
-	y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8, legend.text.size = 8, 
-	title.size = 10, tad.borders = NULL, highlight.points = NULL, width = 10, height = 6, units = "cm",
-	legend.key.width = unit(3,"cm"), legend.key.height = unit(0.5,"cm")){
+	x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL, col.direction = 1, extrapolate.on = NULL, 
+	x.axis.text.size = 10, y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8, legend.text.size = 8, 
+	title.size = 10, tad.ranges = NULL, group.col = NULL, tad.colour.col = NULL, cut.corners = NULL, 
+	highlight.points = NULL, width = 10, height = 6, units = "cm", legend.key.width = unit(3,"cm"), 
+	legend.key.height = unit(0.5,"cm")){
 
 	Matrix.df <- Get_one_or_two_lego_regions(Legos = Legos, x.coords = x.coords, y.coords = y.coords, 
 		distance = distance, value.cap = value.cap, FUN = FUN)
 	if(nrow(Matrix.df)==0){
 		stop("The matrix was empty!")
 	}
-    x.coord.split <- Split_genomic_coordinates(Coordinate=x.coords)
-    x.coord.chrom <- x.coord.split[[1]][1]
-    x.coord.start <- as.numeric(x.coord.split[[1]][2])
-    x.coord.stop <- as.numeric(x.coord.split[[1]][3])
-    y.coord.split <- Split_genomic_coordinates(Coordinate=y.coords)
-    y.coord.chrom <- y.coord.split[[1]][1]
-    y.coord.start <- as.numeric(y.coord.split[[1]][2])
-    y.coord.stop <- as.numeric(y.coord.split[[1]][3])
-	
-    x.coord.breaks <- round(seq(min(Matrix.df$row),max(Matrix.df$row),length.out = x.axis.num.breaks))
-    x.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], chr = x.coord.chrom, positions = x.coord.breaks)
+	list_of_coords <- list("x.coords" = x.coords, "y.coords" = y.coords)
 
-    y.coord.breaks <- round(seq(min(Matrix.df$row),max(Matrix.df$row),length.out = y.axis.num.breaks))
-    y.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], chr = y.coord.chrom, positions = y.coord.breaks)
+	Parsed_string <- ._Parse_genomic_coordinates(list_of_coords)
+    x.coord.parsed <- Parsed_string[["x.coords"]]
+    y.coord.parsed <- Parsed_string[["y.coords"]]
+    x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), to = max(Matrix.df$row), 
+    	how.many = x.axis.num.breaks, two.sample = FALSE)
+    x.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], chr = x.coord.parsed['chr'], positions = x.coord.breaks)
 
-    Colours <- Make_colours(palette = palette, extrapolate.on = extrapolate.on)
+    two.sample <- (rotate & length(Legos)==2)
+    y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), to = max(Matrix.df$row), 
+    	how.many = x.axis.num.breaks, two.sample = two.sample)
+    y.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], chr = y.coord.parsed['chr'], positions = abs(y.coord.breaks))
+
+    Colours <- Make_colours(palette = palette, extrapolate.on = extrapolate.on, direction = col.direction)
     # go from min val to mid to max val
-    require(scales)
-    if(length(Legos) == 2){
-    	Matrix.df$rescale[Matrix.df$dist >= 0] <- rescale(Matrix.df$val[Matrix.df$dist >= 0]*-1,c(0,0.5))
-    	Matrix.df$rescale[Matrix.df$dist <= 0] <- rescale((Matrix.df$val[Matrix.df$dist <= 0]),c(0.5,1))
-    	Value.dist.1 <- seq(min(Matrix.df$rescale[Matrix.df$dist >= 0]),max(Matrix.df$rescale[Matrix.df$dist >= 0]),length.out = length(Colours))
-    	Value.dist.2 <- seq(min(Matrix.df$rescale[Matrix.df$dist <= 0]),max(Matrix.df$rescale[Matrix.df$dist <= 0]),length.out = length(Colours))
-    	Value.dist <- c(Value.dist.1,Value.dist.2)
-    	Colour.breaks.1 <- seq(min(Value.dist.1),max(Value.dist.1),length.out = 3)
-    	Colour.labs.1 <- round(seq(max(Matrix.df$val[Matrix.df$dist >= 0]),min(Matrix.df$val[Matrix.df$dist >= 0]),length.out = 3),2)
-    	Colour.breaks.2 <- seq(min(Value.dist.2),max(Value.dist.2),length.out = 3)
-    	Colour.labs.2 <- round(seq(min(Matrix.df$val[Matrix.df$dist <= 0]),max(Matrix.df$val[Matrix.df$dist <= 0]),length.out = 3),2)
-    	Colour.labs <- round(unique(c(Colour.labs.1,Colour.labs.2)),2)
-    	Colour.breaks <- unique(c(Colour.breaks.1,Colour.breaks.2))
-    	Colours <- c(rev(Colours),Colours)
-    	if(!is.null(value.cap)){
-	    	Colour.labs[1] <- paste(">",Colour.labs[1])
-	    	Colour.labs[length(Colour.labs)] <- paste(">",Colour.labs[length(Colour.labs)])
-    	}
-    }else{
-    	Matrix.df$rescale <- rescale(Matrix.df$val,c(0,1))
-    	Value.dist <- seq(min(Matrix.df$rescale),max(Matrix.df$rescale),length.out = length(Colours))
-    	Colour.breaks <- seq(min(Value.dist),max(Value.dist),length.out = 5)
-    	Colour.labs <- round(seq(min(Matrix.df$val),max(Matrix.df$val),length.out = 5),2)
-    	if(!is.null(value.cap)){
-	    	Colour.labs[length(Colour.labs)] <- paste(">",Colour.labs[length(Colour.labs)])
-    	}
-    }
+    two.sample <- (length(Legos)==2)
+    Matrix.df$rescale <- rescale_values_for_colours(Object = Matrix.df, two.sample = two.sample)
+    Value.dist <- make_colour_breaks(Object = Matrix.df, how.many = length(Colours), two.sample = two.sample)
+    
+    Legend.breaks.list <- get_legend_breaks(Object = Matrix.df, how.many = 5, value.cap = value.cap, colours = Colours,
+    	two.sample = two.sample)
+    Colour.breaks <- Legend.breaks.list[["col.breaks"]]
+    Colour.labs <- Legend.breaks.list[["col.labs"]]
+    Colours <- Legend.breaks.list[["cols"]]
     if(rotate){
     	y.coord.breaks <- y.coord.breaks - min(y.coord.breaks)
     	x.coord.breaks <- x.coord.breaks - min(x.coord.breaks)
@@ -235,58 +431,31 @@ Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, 
     }
 
 	require(ggplot2)
-	if(!x.axis){
-		x.axis.ticks <- element_blank()
-		x.axis.text <- element_blank()
-	}else{
-		x.axis.text <- element_text(size = x.axis.text.size)
-	}
-	if(!y.axis){
-		y.axis.ticks <- element_blank()
-		y.axis.text <- element_blank()
-	}else{
-		y.axis.text <- element_text(size = y.axis.text.size)
-	}
-	if(is.null(legend.title)){
-		legend.title <- "Signal"
-	}
-	if(is.null(x.axis.title)){
-		x.axis.title <- paste("Genomic position",x.coords,sep = " ")
-	}
-	if(is.null(y.axis.title)){
-		y.axis.title <- paste("Genomic position",y.coords,sep = " ")
-	}
-	if(is.null(title)){
-		title <- paste(x.coords,y.coords,sep = "-")
-	}
-    Lego_theme <- theme_bw() + theme(text = element_text(size=text.size),
-				plot.background=element_blank(),
-				panel.grid.minor=element_blank(),
-				panel.grid.major=element_blank(),
-				panel.background = element_blank(),
-				axis.title.x=x.axis.text,
-				axis.title.y=y.axis.text,
-				axis.ticks.length=unit(0.5,"mm"),
-				legend.position="bottom",
-				legend.key.height = legend.key.height,
-				legend.key.width = legend.key.width,
-				legend.title=element_text(size=legend.title.text.size),
-				legend.text=element_text(size=legend.text.size),
-				plot.title=element_text(size=title.size))
+	Lego_theme <- Get_heatmap_theme(x.axis=x.axis, y.axis=y.axis, text.size = text.size, 
+		x.axis.text.size = x.axis.text.size, y.axis.text.size = y.axis.text.size,
+		legend.title.text.size = legend.title.text.size, legend.text.size = legend.text.size, 
+		title.size = title.size, legend.key.width = legend.key.width, legend.key.height =legend.key.height)
+	Labels <- Get_heatmap_titles(title = title, x.axis.title = x.axis.title, y.axis.title = y.axis.title, 
+		legend.title = legend.title, x.coords = x.coords, y.coords = y.coords, rotate = rotate)
+
     if(rotate){
+    	cat(head(Entire.rotated.map$values),"\n")
 	    ThePlot <- ggplot(Entire.rotated.map, aes(x = xcoords, y = ycoords))
 	    ThePlot <- ThePlot + geom_polygon(aes(fill = values, group = ids))
 	    xlims <- c(0,max(Entire.rotated.map$xcoords))
 	    ylims <- c(min(Entire.rotated.map$ycoords),max(Entire.rotated.map$ycoords))
 	    y.coord.breaks <- seq(ceiling(min(Entire.rotated.map$ycoords)),ceiling(max(Entire.rotated.map$ycoords)),length.out = y.axis.num.breaks)
     	y.axis.coord.labs <- y.coord.breaks*2
-    	y.axis.title <- "distance in bins"
     }else{
 	    ThePlot <- ggplot(Matrix.df, aes(x = row, y = col))
 	    ThePlot <- ThePlot + geom_tile(aes(fill = rescale))
 	    xlims <- c(min(Matrix.df$row),max(Matrix.df$row))
 	    ylims <- c(min(Matrix.df$col),max(Matrix.df$col))
     }
+
+    Refor
+
+
     ThePlot <- ThePlot + scale_x_continuous(limits = xlims, expand = c(0,0),
     	breaks = x.coord.breaks, labels = x.axis.coord.labs)
     ThePlot <- ThePlot + scale_y_continuous(limits = ylims, expand = c(0,0),
@@ -295,11 +464,10 @@ Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, 
     	breaks = Colour.breaks, labels = Colour.labs, colors = Colours)
     ThePlot<-ThePlot+ Lego_theme
     # return(Entire.rotated.map)
-    ThePlot<-ThePlot+labs(title = title, x = x.axis.title, y = y.axis.title)
+    ThePlot<-ThePlot+labs(title = Labels['title'], x = Labels['x.axis'], y = Labels['y.axis'])
     ggsave(file = File, plot = ThePlot, width = width, height = height, units = units)
-    
     if(return.object){
-	    return(ThePlot)    	
+	    return(ThePlot)
     }
 }
 
