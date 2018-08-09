@@ -532,8 +532,8 @@ Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = N
         QueryRanges <- Lego_make_ranges(Chrom=Cur.Chrom, Start=Cur.Start, End=Cur.end, Names=Cur.Names)
         require(GenomicRanges)
         HitsObject <- findOverlaps(SubjectRanges,QueryRanges,type=type)
-        UniqueQueries <- unique(subjectHits(HitsObject))
-        MatchingIndexes <- lapply(1:length(UniqueQueries),function(x){
+        UniqueQueries <- seq_along(QueryRanges)
+        MatchingIndexes <- lapply(UniqueQueries,function(x){
             A.Query <- UniqueQueries[x]
             MatchingQueries <- queryHits(HitsObject)[subjectHits(HitsObject)==A.Query]
             ListObj<-list()

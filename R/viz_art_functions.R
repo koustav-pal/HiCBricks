@@ -165,84 +165,123 @@ RotateHeatmap = function(Matrix=NULL, value.var=NULL, upper = FALSE){
 	return(Rotated.df)
 }
 
+make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL, 
+	region.end = NULL, distance = NULL, two.sample = FALSE){
+	Unique.groups <- unique(Object[,"groups"])
+	Group.list <- lapply(Unique.groups,function(Lego.x){
+		Domain <- Object[Object[,"groups"] == Lego.x,]
+		Domain.names <- unique(Domain[,"dom.names"])
+		Dolly.the.sheep.list <- lapply(Domain.names, function(domain.name){
+			current.domain <- Domain[Domain[,"dom.names"]==domain.name,]
+			colours <- current.domain$colours[current.domain[,"type"] == "start"]
+		    Start <- current.domain[current.domain[,"type"] == "start", "position"]
+		    End <- current.domain[current.domain[,"type"] == "end", "position"]
+		    if(Start < region.start & End >= region.start){
+			    My.start <- region.start
+			    if((End - My.start) > distance){
+			    	My.start <- End - distance
+			    }
+		    	Coord.list <- list(x1 = c(My.start,End),y1 = c(End,End))
+		    	Groups <- rep(paste(domain.name,Lego.x,c(1,2),sep = "."), each = 2)
+		    }else if(Start >= region.start & End <= region.end){
+			    Coord.list <- list(x1 = c(Start,Start,End), y1 = c(Start,End,End))
+			    Groups <- rep(paste(domain.name,Lego.x,sep = "."), each = 3)
+			    if((End - Start) > distance){
+			    	My.end <- Start + distance
+			    	My.Start <- End - distance
+			    	Coord.list <- list(x1 = c(Start,Start,My.Start,End), y1 = c(Start,My.end,End,End))
+			    	Groups <- rep(paste(domain.name,Lego.x,c(1,2),sep = "."), each = 2)
+			    }
+		    }else if(Start < region.end & End > region.end){
+		    	My.end <- region.end
+		    	if((region.end - Start) > distance){
+		    		My.end <- Start + distance
+		    	}
+		    	Coord.list <- list(x1 = c(Start,Start), y1 = c(Start,My.end))
+		    	Groups <- rep(paste(domain.name,Lego.x,sep = "."),2)
+		    }
+		    if(Lego.x == 2){
+		    	Coord.list <- rev(Coord.list)
+		    }
+		    Line <- data.frame(x = Coord.list[[1]], y = Coord.list[[2]], colours = colours,
+		    	line.group = Groups, group = paste("Group",Lego.x,sep = "."))
+		    Line
+		})
+		Dolly.the.sheep <- do.call(rbind,Dolly.the.sheep.list)
+		Dolly.the.sheep
+	})
+	Group.df <- do.call(rbind,Group.list)
+}
+
+
 Format.boundaries <- function(Legos = NULL, Ranges = NULL, group.col = NULL, 
 	cut.corners = NULL, colour.col = NULL, colours = NULL, region.chr = NULL, 
-	region.start = NULL, region.end = NULL, rotate = NULL){
+	region.start = NULL, region.end = NULL, distance = NULL, rotate = NULL){
 	Reference.object <- GenomicMatrix$new()
 	if(!is.null(group.col)){
-		Col.values <- unique(mcols(Ranges,group.col,use.names = TRUE)[[1]])		
+		Col.values <- unique(mcols(Ranges,group.col,use.names = TRUE)[[1]])
 		if(!(length(Col.values) > 2 | class(Col.values)!="numeric"){
-			stop("group.col values must be numeric values of demarcating the two Lego objects.\n")
+			stop("group.col values must be numeric values of for the two Lego objects.\n")
 		}
+	}else{
+		group.col <- "pseudogroups"
+		Ranges.too <- Ranges
+		mcols(Ranges, group.col, use.names = TRUE) <- 1
+		mcols(Ranges.too, group.col, use.names = TRUE) <- 2
+		Ranges <- c(Ranges,Ranges.too)
+	}
+	
+	Colour.check <- as.logical(as.numeric(is.null(colour.col)) * as.numeric(is.null(colours)))
+	Colour.check.2 <- length(colour.col)/length(colours)
+	if(Colour.check){
+		stop("colours expects a vector of length 1 with the colour value")
+	}else if(is.nan(Colour.check.2)){
+		stop("colours is missing\n")
+	}else if(!(Colour.check.2 %in% c(0,1))){
+		stop("colours and colour.col have different lengths\n")
+	}else {
+		colour.col <- "pseudo.colour.col"
+		mcols(Ranges, colour.col, use.names = TRUE) <- "My_Group"
 	}
 
-
 	chr.ranges <- Ranges[seqnames(Ranges) %in% region.chr]
-	lapply(Legos,function(Lego){
-		chrs <- as.vector(seqnames(chr.ranges))
-		start <- start(chr.ranges)
-		end <- end(chr.ranges)
-		A.list <- Lego_fetch_range_index(Lego = Lego, chr = chrs, start = start, end = end)
+	chr.ranges <- chr.ranges[start(chr.ranges) < region.end & end(chr.ranges) > region.start]
+	region <- paste(region.chr, region.start, region.end, sep = Reference.object$Ranges.separator)
+	Region.positions <- Lego_return_region_position(Lego = Legos[1], region = region)
+
+	Range.to.df.list <- lapply(seq_along(Legos),function(Lego.x){
+		pos.ranges <- chr.ranges[mcols(chr.ranges,group.col,use.names = TRUE) == Lego.x]
+		chrs <- as.vector(seqnames(pos.ranges))
+		start <- start(pos.ranges)
+		end <- end(pos.ranges)
+		A.list <- Lego_fetch_range_index(Lego = Legos[Lego.x], chr = chrs, start = start, end = end)
 		Position.list <- A.list[[chr]]
 		check_if_only_one_ranges <- function(x){
-			length(x[["Indexes"]]) == 1
+			!is.na(x[["Indexes"]])
 		}
 		if(!all(vapply(Position.list, check_if_only_one_ranges, TRUE))){
-			stop("Provided ranges overlap with too many bins. Please make sure to have 
-				one range for each border.\n")
+			stop("All ranges did not overlap with the bintable.\n")
 		}
-		Range.positions <- vapply(Position.list,function(x){x[["Indexes"]]},1)
-		data.frame(Range.positions)
+		Range.positions.start <- vapply(Position.list,function(x){min(x[["Indexes"]])},1)
+		Range.positions.end <- vapply(Position.list,function(x){max(x[["Indexes"]])},1)
+		Range.positions.names <- vapply(Position.list,function(x){names(x[["SubjectInfo"]])},"")
+		Start.df <- data.frame(dom.names = Range.positions.names, position = Range.positions.start, 
+			relative.position = Range.positions.end - min(Region.positions),
+			groups = Lego.x, type = "start",
+			colours = mcols(Ranges, colour.col, use.names = TRUE))
+		End.df <- data.frame(dom.names = Range.positions.names, position = Range.positions.end, 
+			relative.position = Range.positions.end - min(Region.positions),
+			groups = Lego.x, type = "end",
+			colours = mcols(Ranges, colour.col, use.names = TRUE))
+		All.df <- rbind(Start.df,End.df)
+		All.df$dom.names <- as.character(All.df$dom.names)
 	})
-	
+	Range.to.df <- do.call(rbind, Range.to.df.list)
+	Normal.heatmap.lines <- make_boundaries_for_heatmap(Object = Range.to.df, region.start = region.start, 
+		region.end = region.end, distance = distance)
 	if(rotate){
 
 	}
-
-	
-
-
-
-	Domain.df.list <- lapply(1:length(Region.domain.boundaries),function(x){
-	    Domain <- Region.domain.boundaries[x]
-	    My.Start <- ((start(Domain)-1)+(Binsize/2))
-	    Mid.bin <- (My.Start/Binsize) - ((Start - 1)/Binsize)
-	    Max.dist <- (Distance.limit/2)
-	    Dist.up <- Max.dist
-	    if((Mid.bin - (Max.dist*2)) < 0){
-	        Dist.up <- abs(0 - Mid.bin)/2
-	    }
-	    x1.start <- Mid.bin - Dist.up
-	    y1.start <- Dist.up
-	    x2.start <- Mid.bin
-	    y2.start <- 0
-	    End.line <- data.frame(x=c(x1.start,x2.start),
-	                y=c(y1.start,y2.start),
-	                category=c("Backwards differences","Backwards differences"),group=paste("TAD",x,"End",sep="."), type = Domain$status)
-	    Dist.down <- Max.dist
-	    if((Mid.bin + (Max.dist*2)) > Span){
-	        Dist.down <- (Span - Mid.bin)/2
-	    }
-	    x1.end <- Mid.bin
-	    y1.end <- 0
-	    x2.end <- Mid.bin + Dist.down
-	    y2.end <- Dist.down
-	    Start.line <- data.frame(x=c(x1.end,x2.end),
-	            y=c(y1.end,y2.end),
-	            category=c("Backwards differences","Backwards differences"),group=paste("TAD",x,"Start",sep="."), type = Domain$status)
-	    Lines <- rbind(End.line,Start.line)
-	    if(Domain$status=="Disappearing"){
-	        Lines$y <- Lines$y * -1
-	    }
-	    if(Domain$status=="Same"){
-	        Lines.2 <- Lines
-	        Lines.2$y <- Lines.2$y * -1
-	        Lines.2$group <- paste(Lines.2$group,"female",sep =".")
-	        Lines <- rbind(Lines, Lines.2)
-	    }
-	    Lines
-	})
-	Domain.df <- do.call(rbind,Domain.df.list)
 }
 
 Get_heatmap_theme <- function(x.axis=TRUE, y.axis=TRUE, 
