@@ -31,3 +31,7 @@ other than "Bintable", and had been added using Lego_add_ranges the width and
 Strand columns may appear as metadata columns. These will most likely be
 artifacts from converting the original ranges object to a data.frame.
 }
+\section{Arguments}{
+NA
+}
+

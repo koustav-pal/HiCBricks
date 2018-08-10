@@ -6,11 +6,22 @@
 \usage{
 Lego_get_bintable(Lego = NULL, chr = NULL)
 }
+\arguments{
+\item{Lego}{\strong{Required}.
+A string specifying the path to the Lego store created with CreateLego.}
+
+\item{chr}{\strong{Optional}.
+A chr string specifying the chromosome to select from the ranges.}
+}
 \description{
 \code{Lego_get_bintable} makes a call to Lego_get_ranges to retrieve the
 binning table of the associated Lego store. This is equivalent to passing
 the argument rangekey = "bintable" in Lego_get_ranges
 }
+\section{Arguments}{
+NA
+}
+
 \seealso{
 Lego_get_ranges
 }

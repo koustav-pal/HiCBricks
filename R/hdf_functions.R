@@ -1,5 +1,4 @@
 ReturnH5FileConnection = function(File = NULL){
-    require(rhdf5)
         HDF.File <- File
         HDF.Connection = H5Fopen(name=HDF.File)
         return(HDF.Connection)
@@ -90,15 +89,15 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "gro
     CloseH5Con(Handle = Lego.handler, type = on)
     return(Attribute.val)
 }
-InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
-    Start = NULL, Stride = NULL, Count = NULL){
-    DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, Name = Name, handler = TRUE)
-    if(!is.null(Index)){
-        h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, index=Index)
-    }else if(!is.null(Count) & !is.null(Stride) & !is.null(Start)){
-        h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, start=Start, stride=Stride, count=Count)
-    }else{
-        stop("FetchFromDataset expects one of Start, Stride, Count if Index is NULL")
-    }
-    private$Flush.HDF()
-}
+# InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
+#     Start = NULL, Stride = NULL, Count = NULL){
+#     DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, Name = Name, return.what = "group_handle")
+#     if(!is.null(Index)){
+#         h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, index=Index)
+#     }else if(!is.null(Count) & !is.null(Stride) & !is.null(Start)){
+#         h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, start=Start, stride=Stride, count=Count)
+#     }else{
+#         stop("FetchFromDataset expects one of Start, Stride, Count if Index is NULL")
+#     }
+#     private$Flush.HDF()
+# }

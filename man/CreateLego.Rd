@@ -32,7 +32,7 @@ It is recommended to always use binning tables where the end and start of
 consecutive ranges are not the same. If they are the same, this may lead to
 \strong{unexpected behaviour} when using the GenomicRanges "any" overlap function.}
 
-\item{bin.delim}{\strong{Optional}. Default "\t".
+\item{bin.delim}{\strong{Optional}. Defaults to tabs.
 A character vector of length 1 specifying the delimiter used in the file
 containing the binning table.}
 

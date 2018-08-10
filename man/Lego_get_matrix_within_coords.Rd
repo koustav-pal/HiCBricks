@@ -24,10 +24,6 @@ to identify the bins to subset on the column}
 \item{FUN}{\strong{Optional}.
 If provided a data transformation with FUN will be applied before the matrix
 is returned.}
-
-\item{constrain.region}{\strong{Optional}.
-A character vector of length 1 with the form chr:start:end specifying the
-region for which the distance values must be retrieved.}
 }
 \value{
 Returns a matrix of dimension x.coords binned length by y.coords

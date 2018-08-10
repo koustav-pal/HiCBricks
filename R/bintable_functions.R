@@ -10,14 +10,13 @@
         if(Len.x > 5){
             Index.type.error <- "indices were provided."
         }
-        stop(paste("col.index expects as bare minimum chr,start,end.",Error.col[x],Second.part,"\n"))
+        stop(paste("col.index expects as bare minimum chr,start,end.",Error.col[x],Index.type.error,"\n"))
     }
     Alist <- list("Names" = ColNames[Norm.x], "Classes" = ColClasses[Norm.x])
     return(Alist)
 }
 Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,2,3), 
     chromosomes=NULL, impose.discontinuity=TRUE){
-    require(data.table)
     if(is.null(exec)) {
         stop("exec is not allowed to be null")
     }
@@ -90,7 +89,6 @@ get_chrom_info <- function(bin.table = NULL, chrom = NULL, FUN = NULL, col.name 
     return(Info)
 }
 Split_genomic_coordinates = function(Coordinate=NULL){
-    require(stringr)
     Reference.object <- GenomicMatrix$new()
     Sep <- Reference.object$Ranges.separator
     Coord.Split<-stringr::str_split(pattern=Sep,string=Coordinate)

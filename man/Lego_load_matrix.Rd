@@ -32,6 +32,10 @@ The delimiter of the matrix file.}
 A string specifying the program to use for reading the file. Use cat for txt
 files, for bz2 files use bzcat and for gz files zcat.}
 
+\item{remove.prior}{\strong{Optional}. Default FALSE
+If a matrix was loaded before, it will not be replaced. Use remove.prior to
+override and replace the existing matrix.}
+
 \item{num.rows}{\strong{Optional}. Default 2000
 Number of rows to read, in each chunk.}
 
@@ -51,10 +55,6 @@ will be loaded into the data structure.}
 \item{sparsity.bins}{\strong{Optional}. Default 100
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
-
-\item{remove.priori}{\strong{Optional}. Default FALSE
-If a matrix was loaded before, it will not be replaced. Use remove.priori to
-override and replace the existing matrix.}
 }
 \description{
 Load a NxM dimensional matrix into the Lego store.

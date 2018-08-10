@@ -1,4 +1,3 @@
-require(R6)
 GenomicMatrix <- R6Class("GenomicMatrix",
     public = list (
         initialize = function(){
@@ -66,7 +65,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
 )
 
 ._GenerateRandomName_ <- function(){
-    library("digest")
     Seed <- format(Sys.time(),"%Y-%m-%d_%H-%M-%S")
     HashString <- digest(Seed,"crc32")
     return(HashString)
@@ -123,7 +121,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     H5Gclose(Group.handler)
 }
 ._Lego_do_on_ComplexSelection_ <- function(Group.path = NULL, Lego = NULL, Name = NULL,
-    Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
+    Start.list = NULL, Stride.list = NULL, Count.list = NULL, Data = NULL,
     Block.list = NULL, do.what = "fetch"){
     ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
     if(any(sapply(ListOfArgs,!is.list))){
@@ -132,12 +130,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     if(unique(sapply(ListOfArgs,length))!=1){
         stop("Start, Stride, Count, Block must have same length.\n")
     }
-    if(!is.vector(data)){
-        stop("data should be a vector, when working with Start, Stride, Count, Block.\n")
+    if(!is.vector(Data)){
+        stop("Data should be a vector, when working with Start, Stride, Count, Block.\n")
     }
 }
 ._Lego_WriteDataFrame_ <- function(Lego = NULL, Path = NULL, name = NULL, object = NULL){
-    library(stringr)
     if(!(length(c(Lego,Path,name,object))>=4)){
         stop("All arguments are required!")
     }
@@ -149,7 +146,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     H5Gclose(Lego.handler)
 }
 ._Lego_WriteArray_ <- function(Lego = NULL, Path = NULL, name = NULL, object = NULL){
-    library(stringr)
     if(!(length(c(Lego,Path,name,object))>=4)){
         stop("All arguments are required!")
     }
@@ -204,7 +200,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
 ._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
     chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
     distance = NULL, sparsity.bins = 100){
-    require(data.table)
+
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins

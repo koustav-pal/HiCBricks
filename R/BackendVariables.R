@@ -23,8 +23,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
                 self$hdf.ranges.chr.name, self$hdf.ranges.offset.name)
             return(Protect)
         },
-        matrices.chrom.attributes = c("filename","min","max","sparsity","done"),
-        matrices.chrom.attributes.dtype = c("character","double","double","integer","integer"),
+        matrices.chrom.attributes = c("filename","min","max","sparsity","distance","done"),
+        matrices.chrom.attributes.dtype = c("character","double","double","integer","integer","integer"),
         matrices.chrom.attributes.dims = list(1,1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
@@ -202,15 +202,15 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     return(Batch.size)
 }
 ._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
-    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
-    distance = NULL, sparsity.bins = 100){
+    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, distance = NULL, is.sparse = NULL, compute.sparsity = NULL,
+    sparsity.bins = 100){
     require(data.table)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
     Command <- paste(exec,Matrix.file,sep=" ")
-    Start.row <- 0
+    Start.row <- 1
     Path.to.file <- Lego
     Cumulative.data <- NULL
     Cumulative.indices <- NULL
@@ -238,11 +238,20 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         Skippity <- c(0,Skippity.cumsum[-length(Skippity.cumsum)])
     }
     i<-1
+    if(!is.null(distance)){
+        distance <- chr2.len
+    }
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
+        Drop.what <- NULL
+        Col.upper.limit <- ifelse(Iter + distance > chr2.len, chr2.len, Iter + distance)
+        Col.lower.limit <- ifelse(((Skip+1) - distance) <= 0, 1, (Skip - distance))
+        Drop.what <- c(1:chr2.len)
+        Drop.what <- Drop.what[!(Drop.what %in% (Col.lower.limit:Col.upper.limit))]
         Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, na.strings="NA", 
-            stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", showProgress=FALSE))
+            stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", drop = Drop.what, 
+            showProgress=FALSE))
         cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
         Bin.coverage <- c(Bin.coverage,sapply(1:nrow(Matrix),function(x){
             Vec.sub <- Matrix[x,]
@@ -269,7 +278,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         Cumulative.data <- rbind(Cumulative.data,Matrix)
         Obj.size <- object.size(Cumulative.data)
         if(Obj.size >= Reference.object$Max.vector.size | i == length(Iterations)){
-            Start <- c(Start.row+1,1) 
+            Start.col <- Col.lower.limit
+            Start <- c(Start.row,Start.col) 
             Stride <- c(1,1)
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
             cat("Inserting Data at location:",Start[1],"\n")
@@ -289,7 +299,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
     }
     Attributes <- Reference.object$matrices.chrom.attributes
-    Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(TRUE))
+    Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(distance),as.integer(TRUE))
     WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
 }
 

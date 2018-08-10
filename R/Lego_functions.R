@@ -38,7 +38,7 @@
 #' A string specifying the location and name of the HDF file to create. If path
 #' is not provided, it will be created in the current working directory.
 #' 
-#' @param bin.delim **Optional**. Default "\t".
+#' @param bin.delim **Optional**. Defaults to tabs.
 #' A character vector of length 1 specifying the delimiter used in the file 
 #' containing the binning table.
 #' 
@@ -91,7 +91,7 @@
 CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
     Output.Filename=NULL, exec="cat", remove.existing=FALSE){
-    require(rhdf5)
+
     H5close()
     Dir.path <- dirname(Output.Filename)
     Filename <- basename(Output.Filename)
@@ -208,7 +208,7 @@ Lego_get_chrominfo <- function(Lego = NULL){
 Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, 
     Names=NULL){
     Reference.object <- GenomicMatrix$new()
-    require(GenomicRanges)
+
     if(is.null(Names)){
         Names<-paste(Chrom,as.integer(Start),as.integer(End),sep=Reference.object$Ranges.separator)
     }
@@ -389,6 +389,8 @@ Lego_list_matrices = function(Lego = NULL){
 #' Strand columns may appear as metadata columns. These will most likely be 
 #' artifacts from converting the original ranges object to a data.frame.
 #' 
+#' @section Arguments
+#' 
 #' @param Lego **Required**.
 #' A string specifying the path to the Lego store created with CreateLego.
 #' 
@@ -459,6 +461,14 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
 #' binning table of the associated Lego store. This is equivalent to passing
 #' the argument rangekey = "bintable" in Lego_get_ranges
 #' 
+#' @section Arguments
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr **Optional**.
+#' A chr string specifying the chromosome to select from the ranges.
+
 #' @seealso Lego_get_ranges
 Lego_get_bintable = function(Lego = NULL, chr = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -530,7 +540,7 @@ Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, end = N
             stop("Start or end is out of ranges for Bintable")
         }
         QueryRanges <- Lego_make_ranges(Chrom=Cur.Chrom, Start=Cur.Start, End=Cur.end, Names=Cur.Names)
-        require(GenomicRanges)
+
         HitsObject <- findOverlaps(SubjectRanges,QueryRanges,type=type)
         UniqueQueries <- seq_along(QueryRanges)
         MatchingIndexes <- lapply(UniqueQueries,function(x){
@@ -598,8 +608,8 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
 #' @param delim **Optional**. Default " "
 #' The delimiter of the matrix file.
 #' 
-#' @param remove.priori **Optional**. Default FALSE
-#' If a matrix was loaded before, it will not be replaced. Use remove.priori to
+#' @param remove.prior **Optional**. Default FALSE
+#' If a matrix was loaded before, it will not be replaced. Use remove.prior to
 #' override and replace the existing matrix.
 #' 
 #' @param num.rows **Optional**. Default 2000
@@ -640,7 +650,7 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, matrix.file =
         stop("Provided chromosomes do not exist in the chrom table\n")
     }
     if(Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2) && !remove.prior){
-        stop("A matrix was preloaded before. Use remove.priori = TRUE to force value replacement\n")
+        stop("A matrix was preloaded before. Use remove.prior = TRUE to force value replacement\n")
     }
     Chrom.info.df <- Lego_get_chrominfo(Lego = Lego)
     chr1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
@@ -677,6 +687,30 @@ Lego_matrix_isdone = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
         stop("chr1 chr2 pairs were not found\n")
     }
     return(as.logical((Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])))
+}
+
+#' Get the maximum loaded distance from the diagonal of any matrix.
+#' 
+#' @param Lego **Required**.
+#' A string specifying the path to the Lego store created with CreateLego.
+#' 
+#' @param chr1 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows of the matrix
+#' 
+#' @param chr2 **Required**.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' columns of the matrix
+#' 
+#' @return Returns an integer vector of length 1, specifying the maximum 
+#' distance loaded for that matrix
+Lego_matrix_maxdist = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Matrix.list <- Lego_list_matrices(Lego = Lego)
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("chr1 chr2 pairs were not found\n")
+    }
+    return(as.integer((Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "distance"])))
 }
 
 #' Check if a chromosome pair exists. This helps if the user thinks that they
@@ -798,14 +832,20 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
     if(any(distance > Nrow, distance < 0)){
         stop("distance must range between 0 and",Nrow,"\n")
     }
+    Max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr, chr2 = chr)
+    if(distance > Max.dist){
+        stop("The farthest pixel loaded for this matrix was at a distance
+            of",Max.dist," bins from the diagonal. The current selection subsets
+            out-of-bounds data.\n")
+    }
     Root.folders <- Reference.object$GetRootFolders()
     Path <- Create_Path(c(Root.folders['matrices'],chr,chr))
     Vector.start <- 1
     Vector.stop <- ChromInfo[ChromInfo$chr==chr,"nrow"]
     if(!is.null(constrain.region)){
-        Vector.coordinates <- Lego_return_region_position(Lego = Lego, region=constrain.region, chr=chr)
+        Vector.coordinates <- Lego_return_region_position(Lego = Lego, region=constrain.region)
         if(is.null(Vector.coordinates)){
-            stop("Overlap operation was unsuccessful! Please check coordinates ",Constrain.region)
+            stop("Overlap operation was unsuccessful! Please check coordinates ",constrain.region)
         }
         Vector.start <- min(Vector.coordinates)
         Vector.stop <- max(Vector.coordinates)
@@ -863,10 +903,6 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
 #' A string specifying the region to subset on the rows. It takes the form
 #' chr:start:end. An overlap operation with the associated bintable will be done
 #' to identify the bins to subset on the column
-#' 
-#' @param constrain.region **Optional**.
-#' A character vector of length 1 with the form chr:start:end specifying the 
-#' region for which the distance values must be retrieved.
 #' 
 #' @param FUN **Optional**.
 #' If provided a data transformation with FUN will be applied before the matrix
@@ -1073,7 +1109,7 @@ Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vec
         x <- Positions[ind]
         if(PikaPika){
             region <- regions[ind]
-            y <- Lego_return_region_position(region=region,Chrom=chr2)
+            y <- Lego_return_region_position(Lego = Lego, region = region)
         }else{
             y <- 1:length(chr2.ranges)
         }
@@ -1145,7 +1181,12 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
     Start <- c(min(xaxis),min(yaxis))
     Stride <- c(1,1)
     Count <- c(length(xaxis),length(yaxis))
-
+    Max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr1, chr2 = chr2)
+    if(max(min(xaxis)-max(yaxis),(max(xaxis) - min(yaxis))) > Max.dist){
+        stop("The farthest pixel loaded for this matrix was at a distance
+            of ",Max.dist," bins from the diagonal. The current selection
+            subsets non-existing data.\n")
+    }
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2))
     Vector <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
     Start = Start, Stride = Stride, Count = Count, return.what = "data")
