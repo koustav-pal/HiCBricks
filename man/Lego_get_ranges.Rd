@@ -31,7 +31,8 @@ other than "Bintable", and had been added using Lego_add_ranges the width and
 Strand columns may appear as metadata columns. These will most likely be
 artifacts from converting the original ranges object to a data.frame.
 }
-\section{Arguments}{
-NA
-}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_ranges(Lego = Lego.file, chr = "chr19", rangekey = "Bintable")
 
+}

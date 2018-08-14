@@ -2,7 +2,7 @@
 % Please edit documentation in R/Lego_functions.R
 \name{Lego_add_ranges}
 \alias{Lego_add_ranges}
-\title{Perpetually store a ranges object in the Lego store.}
+\title{Store a ranges object in the Lego store.}
 \usage{
 Lego_add_ranges(Lego = NULL, ranges = NULL, rangekey = NULL)
 }
@@ -14,7 +14,7 @@ A string specifying the path to the Lego store created with CreateLego.}
 An object of class ranges specifying the ranges to store in the Lego.}
 
 \item{rangekey}{\strong{Required}.
-The name to use for the object within the Lego store.}
+The name to use for the ranges within the Lego store.}
 }
 \description{
 \code{Lego_add_ranges} loads a GRanges object into the Lego store.
@@ -28,4 +28,14 @@ ask for ranges objects, so if the same ranges object is later retrieved
 two additional columns will be present. These are the strand and width
 columns that are obtained when a ranges is converted into a data.frame.
 Users can ignore these columns.
+}
+\examples{
+Lego.file <- "test.hdf"
+Chrom <- c("chrS","chrS","chrS","chrS","chrS")
+Start <- c(10000,20000,40000,50000,60000)
+End <- c(10001,20001,40001,50001,60001)
+Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
+Lego_add_ranges(Lego = Lego.file, ranges = Test_ranges, 
+rangekey = "test_ranges")
+
 }

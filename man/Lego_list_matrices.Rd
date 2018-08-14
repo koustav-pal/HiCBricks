@@ -22,3 +22,8 @@ is defined as a sparse matrix.
 \code{Lego_list_matrices} will list all chromosomal pair matrices from the Lego
 store, with their associated filename, value range, done status and sparse
 }
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_list_matrices(Lego = Lego.file)
+
+}

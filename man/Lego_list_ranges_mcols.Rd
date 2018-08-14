@@ -23,3 +23,8 @@ associated metadata column name.
 \code{Lego_list_ranges_mcols} will list the metadata columns of the specified
 ranges if it is present in the Lego store.
 }
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_list_ranges_mcols(Lego = Lego.file, rangekey = "Bintable")
+
+}

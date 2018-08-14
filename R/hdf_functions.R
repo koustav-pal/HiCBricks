@@ -79,7 +79,7 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "gro
     Attribute.val <- sapply(Attributes, function(An.attribute){
         if(!H5Aexists(h5obj = Lego.handler, name = An.attribute)){
             CloseH5Con(Handle = Lego.handler, type = on)
-            stop(An.attribute,"not found.\n")
+            stop(An.attribute," not found.\n")
         }
         Attr.handle <- H5Aopen(h5obj = Lego.handler, name = An.attribute)
         Attr.val <- H5Aread(Attr.handle)

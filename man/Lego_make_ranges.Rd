@@ -28,6 +28,17 @@ ranges. If not provided, this will be set to the default *.}
 A 1 dimensional character vector of size N specifying the names of the
 ranges. If not provided, this will be set to the default chr:start:end.}
 }
+\value{
+A GenomicRanges object with the previous sort order being preserved
+}
 \description{
 \code{Lego_make_ranges} creates a GRanges object from the provided arguments
+}
+\examples{
+
+Chrom <- c("chrS","chrS","chrS","chrS","chrS")
+Start <- c(10000,20000,40000,50000,60000)
+End <- c(10001,20001,40001,50001,60001)
+Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
+
 }

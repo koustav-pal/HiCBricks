@@ -20,3 +20,9 @@ A logical vector of length 1 with either TRUE or FALSE values.
 \code{Lego_rangekey_exists} checks for the presence of a particular ranges with
 a certain name.
 }
+\examples{
+
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_rangekey_exists(Lego = Lego.file, rangekey = "Bintable")
+
+}

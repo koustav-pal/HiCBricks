@@ -59,3 +59,12 @@ number of bins to scan from the diagonal.}
 \description{
 Load a NxM dimensional matrix into the Lego store.
 }
+\examples{
+
+Lego.file <- "test.hdf"
+Matrix.file <- system.file("extdata", "IMR90_RepA_ICEd_40000_chr19.mat.gz", 
+package = "HiCLegos")
+Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
+matrix.file = Matrix.file, delim = " ", exec = "gunzip -c")
+
+}

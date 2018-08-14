@@ -11,13 +11,22 @@ Lego_get_chrominfo(Lego = NULL)
 A string specifying the path to the Lego store created with CreateLego.}
 }
 \value{
-A three column file containing chromosomes, nrows and length.
-chromosomes corresponds to all chromosomes in the provided bintable, nrows
-corresponds to the number of entries in the bintable or dimension for that
-chromosome in the Hi-C matrix. And length is the total bp length of the same
+A three column data.frame containing chromosomes, nrows and length.
+
+chromosomes corresponds to all chromosomes in the provided bintable.
+
+nrows corresponds to the number of entries in the bintable or dimension
+for that chromosome in a Hi-C matrix.
+
+Length is the total bp length of the same
 chromosome (max value for that chromosome in the bintable).
 }
 \description{
 \code{Lego_get_chrominfo} fetches the associated chrominfo table for the
-Lego (HDF) it is associated to.
+Lego it is associated to.
+}
+\examples{
+Lego.file = system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_chrominfo(Lego = Lego.file)
+
 }

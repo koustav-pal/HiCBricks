@@ -219,35 +219,42 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
 	Group.df <- do.call(rbind,Group.list)
 }
 
-make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NULL, 
-	region.end = NULL, distance = NULL, cut.corners = FALSE){
-	if(is.null(distance)){
-		distance <- region.end - region.start
-	}
-	Shift.seed <- 0.5
-	Unique.groups <- unique(Object[,"groups"])
-	Group.list <- lapply(Unique.groups,function(Lego.x){
-		Domain <- Object[Object[,"groups"] == Lego.x,]
-		Domain.names <- unique(Domain[,"dom.names"])
-			Domain.df.list <- lapply(Domain.names,function(x){
-				current.domain <- Domain[Domain[,"dom.names"]==domain.name,]
-				colours <- current.domain$colours[current.domain[,"type"] == "start"]
-			    Start <- current.domain[current.domain[,"type"] == "start", "position"]
-			    End <- current.domain[current.domain[,"type"] == "end", "position"]
-			    Mid.bin <- Start - region.start
-			    Max.dist <- distance/2
-			    if(Mid.bin - (Max.dist*2) < 0){
-			    	Dist.up <- abs(0 - Mid.bin)/2
-			    }
+# make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NULL, 
+# 	region.end = NULL, distance = NULL, cut.corners = FALSE){
+# 	if(is.null(distance)){
+# 		distance <- region.end - region.start
+# 	}
+# 	Shift.seed <- 0.5
+# 	Unique.groups <- unique(Object[,"groups"])
+# 	Group.list <- lapply(Unique.groups,function(Lego.x){
+# 		Domain <- Object[Object[,"groups"] == Lego.x,]
+# 		Domain.names <- unique(Domain[,"dom.names"])
+# 		Domain.df.list <- lapply(Domain.names,function(x){
+# 			current.domain <- Domain[Domain[,"dom.names"]==domain.name,]
+# 			colours <- current.domain$colours[current.domain[,"type"] == "start"]
+# 		    Start <- current.domain[current.domain[,"type"] == "start", "position"]
+# 		    End <- current.domain[current.domain[,"type"] == "end", "position"]
+# 		    Mid.bin <- Start - region.start
+# 		    Max.dist <- distance/2
+# 		    if(Mid.bin - (Max.dist*2) < 0){
+# 		    	Dist.up <- abs(0 - Mid.bin)/2
+# 		    }
+# 		    x1.start <- Mid.bin - Dist.up
+# 		    y1.start <- Dist.up
+# 		    x2.start <- Mid.bin
+# 		    y2.start <- 0
+# 		    End.line <- data.frame(x=c(x1.start,x2.start),
+#             y=c(y1.start,y2.start), colours = colours,
+# 	    	line.group = paste(x, "end", sep = "."), group = paste("Group",Lego.x,sep = "."))
 
-			    Lines
-			})
-			Domain.df <- do.call(rbind,Domain.df.list)
-		Dolly.the.sheep <- do.call(rbind,Dolly.the.sheep.list)
-		Dolly.the.sheep
-	})
-	Group.df <- do.call(rbind,Group.list)
-}
+# 		    Lines
+# 		})
+# 		Domain.df <- do.call(rbind,Domain.df.list)
+# 		Dolly.the.sheep <- do.call(rbind,Dolly.the.sheep.list)
+# 		Dolly.the.sheep
+# 	})
+# 	Group.df <- do.call(rbind,Group.list)
+# }
 
 
 Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL, group.col = NULL, 
@@ -318,8 +325,8 @@ Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL, group.
 	})
 	Range.to.df <- do.call(rbind, Range.to.df.list)
 	if(rotate){
-		Normal.heatmap.lines <- make_boundaries_for_rotated_heatmap(Object = Range.to.df, 
-			region.start = region.start, region.end = region.end, distance = distance, rotate = rotate)		
+		# Normal.heatmap.lines <- make_boundaries_for_rotated_heatmap(Object = Range.to.df, 
+		# 	region.start = region.start, region.end = region.end, distance = distance, rotate = rotate)		
 	}else{
 		Normal.heatmap.lines <- make_boundaries_for_heatmap(Object = Range.to.df, region.start = region.start, 
 			region.end = region.end, distance = distance)		

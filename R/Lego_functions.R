@@ -12,12 +12,12 @@
 #' the same end and start to be in the overlap. Therefore, this criteria is 
 #' enforced as default behaviour.
 #' 
-#' @param ChromNames **Required**. 
+#' @param ChromNames \strong{Required} 
 #' A character vector containing the chromosomes to be considered for the 
 #' dataset. This string is used to verify the presence of all chromosomes in the
 #' provided bitable. 
 #' 
-#' @param BinTable **Required**. 
+#' @param BinTable \strong{Required}
 #' A string containing the path to the file to load as the binning table for the
 #' Hi-C experiment. The number of entries per chromosome defines the dimension 
 #' of the associated Hi-C data matrices. For example, if chr1 contains 250 
@@ -32,66 +32,134 @@
 #' 
 #' It is recommended to always use binning tables where the end and start of 
 #' consecutive ranges are not the same. If they are the same, this may lead to
-#' **unexpected behaviour** when using the GenomicRanges "any" overlap function.
+#' \strong{unexpected behaviour} when using the GenomicRanges "any" overlap 
+#' function.
 #'
-#' @param Output.Filename **Required**.
+#' @param Output.Filename \strong{Required}
 #' A string specifying the location and name of the HDF file to create. If path
 #' is not provided, it will be created in the current working directory.
 #' 
-#' @param bin.delim **Optional**. Defaults to tabs.
+#' @param bin.delim \strong{Optional}. Defaults to tabs.
 #' A character vector of length 1 specifying the delimiter used in the file 
 #' containing the binning table.
 #' 
-#' @param col.index **Optional**. Default "c(1,2,3)".
+#' @param col.index \strong{Optional}. Default "c(1,2,3)".
 #' A character vector of length 3 containing the indexes of the required columns
 #' in the binning table. the first index, corresponds to the chr column, the
 #' second to the start column and the third to the end column.
 #' 
-#' @param impose.discontinuity **Optional**. Default TRUE.
+#' @param impose.discontinuity \strong{Optional}. Default TRUE.
 #' If TRUE, this parameter ensures a check to make sure that required the end
 #' and start coordinates of consecutive entries are not the same per chromosome.
 #' 
-#' @param ChunkSize **Optional**.
+#' @param ChunkSize \strong{Optional}.
 #' A numeric vector of length 1. If provided, the HDF dataset will use this 
 #' value as the chunk size, for all matrices. By default, the ChunkSize is 
 #' set to matrix dimensions/100. 
 #' 
-#' @param exec **Optional**. Default cat.
+#' @param exec \strong{Optional}. Default cat.
 #' A string specifying the program or expression to use for reading the file.
 #' For bz2 files, use bzcat and for gunzipped files use zcat.
 #' 
-#' @param remove.existing **Optional**. Default FALSE.
+#' @param remove.existing \strong{Optional}. Default FALSE.
 #' If TRUE, will remove the HDF file with the same name and create a new one.
 #' By default, it will not replace existing files.
 #' 
 #' @details The structure of the HDF file is as follows: 
 #' The structure contains three major groups which are then hierarchically
 #' nested with other groups to finally lead to the corresponding datasets.  
-#' _Base.matrices_ **group**
-#'      _chromosome_ **group**
-#'          _chromosome_ **group**, **Attributes:** Filename, Min, Max, Done
-#'              matrix **dataset**
-#'              bin.coverage **dataset**
-#'              row.sums **dataset**
-#'              sparsity **dataset**
-#' _Base.ranges_ **group**
-#'      _Bintable_ **group**
-#'          ranges **dataset**
-#'          offsets **dataset**
-#'          lengths **dataset**
-#'          chr.names **dataset**
-#'      _YourRangesTable_ **group**
-#'          ranges **dataset**
-#'          offsets **dataset**
-#'          lengths **dataset**
-#'          chr.names **dataset**
-#' _Base.metadata_ **group**
-#'      chromosomes **dataset**
-#'      YourMetadataTable **dataset**
+#' \itemize{
+#'    \item Base.matrices - \strong{group} For storing Hi-C matrices
+#'    \itemize{
+#'        \item chromosome - \strong{group}
+#'        \item chromosome - \strong{group}
+#'        \itemize{
+#'            \item attributes - \strong{attribute}
+#'            \itemize{
+#'                \item Filename - Name of the file
+#'                \item Min - min value of Hi-C matrix
+#'                \item Max - max value of Hi-C matrix
+#'                \item sparsity - specifies if this is a sparse matrix
+#'                \item distance - max distance of data from main diagonal
+#'                \item Done - specifies if a matrix has been loaded
+#'            }
+#'            \item matrix - \strong{dataset} - contains the matrix
+#'            \item bin.coverage - \strong{dataset} - proportion of cells with
+#' values greater than 0
+#'            \item row.sums - \strong{dataset} - total sum of all values in a 
+#' row
+#'            \item sparsity - \strong{dataset} - proportion of non-zero cells 
+#' near the diagonal
+#'        }
+#'    }
+#'    \item Base.ranges - \strong{group}, Ranges tables for quick and easy 
+#' access. Additional ranges tables are added here under separate group names.
+#'    \itemize{
+#'        \item Bintable - \strong{group} - The main binning table associated to
+#' a Lego.
+#'        \itemize{
+#'            \item ranges - \strong{dataset} - Contains the three main columns
+#' chr, start and end. 
+#'            \item offsets - \strong{dataset} - first occurence of any given 
+#' chromosome in the ranges dataset.
+#'            \item lengths - \strong{dataset} - Number of occurences of that
+#' chromosome
+#'            \item chr.names - \strong{dataset} - What chromosomes are present
+#' in the given ranges table.
+#'        }
+#'    }
+#'    \item Base.metadata - \strong{group}, A place to store metadata info
+#'    \itemize{
+#'        \item chromosomes - \strong{dataset} - Metadata information specifying
+#' the chromosomes present in this particular Lego file.
+#'        \item other metadata tables.
+#'    }
+#'}
+#' @return This function will generate the target Lego file. If completed, the
+#' function will return TRUE.
+#' 
+#' @examples 
+#' Bintable.path <- system.file("extdata", 
+#' "Bintable_40kb.txt.gz", package = "HiCLegos")
+#' Chromosomes <- "chr19"
+#' CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path,
+#' Output.Filename = "test.hdf", exec = "gunzip -c", remove.existing = TRUE)
+#' 
+#' \dontrun{
+#' Bintable.path <- system.file("extdata", 
+#' "Bintable_40kb.txt.gz", package = "HiCLegos")
+#' Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
+#' CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
+#' impose.discontinuity=TRUE, col.index = c(1,2,3),
+#' Output.Filename = "test.hdf", exec = "gunzip -c", remove.existing = TRUE)
+#' 
+#' This will cause an error as the file located at Bintable.path,
+#' contains coordinates for only chromosome 19. For this code to work, either
+#' all other chromosomes need to be removed from the Chromosomes variable or
+#' coordinate information for the other chromosomes need to be provided.
+#' 
+#' Similarly vice-versa is also true. If the Bintable contains data for other
+#' chromosomes, but they were not listed in ChromNames, this will cause an 
+#' error.
+#' 
+#' Keep in mind that if the end coordinates and start coordinates of adjacent
+#' ranges are not separated by at least a value of 1, then 
+#' impose.discontinuity = TRUE will likely cause an error to occur. 
+#' This may seem obnoxious, but GenomicRanges by default will consider an 
+#' overlap of 1 bp as an overlap. Therefore, to be certain that ranges which 
+#' should not be, are not being targeted during retrieval operations, a check 
+#' is initiated to make sure that adjacent ends and starts are not 
+#' overlapping. 
+#' To load continuous ranges, use impose.discontinuity = FALSE.
+#' 
+#' Also note, that col.index determines which columns to use for chr, start 
+#' and end. Therefore, the original binning table may have 10 or 20 columns,
+#' but it only requires the first three in order of chr, start and end.
+#' }
+#' 
 CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL, 
     Output.Filename=NULL, exec="cat", remove.existing=FALSE){
-
     H5close()
     Dir.path <- dirname(Output.Filename)
     Filename <- basename(Output.Filename)
@@ -159,28 +227,37 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                 name = Reference.object$hdf.matrix.name, dims = Dims, maxdims = Dims)
         }
     }
+    return(TRUE)
 }
 
 #' Get the chrominfo for the Hi-C experiment.
 #' 
 #' `Lego_get_chrominfo` fetches the associated chrominfo table for the 
-#' Lego (HDF) it is associated to. 
+#' Lego it is associated to. 
 #' 
 #' @param Lego **Required**.
 #' A string specifying the path to the Lego store created with CreateLego.
 #' 
-#' @return A three column file containing chromosomes, nrows and length. 
-#' chromosomes corresponds to all chromosomes in the provided bintable, nrows
-#' corresponds to the number of entries in the bintable or dimension for that 
-#' chromosome in the Hi-C matrix. And length is the total bp length of the same
+#' @return A three column data.frame containing chromosomes, nrows and length. 
+#' 
+#' chromosomes corresponds to all chromosomes in the provided bintable.
+#' 
+#' nrows corresponds to the number of entries in the bintable or dimension 
+#' for that chromosome in a Hi-C matrix. 
+#' 
+#' Length is the total bp length of the same
 #' chromosome (max value for that chromosome in the bintable).
+#' 
+#' @examples 
+#' Lego.file = system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_get_chrominfo(Lego = Lego.file)
+#' 
 Lego_get_chrominfo <- function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     Dataset <- ._Lego_Get_Something_(Group.path = Reference.object$hdf.metadata.root, 
         Lego = Lego, Name = Reference.object$metadata.chrom.dataset, return.what = "data")
     return(Dataset)
 }
-
 
 #' Creates a ranges object from provided vectors.
 #' 
@@ -205,6 +282,16 @@ Lego_get_chrominfo <- function(Lego = NULL){
 #' @param Names **Optional**.
 #' A 1 dimensional character vector of size N specifying the names of the 
 #' ranges. If not provided, this will be set to the default chr:start:end.
+#' 
+#' @return A GenomicRanges object with the previous sort order being preserved
+#' 
+#' @examples
+#' 
+#' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
+#' Start <- c(10000,20000,40000,50000,60000)
+#' End <- c(10001,20001,40001,50001,60001)
+#' Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
+#' 
 Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL, 
     Names=NULL){
     Reference.object <- GenomicMatrix$new()
@@ -222,7 +309,7 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL,
     return(Object)
 }
 
-#' Perpetually store a ranges object in the Lego store.
+#' Store a ranges object in the Lego store.
 #' 
 #' `Lego_add_ranges` loads a GRanges object into the Lego store.
 #' 
@@ -234,15 +321,43 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL,
 #' two additional columns will be present. These are the strand and width
 #' columns that are obtained when a ranges is converted into a data.frame. 
 #' Users can ignore these columns.
-#' 
-#' @param Lego **Required**.
-#' A string specifying the path to the Lego store created with CreateLego.
-#' 
+#'  
 #' @param ranges **Required**.
 #' An object of class ranges specifying the ranges to store in the Lego.
 #' 
 #' @param rangekey **Required**.
-#' The name to use for the object within the Lego store.
+#' The name to use for the ranges within the Lego store.
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @examples
+#' Lego.file <- "test.hdf"
+#' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
+#' Start <- c(10000,20000,40000,50000,60000)
+#' End <- c(10001,20001,40001,50001,60001)
+#' Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
+#' Lego_add_ranges(Lego = Lego.file, ranges = Test_ranges, 
+#' rangekey = "test_ranges")
+#' 
+#' \dontrun{
+#' 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
+#' Start <- c(10000,20000,40000,50000,60000)
+#' End <- c(10001,20001,40001,50001,60001)
+#' Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
+#' Lego_add_ranges(Lego = Lego.file, ranges = Test_ranges, 
+#' rangekey = "test_ranges")
+#' 
+#' This will generate an error, as a ranges by the same name already exists
+#' inside this file. You cannot remove objects from the Lego store, so users
+#' are advised to use meaningful names to store their ranges. 
+#' 
+#' While it is possible to remove data from an HDF file, it isn't removed in
+#' reality. It is only unlinked and keeps hogging a lot of space.
+#' 
+#' }
+#' 
 Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
@@ -274,10 +389,16 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
 #' 
 #' `Lego_list_rangekeys` lists the names of all ranges associated to a Lego.
 #'  
-#' @param Lego **Required**.
-#' A string specifying the path to the Lego store created with CreateLego.
+#' @return A one dimensional character vector of length x specifying the names
+#' of all ranges currently present in the file.
 #' 
-#' @return A one dimensional character vector of length x 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @examples
+#' 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_list_rangekeys(Lego = Lego.file)
+#'  
 Lego_list_rangekeys = function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     Handler <- ._Lego_Get_Something_(Group.path = Create_Path(Reference.object$hdf.ranges.root), 
@@ -290,14 +411,19 @@ Lego_list_rangekeys = function(Lego = NULL){
 #' 
 #' `Lego_rangekey_exists` checks for the presence of a particular ranges with
 #' a certain name.
-#'  
-#' @param Lego **Required**.
-#' A string specifying the path to the Lego store created with CreateLego.
 #' 
 #' @param rangekey **Required**.
 #' A string specifying the name of the ranges to check for.
 #' 
+#' @inheritParams Lego_get_chrominfo
+#' 
 #' @return A logical vector of length 1 with either TRUE or FALSE values. 
+#' 
+#' @examples
+#' 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_rangekey_exists(Lego = Lego.file, rangekey = "Bintable")
+#' 
 Lego_rangekey_exists = function(Lego = NULL, rangekey = NULL){
     Keys <- Lego_list_rangekeys(Lego = Lego)
     return(rangekey %in% Keys)
@@ -308,16 +434,21 @@ Lego_rangekey_exists = function(Lego = NULL, rangekey = NULL){
 #' `Lego_list_ranges_mcols` will list the metadata columns of the specified
 #' ranges if it is present in the Lego store. 
 #' 
-#' @param Lego **Required**.
-#' A string specifying the path to the Lego store created with CreateLego.
-#' 
 #' @param rangekey **Optional**.
 #' A string specifying the name of the ranges. If not present, the metadata
-#' columns of all ranges will be listed. 
+#' columns of all ranges will be listed.
+#'  
+#' @inheritParams Lego_get_chrominfo
 #' 
 #' @return if no metadata columns are present, NA. If metadata columns are
 #' present, a data.frame object containing the name of the ranges and the 
 #' associated metadata column name.
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_list_ranges_mcols(Lego = Lego.file, rangekey = "test_ranges")
+#' 
+#' 
 Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     RangeKeys <- Lego_list_rangekeys(Lego = Lego)
@@ -346,8 +477,7 @@ Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
 #' `Lego_list_matrices` will list all chromosomal pair matrices from the Lego
 #' store, with their associated filename, value range, done status and sparse 
 #' 
-#' @param Lego **Required**.
-#' A string specifying the path to the Lego store created with CreateLego.
+#' @inheritParams Lego_get_chrominfo
 #' 
 #' @return Returns a data.frame object with columns chr1, chr2 corresponding 
 #' to chromosome pairs, and the associated attributes. filename corresponds to
@@ -355,6 +485,11 @@ Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
 #' minimum and maximum values in the matrix, done is a logical value 
 #' specifying if a matrix has been loaded and sparsity specifies if a matrix
 #' is defined as a sparse matrix.
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_list_matrices(Lego = Lego.file)
+#' 
 Lego_list_matrices = function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
@@ -389,10 +524,7 @@ Lego_list_matrices = function(Lego = NULL){
 #' Strand columns may appear as metadata columns. These will most likely be 
 #' artifacts from converting the original ranges object to a data.frame.
 #' 
-#' @section Arguments
-#' 
-#' @param Lego **Required**.
-#' A string specifying the path to the Lego store created with CreateLego.
+#' @inheritParams Lego_get_chrominfo
 #' 
 #' @param chr **Optional**.
 #' A chr string specifying the chromosome to select from the ranges.
@@ -402,6 +534,11 @@ Lego_list_matrices = function(Lego = NULL){
 #' 
 #' @return Returns a GRanges object with the associated metadata columns that
 #' may have been present in the Ranges object. 
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_get_ranges(Lego = Lego.file, chr = "chr19", rangekey = "Bintable")
+#' 
 Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     Reference.object <- GenomicMatrix$new()
     if(is.null(rangekey) | is.null(Lego)){
@@ -453,7 +590,6 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     }
     return(Dataset)
 }
-
 
 #' Returns the binning table associated to the Hi-C experiment.
 #' 
@@ -631,6 +767,15 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
 #' @param sparsity.bins **Optional**. Default 100
 #' With regards to computing the sparsity.index, this parameter decides the 
 #' number of bins to scan from the diagonal. 
+#' 
+#' @examples
+#' 
+#' Lego.file <- "test.hdf"
+#' Matrix.file <- system.file("extdata", "IMR90_RepA_ICEd_40000_chr19.mat.gz", 
+#' package = "HiCLegos")
+#' Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
+#' matrix.file = Matrix.file, delim = " ", exec = "gunzip -c")
+#' 
 Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, matrix.file = NULL, delim = " ", exec = NULL,  
     remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, distance = NULL, sparsity.bins = 100){
     Reference.object <- GenomicMatrix$new()

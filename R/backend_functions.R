@@ -22,9 +22,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
                 self$hdf.ranges.chr.name, self$hdf.ranges.offset.name)
             return(Protect)
         },
-        matrices.chrom.attributes = c("filename","min","max","sparsity","done"),
-        matrices.chrom.attributes.dtype = c("character","double","double","integer","integer"),
-        matrices.chrom.attributes.dims = list(1,1,1,1,1),
+        matrices.chrom.attributes = c("filename","min","max","sparsity","distance","done"),
+        matrices.chrom.attributes.dtype = c("character","double","double","integer","integer","integer"),
+        matrices.chrom.attributes.dims = list(1,1,1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
         GeneralFileSeparator = "_",
@@ -197,6 +197,22 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Batch.size[Batch.size<1] <- 1
     return(Batch.size)
 }
+._Do_rbind_on_matrices_of_different_sizes_ <- function(Matrix.top = NULL, Matrix.bottom = NULL, 
+    row.length = NULL, col.length = NULL, top.coords = NULL, bottom.coords = NULL){
+    if(is.null(Matrix.top)){
+        return(Matrix.bottom)
+    }
+    if(bottom.coords[2] != top.coords[2]){
+        Makeup.col <- bottom.coords[2] - top.coords[2]
+        Matrix.top <- cbind(Matrix.top,matrix(NA,nrow = nrow(Matrix.top), ncol = Makeup.col))
+    }
+    if(bottom.coords[1] != top.coords[1]){
+        Makeup.col <- bottom.coords[1] - top.coords[1]
+        Matrix.bottom <- cbind(matrix(NA,nrow = nrow(Matrix.bottom), ncol = Makeup.col),Matrix.bottom)   
+    }
+    Matrix.return <- rbind(Matrix.top,Matrix.bottom)
+    return(Matrix.return)
+}
 ._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
     chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
     distance = NULL, sparsity.bins = 100){
@@ -206,7 +222,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         Sparsity.bins = sparsity.bins
     }
     Command <- paste(exec,Matrix.file,sep=" ")
-    Start.row <- 0
+    Start.row <- 1
+    Start.col <- 1
+    Set.col <- TRUE
     Path.to.file <- Lego
     Cumulative.data <- NULL
     Cumulative.indices <- NULL
@@ -234,11 +252,30 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         Skippity <- c(0,Skippity.cumsum[-length(Skippity.cumsum)])
     }
     i<-1
+    if(is.null(distance)){
+        distance <- chr2.len
+    }
+    top.coords <- NULL
+    bottom.coords <- NULL
+    Drop.what <- c(1:chr2.len)
+
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
+        Col.upper.limit <- ifelse(Iter + distance > chr2.len, chr2.len, Iter + distance)
+        Col.lower.limit <- ifelse(((Skip+1) - distance) <= 0, 1, (Skip - distance))
+        Drop.what.sub <- Drop.what[Drop.what < Col.lower.limit | Drop.what > Col.upper.limit]
+        if(length(Drop.what.sub) == 0){
+            Drop.what.sub <- NULL
+        }
+        if(Set.col){
+            Start.col <- Col.lower.limit
+            Set.col <- FALSE
+        }
+        bottom.coords <- c(Col.lower.limit, Col.upper.limit)
         Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, na.strings="NA", 
-            stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", showProgress=FALSE))
+            stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", drop = Drop.what.sub, 
+            showProgress=TRUE))
         cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
         Bin.coverage <- c(Bin.coverage,sapply(1:nrow(Matrix),function(x){
             Vec.sub <- Matrix[x,]
@@ -262,17 +299,20 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         if(Matrix.range[2] < Row.extent[2] | is.na(Matrix.range[2])){
             Matrix.range[2] <- Row.extent[2]
         }
-        Cumulative.data <- rbind(Cumulative.data,Matrix)
+        Cumulative.data <- ._Do_rbind_on_matrices_of_different_sizes_(Matrix.top = Cumulative.data, 
+            Matrix.bottom = Matrix, top.coords = top.coords, bottom.coords = bottom.coords)
+        top.coords <- bottom.coords
         Obj.size <- object.size(Cumulative.data)
         if(Obj.size >= Reference.object$Max.vector.size | i == length(Iterations)){
-            Start <- c(Start.row+1,1) 
+            Start <- c(Start.row,Start.col) 
             Stride <- c(1,1)
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
             cat("Inserting Data at location:",Start[1],"\n")
             cat("Data length:",Count[1],"\n")
             ._Lego_Put_Something_(Group.path=Group.path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
                 data = Cumulative.data, Start = Start, Stride = Stride, Count = Count)
-            Start.row <- Start.row+Count[1]
+            Start.row <- Start.row + Count[1]
+            Set.col <- TRUE
             Cumulative.data <- NULL
             cat("Loaded ",Obj.size," bytes of data...\n")
         }
@@ -285,123 +325,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
     }
     Attributes <- Reference.object$matrices.chrom.attributes
-    Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(TRUE))
+    Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(distance),as.integer(TRUE))
     WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
 }
-
-
-
-
-
-
-
-
-# ._ProcessMatrix_ = function(Read.file = NULL, delim=" ", exec= " ", fix.num.rows.at=2000,
-#     is.spa){
-#     require(data.table)
-
-#     Chromosomes.all <- c(Chromosome1,Chromosome2)
-#     if(is.null(exec)){
-#         stop("exec takes as input the shell command to be used by data.table for reading")
-#     }
-#     if((!is.null(Chromosome1) & !is.null(Chromosome2))){
-#         private$CheckForChromosomes(Chrom1=Chromosome1,Chrom2=Chromosome2)
-#     }
-#     if(!is.null(Filename)){
-#         Command <- paste(exec,Filename,sep=" ")
-#         Start.row <- 0
-#         Path.to.file <- file.path(private$Output.Directory,private$Output.Filename)
-#         Chrom1.ranges <- self$GetRangesByChromosome(RangeKey=private$Bintable.Key,Chrom=Chromosome1)
-#         Chrom2.ranges <- self$GetRangesByChromosome(RangeKey=private$Bintable.Key,Chrom=Chromosome2)
-#         Chrom1.len <- length(Chrom1.ranges)
-#         Chrom2.len <- length(Chrom2.ranges)
-#         Chrom1.Group <- private$ReturnH5GroupHandler(Groups=c(private$hdf.matrices,Chromosome1))
-#         Cumulative.data <- NULL
-#         Cumulative.distances.data <- NULL
-#         Cumulative.indices <- NULL
-#         Matrix.range <- c(NA,NA)
-#         NumLines <- private$FindLineNumbers(Row.len=Chrom1.len,Col.len=Chrom2.len)
-#         if(NumLines <= fix.num.rows.at){
-#             NumLines <- fix.num.rows.at
-#         }
-#         if(Chrom1.len <= NumLines){
-#             NumLines <- Chrom1.len
-#         }
-#         Bin.coverage <- NULL
-#         Row.sums <- NULL
-#         Sparsity.Index <- NULL
-#         Iterations.number <- Chrom1.len / NumLines
-#         Iterations <- rep(NumLines,floor(Iterations.number))
-#         if(floor(Iterations.number)!=ceiling(Iterations.number)){
-#             cumulative <- sum(Iterations)
-#             Iterations <- c(Iterations,(Chrom1.len-cumulative))
-#         }
-#         Skippity<-0
-#         if(length(Iterations)>1){
-#             Skippity.cumsum <- cumsum(Iterations)
-#             Skippity <- c(0,Skippity.cumsum[1:(length(Skippity.cumsum)-1)])
-#         }
-#         i<-1
-#         while(i<=length(Iterations)) {
-#             Iter <- Iterations[i]
-#             Skip <- Skippity[i]
-#             Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, na.strings="NA", 
-#                 stringsAsFactors=FALSE, skip=Skip,verbose=FALSE, dec=".",
-#                 showProgress=FALSE))
-#             cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
-#             Bin.coverage <- c(Bin.coverage,sapply(1:nrow(Matrix),function(x){
-#                 Vec.sub <- Matrix[x,]
-#                 PercentGTZero(Vec.sub)
-#             }))
-#             Row.sums <- c(Row.sums,sapply(1:nrow(Matrix),function(x){
-#                 Vec.sub <- Matrix[x,]
-#                 ComputeRowSums(Vec.sub)
-#             }))
-#             if(self$is.sparse() & Chromosome1==Chromosome2){
-#                 Sparsity.Index <- c(Sparsity.Index,sapply(1:nrow(Matrix),function(x){
-#                     Vec.sub <- Matrix[x,]
-#                     sparsity.bin.idexes <- x + Skip
-#                     SparsityIndex(x=Vec.sub,index=sparsity.bin.idexes,length=Chrom2.len)
-#                 }))
-#             }
-#             Row.extent <- ComputeMinMax(Matrix)
-#             if(Matrix.range[1] > Row.extent[1] | is.na(Matrix.range[1])) {
-#                 Matrix.range[1] <- Row.extent[1]
-#             }
-#             if(Matrix.range[2] > Row.extent[2] | is.na(Matrix.range[2])){
-#                Matrix.range[2] <- Row.extent[2]
-#             }
-#             Cumulative.data <- rbind(Cumulative.data,Matrix)
-#             Obj.size <- object.size(Cumulative.data)
-#             if(Obj.size>=private$Max.vector.size | i==length(Iterations)){
-#                 Start <- c(Start.row+1,1) 
-#                 Stride <- c(1,1)
-#                 Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
-#                 cat("Inserting Data at location:",Start[1],"\n")
-#                 cat("Data length:",Count[1],"\n")
-#                 private$InsertIntoDataset(Connection=Chrom1.Group,
-#                     Chrom=Chromosome2,Data=Cumulative.data,Start=Start,Stride=Stride,Count=Count)
-#                 Start.row <- Start.row+Count[1]
-#                 Cumulative.data <- NULL
-#                 cat("Loaded ",Obj.size," bytes of data...\n")
-                
-#             }
-#             cat("Read ",(Skip+Iter),"records...\n")
-#             i<-i+1
-#         }
-#         H5Gclose(Chrom1.Group)
-#         private$CloseH5FileConnection()
-#         # cat(length(Bin.coverage),"\n")
-#         private$AddMetaDataToRanges(RangeKey=private$Bintable.Key,Chrom=Chromosome1,Column=Bin.coverage,
-#             Col.Name=paste(Chromosome2,"cov",sep="."),Replace=TRUE,na.function=as.numeric)
-#         # cat(length(Row.sums),"\n")
-#         private$AddMetaDataToRanges(RangeKey=private$Bintable.Key,Chrom=Chromosome1,Column=Row.sums,
-#             Col.Name=paste(Chromosome2,"sum",sep="."),Replace=TRUE,na.function=as.numeric)
-#         if((Chromosome1 == Chromosome2) & self$is.sparse()){
-#             private$AddMetaDataToRanges(RangeKey=private$Bintable.Key,Chrom=Chromosome1,Column=Sparsity.Index,
-#                 Col.Name=paste("sparsity","idx",sep="."),Replace=TRUE,na.function=as.numeric)                    
-#         }
-#         private$AddFileToList(Key1=Chromosome1,Key2=Chromosome2,Value=normalizePath(Filename))
-#         private$AddDoneForChromosome(Key1=Chromosome1,Key2=Chromosome2)
-#     }
-# }

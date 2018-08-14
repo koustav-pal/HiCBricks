@@ -11,8 +11,15 @@ Lego_list_rangekeys(Lego = NULL)
 A string specifying the path to the Lego store created with CreateLego.}
 }
 \value{
-A one dimensional character vector of length x
+A one dimensional character vector of length x specifying the names
+of all ranges currently present in the file.
 }
 \description{
 \code{Lego_list_rangekeys} lists the names of all ranges associated to a Lego.
+}
+\examples{
+
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_list_rangekeys(Lego = Lego.file)
+ 
 }

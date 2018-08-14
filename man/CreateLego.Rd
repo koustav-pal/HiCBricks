@@ -10,12 +10,12 @@ CreateLego(ChromNames = NULL, BinTable = NULL, bin.delim = "\\t",
   remove.existing = FALSE)
 }
 \arguments{
-\item{ChromNames}{\strong{Required}.
+\item{ChromNames}{\strong{Required}
 A character vector containing the chromosomes to be considered for the
 dataset. This string is used to verify the presence of all chromosomes in the
 provided bitable.}
 
-\item{BinTable}{\strong{Required}.
+\item{BinTable}{\strong{Required}
 A string containing the path to the file to load as the binning table for the
 Hi-C experiment. The number of entries per chromosome defines the dimension
 of the associated Hi-C data matrices. For example, if chr1 contains 250
@@ -30,7 +30,8 @@ associated parameters. The columns of importance are chr, start and end.
 
 It is recommended to always use binning tables where the end and start of
 consecutive ranges are not the same. If they are the same, this may lead to
-\strong{unexpected behaviour} when using the GenomicRanges "any" overlap function.}
+\strong{unexpected behaviour} when using the GenomicRanges "any" overlap
+function.}
 
 \item{bin.delim}{\strong{Optional}. Defaults to tabs.
 A character vector of length 1 specifying the delimiter used in the file
@@ -50,7 +51,7 @@ A numeric vector of length 1. If provided, the HDF dataset will use this
 value as the chunk size, for all matrices. By default, the ChunkSize is
 set to matrix dimensions/100.}
 
-\item{Output.Filename}{\strong{Required}.
+\item{Output.Filename}{\strong{Required}
 A string specifying the location and name of the HDF file to create. If path
 is not provided, it will be created in the current working directory.}
 
@@ -61,6 +62,10 @@ For bz2 files, use bzcat and for gunzipped files use zcat.}
 \item{remove.existing}{\strong{Optional}. Default FALSE.
 If TRUE, will remove the HDF file with the same name and create a new one.
 By default, it will not replace existing files.}
+}
+\value{
+This function will generate the target Lego file. If completed, the
+function will return TRUE.
 }
 \description{
 \code{CreateLego} creates the complete HDF5 on-disk data structure
@@ -77,25 +82,91 @@ enforced as default behaviour.
 The structure of the HDF file is as follows:
 The structure contains three major groups which are then hierarchically
 nested with other groups to finally lead to the corresponding datasets.
-\emph{Base.matrices} \strong{group}
-\emph{chromosome} \strong{group}
-\emph{chromosome} \strong{group}, \strong{Attributes:} Filename, Min, Max, Done
-matrix \strong{dataset}
-bin.coverage \strong{dataset}
-row.sums \strong{dataset}
-sparsity \strong{dataset}
-\emph{Base.ranges} \strong{group}
-\emph{Bintable} \strong{group}
-ranges \strong{dataset}
-offsets \strong{dataset}
-lengths \strong{dataset}
-chr.names \strong{dataset}
-\emph{YourRangesTable} \strong{group}
-ranges \strong{dataset}
-offsets \strong{dataset}
-lengths \strong{dataset}
-chr.names \strong{dataset}
-\emph{Base.metadata} \strong{group}
-chromosomes \strong{dataset}
-YourMetadataTable \strong{dataset}
+\itemize{
+\item Base.matrices - \strong{group} For storing Hi-C matrices
+\itemize{
+\item chromosome - \strong{group}
+\item chromosome - \strong{group}
+\itemize{
+\item attributes - \strong{attribute}
+\itemize{
+\item Filename - Name of the file
+\item Min - min value of Hi-C matrix
+\item Max - max value of Hi-C matrix
+\item sparsity - specifies if this is a sparse matrix
+\item distance - max distance of data from main diagonal
+\item Done - specifies if a matrix has been loaded
+}
+\item matrix - \strong{dataset} - contains the matrix
+\item bin.coverage - \strong{dataset} - proportion of cells with
+values greater than 0
+\item row.sums - \strong{dataset} - total sum of all values in a
+row
+\item sparsity - \strong{dataset} - proportion of non-zero cells
+near the diagonal
+}
+}
+\item Base.ranges - \strong{group}, Ranges tables for quick and easy
+access. Additional ranges tables are added here under separate group names.
+\itemize{
+\item Bintable - \strong{group} - The main binning table associated to
+a Lego.
+\itemize{
+\item ranges - \strong{dataset} - Contains the three main columns
+chr, start and end.
+\item offsets - \strong{dataset} - first occurence of any given
+chromosome in the ranges dataset.
+\item lengths - \strong{dataset} - Number of occurences of that
+chromosome
+\item chr.names - \strong{dataset} - What chromosomes are present
+in the given ranges table.
+}
+}
+\item Base.metadata - \strong{group}, A place to store metadata info
+\itemize{
+\item chromosomes - \strong{dataset} - Metadata information specifying
+the chromosomes present in this particular Lego file.
+\item other metadata tables.
+}
+}
+}
+\examples{
+Bintable.path <- system.file("extdata", 
+"Bintable_40kb.txt.gz", package = "HiCLegos")
+Chromosomes <- "chr19"
+CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path,
+Output.Filename = "test.hdf", exec = "gunzip -c", remove.existing = TRUE)
+
+\dontrun{
+Bintable.path <- system.file("extdata", 
+"Bintable_40kb.txt.gz", package = "HiCLegos")
+Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
+CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
+impose.discontinuity=TRUE, col.index = c(1,2,3),
+Output.Filename = "test.hdf", exec = "gunzip -c", remove.existing = TRUE)
+
+This will cause an error as the file located at Bintable.path,
+contains coordinates for only chromosome 19. For this code to work, either
+all other chromosomes need to be removed from the Chromosomes variable or
+coordinate information for the other chromosomes need to be provided.
+
+Similarly vice-versa is also true. If the Bintable contains data for other
+chromosomes, but they were not listed in ChromNames, this will cause an 
+error.
+
+Keep in mind that if the end coordinates and start coordinates of adjacent
+ranges are not separated by at least a value of 1, then 
+impose.discontinuity = TRUE will likely cause an error to occur. 
+This may seem obnoxious, but GenomicRanges by default will consider an 
+overlap of 1 bp as an overlap. Therefore, to be certain that ranges which 
+should not be, are not being targeted during retrieval operations, a check 
+is initiated to make sure that adjacent ends and starts are not 
+overlapping. 
+To load continuous ranges, use impose.discontinuity = FALSE.
+
+Also note, that col.index determines which columns to use for chr, start 
+and end. Therefore, the original binning table may have 10 or 20 columns,
+but it only requires the first three in order of chr, start and end.
+}
+
 }

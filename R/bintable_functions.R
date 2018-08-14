@@ -63,9 +63,9 @@ Validate_table = function(Table=NULL,colnames=NULL,colClasses=NULL,col.index=NUL
     if( any( Table[,'start'] > Table[,'end'] ) ){
         stop("start coordinates cannot be greater than end coordinates")
     }
-    if( is.unsorted(Table[,'chr']) ){
-        stop("Table must be sorted by chromosome!")
-    }
+    # if( is.unsorted(Table[,'chr']) ){
+    #     stop("Table must be sorted by chromosome!")
+    # }
 }
 CheckContinuousRanges = function(Table=NULL, StartCol=NULL, EndCol=NULL){
     Starts<-Table[,StartCol]
