@@ -2,7 +2,7 @@
 % Please edit documentation in R/Lego_functions.R
 \name{Lego_return_region_position}
 \alias{Lego_return_region_position}
-\title{Provides the corresponding overlapping position from the bintable.}
+\title{Provides the overlapping position (within) from the bintable.}
 \usage{
 Lego_return_region_position(Lego = NULL, region = NULL)
 }
@@ -21,5 +21,36 @@ overlapping regions in the bintable associated the Lego store.
 \description{
 \code{Lego_return_region_position} takes as input a human-readable coordinate
 format of the form chr:start:end and outputs the overlapping bintable
-positions.
+positions. This module does a "within" operation. So only bins which overlap
+completely with the region will be returned. This is not an iterable module,
+so the user has to make iterative calls to the module itself.
+}
+\section{Design choice}{
+
+This may seem to be a poor design choice at first glance, but I do not
+think this to be the case. By not being iterable, this function circumvents
+the problem of how to structure the data for the user. If one more element
+was accepted, the return object would have become a list, which increases the
+data structure complexity significantly for users who are just starting out
+with R. Therefore this problem is left for the users themselves to deal with.
+}
+
+\examples{
+
+Coordinate <- "chr19:1:1000000"
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Test_Run <- Lego_return_region_position(Lego = Lego.file, 
+region = Coordinate)
+
+\dontrun{
+
+Coordinate <- c("chr19:1:1000000","chr19:40000:2000000")
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Test_Run <- Lego_return_region_position(Lego = Lego.file, 
+region = Coordinate)
+
+This will generate an error because the module itself expects as input a
+vector of length 1. 
+
+}
 }

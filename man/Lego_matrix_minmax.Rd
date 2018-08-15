@@ -25,3 +25,8 @@ maximum finite real values in the matrix.
 \description{
 Return the value range of the matrix
 }
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_matrix_minmax(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19")
+
+}

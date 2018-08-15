@@ -84,7 +84,6 @@ get_chrom_info <- function(bin.table = NULL, chrom = NULL, FUN = NULL, col.name 
     Info <- sapply(chrom,function(x){
         FUN(bin.table[bin.table[,'chr']==x,col.name])
     })
-    # cat(chrom,"\n")
     names(Info) <- chrom
     return(Info)
 }

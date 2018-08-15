@@ -19,9 +19,14 @@ A character vector of length 1 specifying the chromosome corresponding to the
 columns of the matrix}
 }
 \value{
-Returns a character vector of length 1 specifying the initial
-filename of the matrix.
+Returns a character vector of length 1 specifying the filename of
+the currently loaded matrix.
 }
 \description{
 Return the filename of the loaded matrix
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_matrix_filename(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19")
+
 }

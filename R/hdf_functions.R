@@ -75,19 +75,23 @@ WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values 
     CloseH5Con(Handle = Lego.handler, type = on)
 }
 GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "group"){
+    Reference.object <- GenomicMatrix$new()
+    FUNCasts <- Reference.object$matrices.chrom.attributes.fun.cast
     Lego.handler <- ReturnH5Handler(Path = Path,File = File)
-    Attribute.val <- sapply(Attributes, function(An.attribute){
-        if(!H5Aexists(h5obj = Lego.handler, name = An.attribute)){
-            CloseH5Con(Handle = Lego.handler, type = on)
-            stop(An.attribute," not found.\n")
-        }
-        Attr.handle <- H5Aopen(h5obj = Lego.handler, name = An.attribute)
-        Attr.val <- H5Aread(Attr.handle)
-        H5Aclose(Attr.handle)
-        Attr.val
-    })
+    Attribute.df <- do.call(cbind,lapply(Attributes, function(An.attribute){
+            if(!H5Aexists(h5obj = Lego.handler, name = An.attribute)){
+                CloseH5Con(Handle = Lego.handler, type = on)
+                stop(An.attribute," not found.\n")
+            }
+            Attr.handle <- H5Aopen(h5obj = Lego.handler, name = An.attribute)
+            Attr.val <- H5Aread(Attr.handle)
+            H5Aclose(Attr.handle)
+            temp.df <- data.frame(attribute = FUNCasts(type = An.attribute)(Attr.val))
+            colnames(temp.df) <- An.attribute 
+            temp.df
+        }))
     CloseH5Con(Handle = Lego.handler, type = on)
-    return(Attribute.val)
+    return(Attribute.df)
 }
 # InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
 #     Start = NULL, Stride = NULL, Count = NULL){

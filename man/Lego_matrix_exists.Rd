@@ -2,8 +2,7 @@
 % Please edit documentation in R/Lego_functions.R
 \name{Lego_matrix_exists}
 \alias{Lego_matrix_exists}
-\title{Check if a chromosome pair exists. This helps if the user thinks that they
-may have made a mistake while creating the initial Lego file.}
+\title{Check if a chromosome pair exists.}
 \usage{
 Lego_matrix_exists(Lego = NULL, chr1 = NULL, chr2 = NULL)
 }
@@ -24,6 +23,17 @@ Returns a logical vector of length 1, specifying if the matrix exists
 or not.
 }
 \description{
-Check if a chromosome pair exists. This helps if the user thinks that they
-may have made a mistake while creating the initial Lego file.
+Matrices are created when the bintable is loaded and the chromosome names are
+provided. If a user is in doubt regarding whether a matrix is present or not
+it is useful to check this function. If the Bintable did not contain a
+particular chromosome, any matrices for that chromosome would not be present
+in the file
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_matrix_exists(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19") 
+
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_matrix_exists(Lego = Lego.file, chr1 = "chr19", chr2 = "chr20")
+
 }

@@ -25,6 +25,7 @@ ranges if it is present in the Lego store.
 }
 \examples{
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
-Lego_list_ranges_mcols(Lego = Lego.file, rangekey = "Bintable")
+Lego_list_ranges_mcols(Lego = Lego.file, rangekey = "test_ranges")
+
 
 }

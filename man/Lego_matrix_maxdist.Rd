@@ -23,5 +23,14 @@ Returns an integer vector of length 1, specifying the maximum
 distance loaded for that matrix
 }
 \description{
-Get the maximum loaded distance from the diagonal of any matrix.
+If values beyond a certain distance were not loaded in the matrix, this
+distance parameter is useful. This package by default will check this param
+to make sure that it is not returning non-existent data.
+
+\code{Lego_matrix_maxdist} will return this parameter.
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_matrix_maxdist(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19") 
+
 }

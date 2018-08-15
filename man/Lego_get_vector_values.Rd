@@ -12,10 +12,12 @@ Lego_get_vector_values(Lego = NULL, chr1 = NULL, chr2 = NULL,
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A string specifying the chromosome to subset on the rows}
+A character vector of length 1 specifying the chromosome corresponding to the
+rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A string specifying the chromosome to subset on the columns}
+A character vector of length 1 specifying the chromosome corresponding to the
+columns of the matrix}
 
 \item{xaxis}{\strong{Required}.
 A 1 dimensional vector containing the rows to retrieve. Gaps in this vector
@@ -27,8 +29,8 @@ A 1 dimensional vector containing the columns to retrieve. Gaps in this
 vector may result in unexpected behaviour as the values which are considered
 are min(yaxis) and max(yaxis) for retrieval.}
 
-\item{FUN}{\strong{Optional}.
-If provided a data transformation with FUN will be applied before the matrix
+\item{FUN}{\strong{Optional}. Default NULL
+If provided a data transformation with FUN will be applied before the vector
 is returned.}
 }
 \value{
@@ -45,3 +47,9 @@ under consideration will range from min(xaxis) to max(xaxis) on the rows or
 min(yaxis) to max(yaxis) on the columns.
 }
 
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19", 
+x.vector = c(1:10), y.vector = c(1:10))
+
+}

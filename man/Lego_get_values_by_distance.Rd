@@ -18,7 +18,7 @@ will be retrieved at a certain distance.}
 \item{distance}{\strong{Required}. 0 based.
 Fetch values separated by distance.}
 
-\item{constrain.region}{\strong{Optional}.
+\item{constrain.region}{\strong{Required}.
 A character vector of length 1 with the form chr:start:end specifying the
 region for which the distance values must be retrieved.}
 
@@ -36,5 +36,27 @@ constrain.region, FUN and distance from the main diagonal.
 }
 \description{
 \code{Lego_get_values_by_distance} can fetch values with or without transformation
-or subsetted by a certain distance.
+or subsetted by a certain distance. Please note, this module is not an
+iterable module.
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_values_by_distance(Lego = Lego.file, chr = "chr19", distance = 0)
+
+Failsafe_median <- function(x){
+     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
+     return(median(x))
+}
+
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_values_by_distance(Lego = Lego.file, chr = "chr19", distance = 4,
+FUN = Failsafe_median)
+
+}
+\seealso{
+\code{\link{Lego_get_matrix_within_coords}} to get matrix by using
+matrix coordinates, \code{\link{Lego_fetch_row_vector}} to get values in a
+certain row/col and subset them, \code{\link{Lego_get_vector_values}} to get
+values using matrix coordinates, \code{\link{Lego_get_matrix}} to get matrix
+by using matrix coordinates.
 }

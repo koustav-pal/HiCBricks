@@ -1,0 +1,10 @@
+._BackendVariables.R
+._bintable_functions.R
+.git
+.gitignore
+HiCLegos.Rproj
+._hdf_functions.R
+._Lego_functions.R
+._LICENSE
+._MajorWIP.R
+._OldGenomicMatrix.R

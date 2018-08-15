@@ -21,5 +21,5 @@ of all ranges currently present in the file.
 
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
 Lego_list_rangekeys(Lego = Lego.file)
- 
+
 }

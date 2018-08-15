@@ -7,7 +7,7 @@
 Lego_load_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
   matrix.file = NULL, delim = " ", exec = NULL,
   remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-  distance = NULL, sparsity.bins = 100)
+  sparsity.bins = 100)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -45,13 +45,6 @@ sparsity.index. The sparsity index measures the proportion of non-zero rows
 or columns at a certain distance from the diagonal (100) in cis interaction
 matrices.}
 
-\item{distance}{\strong{Optional}. Default NULL. Not implemented yet.
-For very high-resolution matrices, read times can become extremely slow and
-it does not make sense to load the entire matrix into the data structure, as
-after a certain distance, the matrix will become extremely sparse. If
-provided, only interactions upto a certain distance from the main diagonal
-will be loaded into the data structure.}
-
 \item{sparsity.bins}{\strong{Optional}. Default 100
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
@@ -65,6 +58,7 @@ Lego.file <- "test.hdf"
 Matrix.file <- system.file("extdata", "IMR90_RepA_ICEd_40000_chr19.mat.gz", 
 package = "HiCLegos")
 Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
-matrix.file = Matrix.file, delim = " ", exec = "gunzip -c")
+matrix.file = Matrix.file, delim = " ", exec = "gunzip -c", 
+remove.prior = TRUE)
 
 }

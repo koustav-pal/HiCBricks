@@ -24,6 +24,18 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         },
         matrices.chrom.attributes = c("filename","min","max","sparsity","distance","done"),
         matrices.chrom.attributes.dtype = c("character","double","double","integer","integer","integer"),
+        matrices.chrom.attributes.fun.cast = function(type = NULL){
+            as.logical.as.integer = function(x){
+                as.logical(as.integer(x))
+            }
+            TypeList <- list("filename" = as.character, 
+                "min" = as.double, 
+                "max" = as.double, 
+                "sparsity" = as.logical.as.integer, 
+                "distance" = as.integer, 
+                "done" = as.logical.as.integer)
+            return(TypeList[[type]])
+        },
         matrices.chrom.attributes.dims = list(1,1,1,1,1,1),
         bintable.attributes = c("stranded","names"),
         ranges.bintable.dataset = "bintable",
@@ -124,10 +136,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Start.list = NULL, Stride.list = NULL, Count.list = NULL, Data = NULL,
     Block.list = NULL, do.what = "fetch"){
     ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
-    if(any(sapply(ListOfArgs,!is.list))){
+    if(any(vapply(ListOfArgs,!is.list,TRUE))){
         stop("Start, Stride, Count, Block must be of type list.\n")
     }
-    if(unique(sapply(ListOfArgs,length))!=1){
+    if(unique(vapply(ListOfArgs,length,1))!=1){
         stop("Start, Stride, Count, Block must have same length.\n")
     }
     if(!is.vector(Data)){
@@ -213,6 +225,13 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Matrix.return <- rbind(Matrix.top,Matrix.bottom)
     return(Matrix.return)
 }
+
+._Process_matrix_by_distance <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, 
+    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
+    distance = NULL, sparsity.bins = 100){
+    
+}
+
 ._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
     chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
     distance = NULL, sparsity.bins = 100){
@@ -241,7 +260,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Sparsity.Index <- NULL
     Iterations.number <- chr1.len / NumLines
     Iterations <- rep(NumLines,floor(Iterations.number))
-
+    if(is.null(distance)){
+        distance <- chr2.len
+    }
     if(floor(Iterations.number)!=ceiling(Iterations.number)){
         cumulative <- sum(Iterations)
         Iterations <- c(Iterations,(chr1.len-cumulative))
@@ -252,45 +273,41 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         Skippity <- c(0,Skippity.cumsum[-length(Skippity.cumsum)])
     }
     i<-1
-    if(is.null(distance)){
-        distance <- chr2.len
-    }
-    top.coords <- NULL
-    bottom.coords <- NULL
+    # top.coords <- NULL
+    # bottom.coords <- NULL
     Drop.what <- c(1:chr2.len)
 
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
-        Col.upper.limit <- ifelse(Iter + distance > chr2.len, chr2.len, Iter + distance)
-        Col.lower.limit <- ifelse(((Skip+1) - distance) <= 0, 1, (Skip - distance))
-        Drop.what.sub <- Drop.what[Drop.what < Col.lower.limit | Drop.what > Col.upper.limit]
-        if(length(Drop.what.sub) == 0){
-            Drop.what.sub <- NULL
-        }
-        if(Set.col){
-            Start.col <- Col.lower.limit
-            Set.col <- FALSE
-        }
-        bottom.coords <- c(Col.lower.limit, Col.upper.limit)
+        # Col.upper.limit <- ifelse(Iter + distance > chr2.len, chr2.len, Iter + distance)
+        # Col.lower.limit <- ifelse(((Skip+1) - distance) <= 0, 1, (Skip - distance))
+        # Drop.what.sub <- Drop.what[Drop.what < Col.lower.limit | Drop.what > Col.upper.limit]
+        # if(length(Drop.what.sub) == 0){
+        #     Drop.what.sub <- NULL
+        # }
+        # if(Set.col){
+        #     Start.col <- Col.lower.limit
+        #     Set.col <- FALSE
+        # }
+        # bottom.coords <- c(Col.lower.limit, Col.upper.limit)
         Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, na.strings="NA", 
-            stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", drop = Drop.what.sub, 
-            showProgress=TRUE))
+            stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", showProgress=TRUE))
         cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
-        Bin.coverage <- c(Bin.coverage,sapply(1:nrow(Matrix),function(x){
+        Bin.coverage <- c(Bin.coverage,vapply(1:nrow(Matrix),function(x){
             Vec.sub <- Matrix[x,]
             ._Do_on_vector_PercentGTZero_(Vec.sub)
-        }))
-        Row.sums <- c(Row.sums,sapply(1:nrow(Matrix),function(x){
+        },1))
+        Row.sums <- c(Row.sums,vapply(1:nrow(Matrix),function(x){
             Vec.sub <- Matrix[x,]
             ._Do_on_vector_ComputeRowSums_(Vec.sub)
-        }))
+        },1))
         if(compute.sparsity){
-            Sparsity.Index <- c(Sparsity.Index,sapply(1:nrow(Matrix),function(x){
+            Sparsity.Index <- c(Sparsity.Index,vapply(1:nrow(Matrix),function(x){
                 Vec.sub <- Matrix[x,]
                 sparsity.bin.idexes <- sparsity.bins
                 ._Do_on_vector_SparsityIndex_(x=Vec.sub, index=x, sparsity.bins = sparsity.bins, length=chr2.len)
-            }))           
+            },1))
         }
         Row.extent <- ._Do_on_vector_ComputeMinMax_(Matrix)
         if(Matrix.range[1] > Row.extent[1] | is.na(Matrix.range[1])) {
@@ -299,12 +316,13 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         if(Matrix.range[2] < Row.extent[2] | is.na(Matrix.range[2])){
             Matrix.range[2] <- Row.extent[2]
         }
-        Cumulative.data <- ._Do_rbind_on_matrices_of_different_sizes_(Matrix.top = Cumulative.data, 
-            Matrix.bottom = Matrix, top.coords = top.coords, bottom.coords = bottom.coords)
-        top.coords <- bottom.coords
+        # Cumulative.data <- ._Do_rbind_on_matrices_of_different_sizes_(Matrix.top = Cumulative.data, 
+        #     Matrix.bottom = Matrix, top.coords = top.coords, bottom.coords = bottom.coords)
+        # top.coords <- bottom.coords
+        Cumulative.data <- rbind(Cumulative.data,Matrix)
         Obj.size <- object.size(Cumulative.data)
         if(Obj.size >= Reference.object$Max.vector.size | i == length(Iterations)){
-            Start <- c(Start.row,Start.col) 
+            Start <- c(Start.row,1)
             Stride <- c(1,1)
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
             cat("Inserting Data at location:",Start[1],"\n")

@@ -12,16 +12,18 @@ Lego_get_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A string specifying the chromosome to subset on the rows}
+A character vector of length 1 specifying the chromosome corresponding to the
+rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A string specifying the chromosome to subset on the columns}
+A character vector of length 1 specifying the chromosome corresponding to the
+columns of the matrix}
 
 \item{x.vector}{\strong{Required}.
-A one-dimensional numeric vector specifying the the rows to subset.}
+A one-dimensional numeric vector specifying the rows to subset.}
 
 \item{y.vector}{\strong{Required}.
-A one-dimensional numeric vector specifying the the columns to subset.}
+A one-dimensional numeric vector specifying the columns to subset.}
 
 \item{FUN}{\strong{Optional}.
 If provided a data transformation with FUN will be applied before the matrix
@@ -35,4 +37,17 @@ This may differ based on the operations with FUN.
 \code{Lego_get_matrix} will fetch a matrix subset between row values ranging from
 min(x.vector) to max(x.vector) and column values ranging from min(x.vector)
 to max(x.vector)
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19", 
+x.vector = c(1:10), y.vector = c(1:10))
+
+}
+\seealso{
+\code{\link{Lego_get_matrix_within_coords}} to get matrix by using
+matrix genomic coordinates, \code{\link{Lego_get_values_by_distance}} to get
+values separated at a certain distance, \code{\link{Lego_fetch_row_vector}}
+to getvalues in a certain row/col and subset them,
+\code{\link{Lego_get_vector_values}} to get values using matrix coordinates.
 }

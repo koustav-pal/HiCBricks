@@ -25,3 +25,8 @@ been loaded or not.
 \description{
 Check if a matrix has been loaded for a chromosome pair.
 }
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_matrix_isdone(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19")
+
+}

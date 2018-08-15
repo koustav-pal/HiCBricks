@@ -32,8 +32,26 @@ binned length. This may differ based on FUN.
 \description{
 \code{Lego_get_matrix_within_coords} will fetch a matrix subset after creating an
 overlap operation between both regions and the bintable associated to the
-Lego store. This function calls Lego_get_matrix.
+Lego store. This function calls \code{\link{Lego_get_matrix}}.
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_get_matrix_within_coords(Lego = Lego.file, 
+x.coords = "chr19:40000:2000000", y.coords = "chr19:40000:2000000")
+
+Lego_get_matrix_within_coords(Lego = Lego.file, 
+x.coords = "chr19:40000:2000000", y.coords = "chr19:40000:2000000", 
+FUN = mean)
+
+Lego_get_matrix_within_coords(Lego = Lego.file, 
+x.coords = "chr19:40000:2000000", y.coords = "chr19:40000:2000000", 
+FUN = median)
+ 
 }
 \seealso{
-Lego_get_matrix
+\code{\link{Lego_get_matrix}} to get matrix by using matrix
+coordinates, \code{\link{Lego_get_values_by_distance}} to get values
+separated at a certain distance, \code{\link{Lego_fetch_row_vector}} to get
+values in a certain row/col and subset them,
+\code{\link{Lego_get_vector_values}} to get values using matrix coordinates.
 }

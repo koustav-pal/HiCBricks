@@ -32,17 +32,28 @@ any considers any overlap (atleast 1 bp) between the provided ranges and the
 binning table.}
 }
 \value{
-Returns a named list corresponding to one entry for each unique
-chromosome present in the chr character vector. The list contains another
-list with length equal to the number of ranges present per chromosome.
-This list contains two named vectors, SubjectInfo and Indexes.
-SubjectInfo contains a ranges created out of the vector from any given
-position. Indexes contains a numeric vector corresponding to the rows/cols
-overlapping the given ranges.
+Returns a GenomicRanges object of same length as the chr, start, end
+vectors provided. The object is returned with an additional column, Indexes.
+Indexes is a column of class \code{\link[IRanges]{IntegerList}}, which is
+part of the larger \code{\link[IRanges]{AtomicList}} superset. This
+"Indexes" column can be accessed like a normal GRanges column with the
+additional list accessor [[]] in place of the normal vector accessor [].
 }
 \description{
-\code{Lego_fetch_range_index} constructs a ranges object and creates an overlap
-operation between the constructed ranges and the Hi-C experiment associated
-binning table finally returning a list of ranges with their corresponding
-indices in the binning table.
+\code{Lego_fetch_range_index} constructs a ranges object using
+\code{\link{Lego_make_ranges}}, creates an overlap operation using
+\code{\link[GenomicRanges]{findOverlaps}}, where the constructed ranges is
+the \emph{subject} and the Hi-C experiment associated binning table is the
+\emph{query}. The return of this object is a list of ranges with their
+corresponding indices in the binning table.
+}
+\examples{
+
+Chrom <- c("chr19","chr19")
+Start <- c(1,40000)
+End <- c(1000000,2000000)
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Test_Run <- Lego_fetch_range_index(Lego = Lego.file, chr = Chrom, start = Start, end = End)
+Test_Run$Indexes[[1]]
+
 }

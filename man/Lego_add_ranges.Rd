@@ -30,6 +30,7 @@ columns that are obtained when a ranges is converted into a data.frame.
 Users can ignore these columns.
 }
 \examples{
+
 Lego.file <- "test.hdf"
 Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)
@@ -37,5 +38,22 @@ End <- c(10001,20001,40001,50001,60001)
 Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
 Lego_add_ranges(Lego = Lego.file, ranges = Test_ranges, 
 rangekey = "test_ranges")
+
+\dontrun{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Chrom <- c("chrS","chrS","chrS","chrS","chrS")
+Start <- c(10000,20000,40000,50000,60000)
+End <- c(10001,20001,40001,50001,60001)
+Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
+Lego_add_ranges(Lego = Lego.file, ranges = Test_ranges, 
+rangekey = "test_ranges")
+
+This will generate an error, as a ranges by the same name already exists
+inside this file. You cannot remove objects from the Lego store, so users
+are advised to use meaningful names to store their ranges. 
+
+While it is possible to remove data from an HDF file, in actuality it is not 
+removed. It is only unlinked, but still keeps hogging space.
+}
 
 }
