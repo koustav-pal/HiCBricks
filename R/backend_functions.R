@@ -17,6 +17,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.chr.name = "chr.names",
         hdf.ranges.lengths.name = "lengths",
         Max.vector.size=104857600,
+        hdf.matrix.meta.cols = function(){
+            Temp <- c(self$hdf.matrix.coverage, self$hdf.matrix.rowSums, self$hdf.matrix.sparsity)
+            names(Temp) <- c("bin.cov","row.sums","sparse")
+        }
         hdf.ranges.protected.names = function(){
             Protect <- c(self$hdf.ranges.dataset.name, self$hdf.ranges.lengths.name, 
                 self$hdf.ranges.chr.name, self$hdf.ranges.offset.name)
@@ -96,10 +100,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     x[is.na(x) | is.infinite(x)] <- 0
     return(c(min(x),max(x)))
 }
-._Do_on_vector_SparsityIndex_ = function(x=NULL,index=NULL,sparsity.bins = NULL,length=NULL){
+._Do_on_vector_SparsityIndex_ = function(x=NULL,index=NULL,sparsity.bins = NULL){
     x[is.na(x) | is.infinite(x)] <- 0
     Range <- (index-sparsity.bins):(index+sparsity.bins)
-    Range <- Range[Range>0 & Range<length]
+    Range <- Range[Range>0 & Range<length(x)]
     Rows <- x[Range]
     return(length(Rows[Rows!=0])/length(Rows))
 }
@@ -225,11 +229,130 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Matrix.return <- rbind(Matrix.top,Matrix.bottom)
     return(Matrix.return)
 }
+._Create_file_connection = function(Filename=NULL,mode="r"){
+    if(grepl('$/.gz',Filename)){
+        connection=gzfile(Filename,open=mode)
+    }else if(grepl('$/.bz2',Filename)){
+        connection=bzfile(Filename,open=mode)
+        }else {
+            connection=file(Filename,mode)
+        }
+        return(connection)
+}
 
-._Process_matrix_by_distance <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, 
-    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
-    distance = NULL, sparsity.bins = 100){
-    
+._Compute_various_matrix_metrics <- function(Matrix = NULL, compute.sparsity=FALSE, 
+    sparsity.bins = 100, range = NULL){
+    Bin.coverage <- vapply(1:nrow(Matrix),function(x){
+        Vec.sub <- Matrix[x,]
+        ._Do_on_vector_PercentGTZero_(Vec.sub)
+    },1)
+    Row.sums <- vapply(1:nrow(Matrix),function(x){
+        Vec.sub <- Matrix[x,]
+        ._Do_on_vector_ComputeRowSums_(Vec.sub)
+    },1)
+    if(compute.sparsity){
+        Sparsity.Index <- vapply(1:nrow(Matrix),function(x){
+            Vec.sub <- Matrix[x,]
+            sparsity.bin.idexes <- sparsity.bins
+            ._Do_on_vector_SparsityIndex_(x=Vec.sub, index=x, sparsity.bins = sparsity.bins)
+        },1)
+    }else{
+        Sparsity.Index <- NULL
+    }
+    Row.extent <- ._Do_on_vector_ComputeMinMax_(Matrix)
+    if(range[1] > Row.extent[1] | is.na(range[1])) {
+        range[1] <- Row.extent[1]
+    }
+    if(range[2] < Row.extent[2] | is.na(range[2])){
+        range[2] <- Row.extent[2]
+    }
+    A.list <- list("bin.cov" = Bin.coverage, "row.sum" = Row.sums, 
+        "sparsity" = Sparsity.Index, "extent" = range)
+    return(A.list)
+}
+
+humanize_size <- function(x){
+    Size <- x/1024
+    if(Size < 1){
+        return(paste(x,"bytes"))
+    }
+    Size <- x/1024/1024
+    if(Size < 1){
+        return(paste(x/1024,"KB"))   
+    }
+    Size <- x/1024/1024/1024
+    if(Size < 1){
+        return(paste(x/1024/1024,"MB"))   
+    }
+    return(paste(x/1024/1024/1024,"GB"))
+}
+
+._Process_matrix_by_distance <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, Group.path = NULL,
+    chr1.len = NULL, chr2.len = NULL, num.rows = 2000, distance = NULL, is.sparse = NULL, compute.sparsity = NULL,
+     sparsity.bins = 100){
+    Reference.object <- GenomicMatrix$new()
+    if(is.sparse){
+        Sparsity.bins = sparsity.bins
+    }
+    Handler <- ._Create_file_connection(Filename = Matrix.file, mode = "r")
+    Start.row <- 1
+    Start.col <- 1
+    Row.Offset <- 0
+    Col.Offset <- 0
+    Path.to.file <- Lego
+    Matrix.range <- c(NA,NA)
+    if(chr1.len <= num.rows){
+        num.rows <- chr1.len
+    }
+    Bin.coverage <- NULL
+    Row.sums <- NULL
+    Sparsity.Index <- NULL
+    Matrix <- NULL
+    i <- 1
+    while(i<=chr1.len) {
+        Col.upper.limit <- ifelse((i + distance) > chr2.len, chr2.len, i + distance)
+        Col.lower.limit <- ifelse((i - distance) <= 0, 1, i - distance)
+        if(is.null(Matrix)){
+            Start.col <- Col.lower.limit
+            Col.Offset <- Col.lower.limit - 1
+            num.row.upper.limit <- ifelse((i + num.rows + distance) > chr2.len, chr2.len, i + num.rows + distance)
+            Matrix <- matrix(data = 0, nrow = num.rows, ncol = (num.row.upper.limit - Col.lower.limit + 1))
+        }
+        Vector <- scan(file=Handler, what=double(), sep=delim, nlines=1, quiet=TRUE)
+        Matrix[(i - Row.Offset),c((Col.lower.limit-Col.Offset):(Col.upper.limit-Col.Offset))] <- Vector[Col.lower.limit:Col.upper.limit]
+        if((i - Row.Offset) == num.rows){
+            Start <- c(Start.row,Start.col)
+            Stride <- c(1,1)
+            Count <- c(nrow(Matrix),ncol(Matrix))
+            Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, compute.sparsity = compute.sparsity, 
+                sparsity.bins = sparsity.bins, range = Matrix.range)
+            Matrix.range <- Metrics.list[["extent"]]
+            Bin.coverage <- c(Bin.coverage,Metrics.list[["bin.cov"]])
+            Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
+            Sparsity.Index <- c(Sparsity.Index,Metrics.list[["sparsity"]])
+
+            cat("Inserting Data at location:",Start[1],Start[2],"\n")
+            cat("Data length:",Count[1],"\n")
+            ._Lego_Put_Something_(Group.path=Group.path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
+                data = Matrix, Start = Start, Stride = Stride, Count = Count)
+            Start.row <- Start.row + Count[1]
+            Row.Offset <- Row.Offset + num.rows 
+            Object.size <- object.size(Matrix)
+            Matrix <- NULL
+            num.rows <- ifelse((i + num.rows) >= chr1.len, chr1.len - i, num.rows)
+            cat("Loaded",humanize_size(Object.size),"of data...\n")
+        }
+        i<-i+1
+    }
+    close(Handler)
+    ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
+    ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+    if(compute.sparsity){
+        ._Lego_WriteArray_(Lego = Lego, Path = Group.path, name = Reference.object$hdf.matrix.sparsity, object = Sparsity.Index)
+    }
+    Attributes <- Reference.object$matrices.chrom.attributes
+    Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(distance),as.integer(TRUE))
+    WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
 }
 
 ._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
@@ -280,45 +403,17 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
-        # Col.upper.limit <- ifelse(Iter + distance > chr2.len, chr2.len, Iter + distance)
-        # Col.lower.limit <- ifelse(((Skip+1) - distance) <= 0, 1, (Skip - distance))
-        # Drop.what.sub <- Drop.what[Drop.what < Col.lower.limit | Drop.what > Col.upper.limit]
-        # if(length(Drop.what.sub) == 0){
-        #     Drop.what.sub <- NULL
-        # }
-        # if(Set.col){
-        #     Start.col <- Col.lower.limit
-        #     Set.col <- FALSE
-        # }
-        # bottom.coords <- c(Col.lower.limit, Col.upper.limit)
         Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, na.strings="NA", 
             stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, dec=".", showProgress=TRUE))
         cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
-        Bin.coverage <- c(Bin.coverage,vapply(1:nrow(Matrix),function(x){
-            Vec.sub <- Matrix[x,]
-            ._Do_on_vector_PercentGTZero_(Vec.sub)
-        },1))
-        Row.sums <- c(Row.sums,vapply(1:nrow(Matrix),function(x){
-            Vec.sub <- Matrix[x,]
-            ._Do_on_vector_ComputeRowSums_(Vec.sub)
-        },1))
-        if(compute.sparsity){
-            Sparsity.Index <- c(Sparsity.Index,vapply(1:nrow(Matrix),function(x){
-                Vec.sub <- Matrix[x,]
-                sparsity.bin.idexes <- sparsity.bins
-                ._Do_on_vector_SparsityIndex_(x=Vec.sub, index=x, sparsity.bins = sparsity.bins, length=chr2.len)
-            },1))
-        }
-        Row.extent <- ._Do_on_vector_ComputeMinMax_(Matrix)
-        if(Matrix.range[1] > Row.extent[1] | is.na(Matrix.range[1])) {
-            Matrix.range[1] <- Row.extent[1]
-        }
-        if(Matrix.range[2] < Row.extent[2] | is.na(Matrix.range[2])){
-            Matrix.range[2] <- Row.extent[2]
-        }
-        # Cumulative.data <- ._Do_rbind_on_matrices_of_different_sizes_(Matrix.top = Cumulative.data, 
-        #     Matrix.bottom = Matrix, top.coords = top.coords, bottom.coords = bottom.coords)
-        # top.coords <- bottom.coords
+
+        Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, compute.sparsity = compute.sparsity, 
+            sparsity.bins = sparsity.bins, range = Matrix.range)
+        Matrix.range <- Metrics.list[["extent"]]
+        Bin.coverage <- c(Bin.coverage,Metrics.list[["bin.cov"]])
+        Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
+        Sparsity.Index <- c(Sparsity.Index,Metrics.list[["sparsity"]])
+
         Cumulative.data <- rbind(Cumulative.data,Matrix)
         Obj.size <- object.size(Cumulative.data)
         if(Obj.size >= Reference.object$Max.vector.size | i == length(Iterations)){

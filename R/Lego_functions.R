@@ -491,7 +491,6 @@ Lego_list_ranges_mcols = function(Lego = NULL, rangekey = NULL){
 #' 
 Lego_list_matrices = function(Lego = NULL){
     Reference.object <- GenomicMatrix$new()
-    FUNCasts <- Reference.object$matrices.chrom.attributes.fun.cast
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     chr1.list <- lapply(ChromInfo[,"chr"], function(chr1){
         chr2.list <- lapply(ChromInfo[,"chr"], function(chr2){
@@ -796,9 +795,14 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
 #' 
 #' @examples
 #' 
+#' Test.mat <- matrix(NA,nrow = 800, ncol = 800)
+#' Row <- row(Test.mat)
+#' Col <- col(Test.mat)
+#' Dist <- Col - Row
+#' Matrix.file <- "Test_matrix.txt"
+#' write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
+#' row.names = FALSE, col.names = FALSE)
 #' Lego.file <- "test.hdf"
-#' Matrix.file <- system.file("extdata", "IMR90_RepA_ICEd_40000_chr19.mat.gz", 
-#' package = "HiCLegos")
 #' Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
 #' matrix.file = Matrix.file, delim = " ", exec = "gunzip -c", 
 #' remove.prior = TRUE)
@@ -808,14 +812,14 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL,
     remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
 
     Reference.object <- GenomicMatrix$new()
-    ListVars <- list(Lego = Lego, chr1 = chr1, chr2 = chr2, file = file, is.sparse = is.sparse, 
+    ListVars <- list(Lego = Lego, chr1 = chr1, chr2 = chr2, matrix.file = matrix.file, is.sparse = is.sparse, 
         sparsity.bins = sparsity.bins, exec = exec, delim = delim, distance = distance, remove.prior = remove.prior)
     sapply(seq_along(ListVars),function(x){
         if(length(ListVars[[x]]) > 1){
             stop(names(ListVars[x]),"had length greater than 1.\n")
         }
     })
-    sapply(seq_along(ListVars[c("Lego","chr1","chr2","file","exec")]),function(x){
+    sapply(seq_along(ListVars[c("Lego","chr1","chr2","matrix.file","exec")]),function(x){
         if(is.null(ListVars[[x]])){
             stop(names(ListVars[x]),"has no value.\n")
         }
@@ -839,6 +843,78 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL,
         compute.sparsity = compute.sparsity, sparsity.bins = sparsity.bins)
 }
 
+
+#' Load a NxN dimensional sub-distance  \emph{cis} matrix into the Lego store.
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @inheritParams Lego_load_matrix
+#' 
+#' @param chr \strong{Required}.
+#' A character vector of length 1 specifying the chromosome corresponding to the
+#' rows and cols of the matrix
+#' 
+#' @param distance \strong{Required}. Default NULL. Not implemented yet.
+#' For very high-resolution matrices, read times can become extremely slow and
+#' it does not make sense to load the entire matrix into the data structure, as
+#' after a certain distance, the matrix will become extremely sparse. This 
+#' ensures that only interactions upto a certain distance from the main diagonal
+#' will be loaded into the data structure.
+#' 
+#' @param num.rows \strong{Optional}. Default 2000
+#' Number of rows to insert per write operation in the HDF file.
+#' 
+#' @examples
+#' 
+#' Test.mat <- matrix(NA,nrow = 800, ncol = 800)
+#' Row <- row(Test.mat)
+#' Col <- col(Test.mat)
+#' Dist <- Col - Row
+#' Matrix.file <- "Test_matrix.txt"
+#' write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
+#' row.names = FALSE, col.names = FALSE)
+#' Lego.file <- "test.hdf"
+#' Lego_load_cis_matrix_till_distance(Lego = Lego.file, chr = "chr19", 
+#' matrix.file = Matrix.file, delim = " ", distance = 200, remove.prior = TRUE)
+#' 
+Lego_load_cis_matrix_till_distance = function(Lego = NULL, chr = NULL, 
+    matrix.file = NULL, delim = " ", distance = NULL, remove.prior = FALSE, 
+    num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
+
+    Reference.object <- GenomicMatrix$new()
+    ListVars <- list(Lego = Lego, chr = chr, matrix.file = matrix.file, is.sparse = is.sparse, 
+        sparsity.bins = sparsity.bins, delim = delim, distance = distance, remove.prior = remove.prior)
+    sapply(seq_along(ListVars),function(x){
+        if(length(ListVars[[x]]) > 1){
+            stop(names(ListVars[x]),"had length greater than 1.\n")
+        }
+    })
+    sapply(seq_along(ListVars[c("Lego","chr","matrix.file","distance")]),function(x){
+        if(is.null(ListVars[[x]])){
+            stop(names(ListVars[x]),"has no value.\n")
+        }
+    })
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr, chr2 = chr)){
+        stop("Provided chromosomes do not exist in the chrom table\n")
+    }
+    if(Lego_matrix_isdone(Lego = Lego, chr1 = chr, chr2 = chr) && !remove.prior){
+        stop("A matrix was preloaded before. Use remove.prior = TRUE to force value replacement\n")
+    }
+    Chrom.info.df <- Lego_get_chrominfo(Lego = Lego)
+    chr1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr,"nrow"]
+    chr2.len <- chr1.len
+    Group.path <- Create_Path(c(Reference.object$hdf.matrices.root,chr,chr))
+    compute.sparsity <- FALSE
+    if(is.sparse){
+        compute.sparsity <- TRUE
+    }
+    ._Process_matrix_by_distance(Lego = Lego, Matrix.file = matrix.file, delim = delim, 
+        Group.path = Group.path, chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num.rows, 
+        distance = distance, is.sparse = is.sparse, compute.sparsity = compute.sparsity, 
+        sparsity.bins = sparsity.bins)
+}
+
+
 #' Check if a matrix has been loaded for a chromosome pair.
 #' 
 #' @inheritParams Lego_get_chrominfo
@@ -860,6 +936,29 @@ Lego_matrix_isdone = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     }
     return(Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "done"])
 }
+
+#' Check if a matrix for a chromosome pair is sparse.
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @inheritParams Lego_load_matrix
+#' 
+#' @return Returns a logical vector of length 1, specifying if a matrix was
+#' loaded as a sparse matrix.
+#' 
+#' @examples
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_matrix_issparse(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19")
+#' 
+Lego_matrix_issparse = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Matrix.list <- Lego_list_matrices(Lego = Lego)
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("chr1 chr2 pairs were not found\n")
+    }
+    return(Matrix.list[Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2, "sparsity"])
+}
+
 
 #' Get the maximum loaded distance from the diagonal of any matrix.
 #' 
@@ -1036,9 +1135,10 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
     }
     Max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr, chr2 = chr)
     if(distance > Max.dist){
-        stop("The farthest pixel loaded for this matrix was at a distance
-            of",Max.dist," bins from the diagonal. The current selection subsets
-            out-of-bounds data.\n")
+        stop(paste("The farthest pixel loaded for",
+            "this matrix was at a distance of"
+            ,Max.dist,"bins from the diagonal.",
+            " The current selection subsets out-of-bounds data.\n"))
     }
     Root.folders <- Reference.object$GetRootFolders()
     Path <- Create_Path(c(Root.folders['matrices'],chr,chr))
@@ -1417,9 +1517,10 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
     Count <- c(length(xaxis),length(yaxis))
     Max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr1, chr2 = chr2)
     if(max(min(xaxis)-max(yaxis),(max(xaxis) - min(yaxis))) > Max.dist){
-        stop("The farthest pixel loaded for this matrix was at a distance
-            of ",Max.dist," bins from the diagonal. The current selection
-            subsets non-existing data.\n")
+        stop(paste("The farthest pixel loaded for",
+            "this matrix was at a distance of",
+            Max.dist,"bins from the diagonal.",
+            " The current selection subsets out-of-bounds data.\n"))
     }
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2))
     Vector <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = Reference.object$hdf.matrix.name,
@@ -1429,4 +1530,68 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
     }else{
         return(FUN(Vector))
     }
+}
+
+
+#' Get the matrix metadata columns in the Lego store.
+#' 
+#' `Lego_get_matrix_mcols` will get the specified matrix metadata column. 
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @inheritParams Lego_load_matrix
+#' 
+#' @param what \strong{Required}
+#' A character vector of length 1 specifying the matrix metric to retrieve
+#'  
+#' @return Returns a 1xN dimensional vector containing the specified matrix 
+#' metric 
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_get_matrix_mcols(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
+#' what = "bin.coverage")
+Lego_get_matrix_mcols = function(Lego = NULL, chr1 = NULL, chr2 = NULL, what = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Meta.cols <- Reference.object$hdf.matrix.meta.cols() 
+    if(any(is.null(c(Lego,chr1,chr2,what)))){
+        stop("Lego, chr1, chr2, what cannot be NULL.\n")
+    }
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("Matrix for this chromsome pair does not exist.\n")   
+    }
+    if(!Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("Matrix for this chromsome pair is yet to be loaded.\n")   
+    }
+    if(length(what) >1){
+        stop("What must be a character vector of length 1\n")      
+    }
+    if(!Lego_matrix_issparse(Lego = Lego, chr1 = chr1, chr2 = chr2) & what
+        == Meta.cols["sparse"]){
+        stop("This matrix is not a sparse matrix. So sparsity.index was not calculated\n")
+    }
+
+    Group.path <- Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2))
+    Vector <- ._Lego_Get_Something_(Group.path = Group.path, Lego = Lego, Name = what, return.what = "data")
+    return(Vector)
+}
+
+
+#' List the matrix metadata columns in the Lego store.
+#' 
+#' `Lego_get_matrix_mcols` will list the names of all matrix metadata columns. 
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @inheritParams Lego_load_matrix
+#'  
+#' @return Returns a vector containing the names of all matrix metadata columns 
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_list_matrix_mcols(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19")
+Lego_list_matrix_mcols = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Meta.cols <- Reference.object$hdf.matrix.meta.cols() 
+    return(Meta.cols)
 }
