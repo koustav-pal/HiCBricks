@@ -1205,6 +1205,10 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
 #' chr:start:end. An overlap operation with the associated bintable will be done
 #' to identify the bins to subset on the column
 #' 
+#' @param force \strong{Optional}. Default FALSE
+#' If true, will force the retrieval operation when matrix contains loaded data
+#' until a certain distance.
+#' 
 #' @param FUN \strong{Optional}.
 #' If provided a data transformation with FUN will be applied before the matrix
 #' is returned.
@@ -1230,7 +1234,7 @@ Lego_get_values_by_distance = function(Lego = NULL, chr = NULL, distance  = NULL
 #' separated at a certain distance, \code{\link{Lego_fetch_row_vector}} to get
 #' values in a certain row/col and subset them, 
 #' \code{\link{Lego_get_vector_values}} to get values using matrix coordinates.
-Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NULL, FUN=NULL){
+Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NULL, force = FALSE, FUN=NULL){
     type <- "within"
     if( (is.null(x.coords)) | (is.null(y.coords)) ){
         stop("x.coords, y.coords and Lego cannot be NULL")
@@ -1265,7 +1269,7 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NU
     }
     x.vector <- chr1.ranges$Indexes[[1]]
     y.vector <- chr2.ranges$Indexes[[1]]
-    Matrix <- Lego_get_matrix(Lego = Lego, chr1=chr1, chr2=chr2, x.vector=x.vector, y.vector=y.vector, FUN=FUN)
+    Matrix <- Lego_get_matrix(Lego = Lego, chr1=chr1, chr2=chr2, x.vector=x.vector, y.vector=y.vector, force = force, FUN=FUN)
     return(Matrix)
 }
 
@@ -1289,6 +1293,8 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NU
 #' If provided a data transformation with FUN will be applied before the matrix
 #' is returned.
 #' 
+#' @inheritParams Lego_get_matrix_within_coords
+#' 
 #' @return Returns a matrix of dimension x.vector length by y.vector length. 
 #' This may differ based on the operations with FUN.
 #' 
@@ -1302,7 +1308,8 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL, y.coords=NU
 #' values separated at a certain distance, \code{\link{Lego_fetch_row_vector}} 
 #' to getvalues in a certain row/col and subset them, 
 #' \code{\link{Lego_get_vector_values}} to get values using matrix coordinates.
-Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.vector=NULL, FUN=NULL){
+Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL,
+ y.vector=NULL, force = FALSE, FUN=NULL){
     # cat(" Rows: ",x.vector," Cols: ",y.vector,"\n")
     if(any(!(class(x.vector) %in% c("numeric","integer")) | !(class(y.vector) %in% c("numeric","integer")))){
         stop("x.vector and y.vector must be numeric.\n")
@@ -1323,7 +1330,7 @@ Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.v
     if(any(x.vector > chr1.len) | any(y.vector > chr2.len) | min(x.vector,y.vector) < 1 ) {
         stop("x.vector or y.vector falls outside the bounds of loaded Bintables") 
     }
-    Matrix <- Lego_get_vector_values(Lego = Lego, chr1=chr1, chr2=chr2, xaxis=x.vector, yaxis=y.vector)
+    Matrix <- Lego_get_vector_values(Lego = Lego, chr1=chr1, chr2=chr2, xaxis=x.vector, yaxis=y.vector, force = force)
     if(is.null(FUN)){
         return(Matrix)              
     }else{
@@ -1358,7 +1365,9 @@ Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.v
 #' positions and the corresponding rows will be subsetted by the corresponding 
 #' region element. If the length of regions does not match, the subset operation
 #' will not be done and all elements from the rows will be returned.
-#'
+#' 
+#' @inheritParams Lego_get_matrix_within_coords
+#'  
 #' @param flip \strong{Optional}. Default FALSE
 #' If present, will flip everything. This is equivalent to selecting columns,
 #' and subsetting on the rows.
@@ -1385,7 +1394,8 @@ Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL, y.v
 #' to get values in a certain row/col and subset them, 
 #' \code{\link{Lego_get_matrix}} to get matrix by using matrix coordinates
 #' 
-Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vector=NULL, regions=NULL, flip = FALSE, FUN=NULL){
+Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, 
+    vector=NULL, regions=NULL, force = FALSE, flip = FALSE, FUN=NULL){
     Chrom.all <- c(chr1,chr2)
     if(is.null(chr1) | is.null(chr2) | is.null(by) | is.null(vector)) {
         stop("Either of chr1, chr2, by or vector were provided as NULL values")
@@ -1395,6 +1405,7 @@ Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vec
     }
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     ChromosomeList <- ChromInfo[,"chr"]
+    max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr1, chr2 = chr2)
     if(class(chr1)!="character" | class(chr2)!="character"){
         stop("Provided Chromosomes does not appear to be of class character")
     }
@@ -1456,7 +1467,7 @@ Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vec
             y <- x
             x <- x1
         }
-        Values <- Lego_get_vector_values(Lego = Lego, chr1=chr1, chr2=chr2, xaxis=x, yaxis=y, FUN=FUN)
+        Values <- Lego_get_vector_values(Lego = Lego, chr1=chr1, chr2=chr2, xaxis=x, yaxis=y, FUN=FUN, force = force)
         return(Values)
     }) 
     return(Vector.values)
@@ -1484,6 +1495,8 @@ Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vec
 #' If provided a data transformation with FUN will be applied before the vector
 #' is returned.
 #' 
+#' @inheritParams Lego_get_matrix_within_coords
+#' 
 #' @return Returns a vector of length yaxis if length of xaxis is 1. Else
 #' returns a matrix of dimension xaxis length by yaxis length.
 #' 
@@ -1496,7 +1509,8 @@ Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL, vec
 #' under consideration will range from min(xaxis) to max(xaxis) on the rows or
 #' min(yaxis) to max(yaxis) on the columns.
 #' 
-Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL, yaxis=NULL, FUN=NULL){
+Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
+ yaxis=NULL, FUN=NULL, force = FALSE){
     Reference.object <- GenomicMatrix$new()
     if(is.null(chr1) | is.null(chr2)){
         stop("chr1 and chr2 keys cannot be empty!")
@@ -1516,7 +1530,7 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
     Stride <- c(1,1)
     Count <- c(length(xaxis),length(yaxis))
     Max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr1, chr2 = chr2)
-    if(max(min(xaxis)-max(yaxis),(max(xaxis) - min(yaxis))) > Max.dist){
+    if(max(min(xaxis)-max(yaxis),(max(xaxis) - min(yaxis))) > Max.dist & !force){
         stop(paste("The farthest pixel loaded for",
             "this matrix was at a distance of",
             Max.dist,"bins from the diagonal.",
@@ -1569,6 +1583,9 @@ Lego_get_matrix_mcols = function(Lego = NULL, chr1 = NULL, chr2 = NULL, what = N
     if(!Lego_matrix_issparse(Lego = Lego, chr1 = chr1, chr2 = chr2) & what
         == Meta.cols["sparse"]){
         stop("This matrix is not a sparse matrix. So sparsity.index was not calculated\n")
+    }
+    if(what == Meta.cols["sparse"] & chr1 != chr2){
+        stop("sparsity.index only applies to cis matrices (chr1 == chr2).\n")
     }
 
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root, chr1, chr2))

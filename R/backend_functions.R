@@ -239,9 +239,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         }
         return(connection)
 }
-
 ._Compute_various_matrix_metrics <- function(Matrix = NULL, compute.sparsity=FALSE, 
-    sparsity.bins = 100, range = NULL){
+    sparsity.bins = 100, range = NULL, distance = NULL, diag.position.start = NULL){
+    sparsity.bins <- ifelse(sparsity.bins < distance, sparsity.bins, distance)
     Bin.coverage <- vapply(1:nrow(Matrix),function(x){
         Vec.sub <- Matrix[x,]
         ._Do_on_vector_PercentGTZero_(Vec.sub)
@@ -254,7 +254,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         Sparsity.Index <- vapply(1:nrow(Matrix),function(x){
             Vec.sub <- Matrix[x,]
             sparsity.bin.idexes <- sparsity.bins
-            ._Do_on_vector_SparsityIndex_(x=Vec.sub, index=x, sparsity.bins = sparsity.bins)
+            ._Do_on_vector_SparsityIndex_(x=Vec.sub, 
+                index=diag.position.start + (x - 1), 
+                sparsity.bins = sparsity.bins)
         },1)
     }else{
         Sparsity.Index <- NULL
@@ -270,7 +272,6 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         "sparsity" = Sparsity.Index, "extent" = range)
     return(A.list)
 }
-
 humanize_size <- function(x){
     Size <- x/1024
     if(Size < 1){
@@ -286,7 +287,6 @@ humanize_size <- function(x){
     }
     return(paste(x/1024/1024/1024,"GB"))
 }
-
 ._Process_matrix_by_distance <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, Group.path = NULL,
     chr1.len = NULL, chr2.len = NULL, num.rows = 2000, distance = NULL, is.sparse = NULL, compute.sparsity = NULL,
      sparsity.bins = 100){
@@ -325,7 +325,7 @@ humanize_size <- function(x){
             Stride <- c(1,1)
             Count <- c(nrow(Matrix),ncol(Matrix))
             Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, compute.sparsity = compute.sparsity, 
-                sparsity.bins = sparsity.bins, range = Matrix.range)
+                sparsity.bins = sparsity.bins, range = Matrix.range, distance = distance, diag.position.start = i - Col.Offset)
             Matrix.range <- Metrics.list[["extent"]]
             Bin.coverage <- c(Bin.coverage,Metrics.list[["bin.cov"]])
             Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
@@ -354,7 +354,6 @@ humanize_size <- function(x){
     Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(distance),as.integer(TRUE))
     WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
 }
-
 ._ProcessMatrix_ <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, exec = NULL, Group.path = NULL, 
     chr1.len = NULL, chr2.len = NULL, num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
     distance = NULL, sparsity.bins = 100){
@@ -408,7 +407,7 @@ humanize_size <- function(x){
         cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
 
         Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, compute.sparsity = compute.sparsity, 
-            sparsity.bins = sparsity.bins, range = Matrix.range)
+            sparsity.bins = sparsity.bins, range = Matrix.range, distance = distance, diag.position.start = Skip + 1)
         Matrix.range <- Metrics.list[["extent"]]
         Bin.coverage <- c(Bin.coverage,Metrics.list[["bin.cov"]])
         Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
