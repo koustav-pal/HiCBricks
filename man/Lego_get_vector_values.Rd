@@ -5,7 +5,7 @@
 \title{Return a N dimensional vector selection.}
 \usage{
 Lego_get_vector_values(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  xaxis = NULL, yaxis = NULL, FUN = NULL)
+  xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -32,6 +32,10 @@ are min(yaxis) and max(yaxis) for retrieval.}
 \item{FUN}{\strong{Optional}. Default NULL
 If provided a data transformation with FUN will be applied before the vector
 is returned.}
+
+\item{force}{\strong{Optional}. Default FALSE
+If true, will force the retrieval operation when matrix contains loaded data
+until a certain distance.}
 }
 \value{
 Returns a vector of length yaxis if length of xaxis is 1. Else

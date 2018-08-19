@@ -36,8 +36,8 @@ Forwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,spars
         }
         return(VectorDiff)
 }
-ComputeOutlierOverIQRInsideWindow <- function(Lookup.window=NULL,diff.values=NULL,values=NULL, row.sums = NULL,
-        min.sum = NULL, Tukeys.constant=NULL,tail=NULL,sparse=FALSE,strict = FALSE,sparsity.idx=NULL,sparsity.threshold=NULL){
+ComputeOutlierOverIQRInsideWindow <- function(lookup.window=NULL,diff.values=NULL,values=NULL, row.sums = NULL,
+        min.sum = NULL, tukeys.constant=NULL,tail=NULL,sparse=FALSE,strict = FALSE,sparsity.idx=NULL,sparsity.threshold=NULL){
         seq.over.value <- seq_along(diff.values)
         Filter <- row.sums > min.sum
         if(sparse){
@@ -46,7 +46,7 @@ ComputeOutlierOverIQRInsideWindow <- function(Lookup.window=NULL,diff.values=NUL
         seq.over.value <- seq.over.value[Filter]
         seq.over.seq <- seq_along(seq.over.value)
         outlier.list <- lapply(seq.over.seq,function(x.seq){
-            lookup.window.range <- ((x.seq - Lookup.window) : (x.seq + Lookup.window))
+            lookup.window.range <- ((x.seq - lookup.window) : (x.seq + lookup.window))
             lookup.window.range <- seq.over.value[lookup.window.range[lookup.window.range>0 & lookup.window.range<=max(seq.over.seq)]]
             offset <- (min(lookup.window.range)-1)
             diff.value.window <- diff.values[lookup.window.range]
@@ -55,7 +55,7 @@ ComputeOutlierOverIQRInsideWindow <- function(Lookup.window=NULL,diff.values=NUL
             InterQuartile <- value.quartile[4]-value.quartile[2]
             if(tail=="lower.tail"){
                 #Calculate Inner fences based on accepted formula
-                fences <- value.quartile[2] - (InterQuartile*Tukeys.constant)
+                fences <- value.quartile[2] - (InterQuartile*tukeys.constant)
                 Outlier.Filter <- !is.na(value.window) &
                 diff.value.window <= fences &
                 diff.value.window < value.window
@@ -63,7 +63,7 @@ ComputeOutlierOverIQRInsideWindow <- function(Lookup.window=NULL,diff.values=NUL
                     Outlier.Filter <- Outlier.Filter & (value.window < 0)
                 }
             }else if(tail=="upper.tail"){
-                fences <- value.quartile[4] + (InterQuartile*Tukeys.constant)
+                fences <- value.quartile[4] + (InterQuartile*tukeys.constant)
                 Outlier.Filter <- !is.na(value.window) &
                 diff.value.window >= fences &
                 diff.value.window > value.window
@@ -81,7 +81,7 @@ ComputeOutlierOverIQRInsideWindow <- function(Lookup.window=NULL,diff.values=NUL
         outlier.vector.uniq.sorted <- sort(unique(outlier.vector.dups))
         return(outlier.vector.uniq.sorted)
 }
-CreateDomainlist <- function(start.vector=NULL,end.vector=NULL,Fill.gaps=NULL){
+CreateDomainlist <- function(start.vector=NULL,end.vector=NULL,fill.gaps=NULL){
     Domains.by.start.list <- lapply(start.vector,function(x){
         data.frame(startbin=x, endbin=min(end.vector[end.vector > x]))
     })
@@ -90,7 +90,7 @@ CreateDomainlist <- function(start.vector=NULL,end.vector=NULL,Fill.gaps=NULL){
     Domains.by.start.df$level <- 2
     Domains.by.end.df <- NULL
     Domains.by.assumption.df <- NULL
-    if(Fill.gaps){
+    if(fill.gaps){
         uncurated.ends <- end.vector[!(end.vector %in% Domains.by.start.df[,"endbin"])]
         if(length(uncurated.ends) > 0){
             Domains.by.end.list <- lapply(uncurated.ends,function(x){
@@ -106,42 +106,38 @@ CreateDomainlist <- function(start.vector=NULL,end.vector=NULL,Fill.gaps=NULL){
     return(All.Domains.sorted)
 }
 ComputeDirectionalityIndex <- function(Matrix = NULL, Window.size=NULL, filter = NULL, start = NULL, end = NULL){
-    Sequence <- start:end
-    Sequence <- Sequence[filter[start:end]]
-    Seq.Over.Sequence <- seq_along(Sequence)
+    Sequence <- 1:nrow(Matrix)
+    Sequence <- Sequence[start:end]
     DI.Data <- rep(NA,length(Sequence))
-    DI.list <- vapply(Seq.Over.Sequence,function(seq.i){
+    Bins.to.process <- Sequence[filter[start:end]]
+    All.bins <- 1:nrow(Matrix)
+    All.bins <- All.bins[filter]
+    DI.list <- vapply(Bins.to.process,function(i){
             Upstream<-0
             Downstream<-0
             My.DI.Data <- NA
-            i <- Sequence[seq.i]
-            Window.range <- c((seq.i-Window.size):(seq.i+Window.size))
-            Window.range <- Sequence[Window.range]
-            Relative.mid <- which(Window.range==i)
+            Relative.mid <- which(All.bins == i)
+            Window.range <- c((Relative.mid - Window.size) : (Relative.mid + Window.size))
+            Window.range <- All.bins[Window.range[Window.range >= 1 & Window.range <= length(All.bins)]]
             Upstream.range <- Window.range[Window.range < i]
             Downstream.range <- Window.range[Window.range > i]
-            if(i >= FirstNonZeroBin)
-            {
-                Row.vector <- Matrix[i,]
-                Row.vector[is.na(Row.vector) | is.infinite(Row.vector)] <- 0
-                if(length(Upstream.range) > 0){
-                    Upstream <- sum(Row.vector[Upstream.range])
-                }
-                if(length(Downstream.range) > 0){
-                    Downstream <- sum(Row.vector[Downstream.range])
-                }
-                Expected <- (Upstream + Downstream)/2
-                if( Expected == 0 | Upstream == Downstream ){
-                    My.DI.Data <- 0
-                }else{
-                    # $DI = ( ($B - $A)/abs($B - $A) ) *( (($A - $E)**2)/$E + (($B - $E)**2)/$E);
-                    My.DI.Data <- ((Downstream - Upstream)/abs(Downstream - Upstream)) * (((Upstream - Expected)^2)/Expected + ((Downstream - Expected)^2)/Expected)
-                }
-            }else{
-                NA
+            Row.vector <- Matrix[i,]
+            Row.vector[is.na(Row.vector) | is.infinite(Row.vector)] <- 0
+            if(length(Upstream.range) > 0){
+                Upstream <- sum(Row.vector[Upstream.range])
             }
-        })
-    DI.Data[Sequence] <- do.call(c,DI.list)
+            if(length(Downstream.range) > 0){
+                Downstream <- sum(Row.vector[Downstream.range])
+            }
+            Expected <- (Upstream + Downstream)/2
+            if( Expected == 0 | Upstream == Downstream ){
+                My.DI.Data <- 0
+            }else{
+                # $DI = ( ($B - $A)/abs($B - $A) ) *( (($A - $E)**2)/$E + (($B - $E)**2)/$E);
+                My.DI.Data <- ((Downstream - Upstream)/abs(Downstream - Upstream)) * (((Upstream - Expected)^2)/Expected + ((Downstream - Expected)^2)/Expected)
+            }
+        },1)
+    DI.Data[Sequence %in% Bins.to.process] <- DI.list
     return(DI.Data)
 }
 get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.window = NULL, distance = NULL,
@@ -156,23 +152,24 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
     if((chunk.size - (di.window*2))/di.window < 10){
         stop("chunk.size is too small for this di.window\n")
     }
-    if(any(di.window > distance){
+    if(any(di.window > distance)){
         stop("di.window cannot be larger than distance\n")
     }
-    Iterations.number <- (chr.length - (Position.start - 1))/chunk.size
+    Iterations.number <- (chr.length - (First.non.zero.bin - 1))/chunk.size
     Iterations <- rep(chunk.size,floor(Iterations.number))
     if(floor(Iterations.number)!=ceiling(Iterations.number)){
         cumulative <- sum(Iterations)
-        Iterations <- c(Iterations,((chr.length - (Position.start - 1))-cumulative))
+        Iterations <- c(Iterations,((chr.length - (First.non.zero.bin - 1))-cumulative))
     }
-    Starts<-Position.start
+    Starts <- First.non.zero.bin - 1
+
     if(length(Iterations)>1){
         Starts.cumsum <- cumsum(Iterations)
-        Starts <- c(Position.start,Starts.cumsum[-length(Starts.cumsum)])
+        Starts <- c(First.non.zero.bin - 1, Starts.cumsum[-length(Starts.cumsum)])
     }
     DI.data.list <- lapply(seq_along(Starts), function(x){
+        End <- Starts[x] + Iterations[x]
         Start <- Starts[x] + 1
-        End <- Start + Iterations[x]
         Position.start <- Start
         Position.end <- End
         Start <- ifelse((Start - di.window) < First.non.zero.bin, First.non.zero.bin, (Start - di.window))
@@ -201,7 +198,7 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
             True.length <- length(which(Filter))
             extend <- extend + 1
         }
-        Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, chr2 = chr, xaxis=c(Start,End), yaxis=c(Start,End), force = force)
+        Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
         DI.data <- ComputeDirectionalityIndex(Matrix = Matrix, Window.size = di.window, filter = Filter, 
             start = Position.start - (Start - 1), end = Position.end - (Start - 1))
         return(DI.data)
@@ -211,13 +208,131 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
     Ranges$DI.Data <- DI.data
     return(Ranges)
 }
-LocalScoreDifferentiator <- function(Lego = NULL, chrs = NULL, min.sum = -1, di.window = 200L, lookup.window = 200L,
-    tukeys.constant=1.5, strict = TRUE, fill.gaps=TRUE, ignore.sparse=TRUE, sparsity.threshold=0.8, 
-    remove.empty = NULL, chunk.size = 500, force.retrieve = FALSE){
+MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
+    Ends <- end(Ranges) 
+    Ends <- Ends[1:(length(Ends)-1)]
+    Starts <- start(Ranges)
+    Starts <- Starts[2:length(Starts)] - 1 
+    Domain.boundaries <- unique(Starts,Ends)
+    Boundary.ranges <- MakeGRangesObject(chr=rep(chr,length(Domain.boundaries)),
+        Start=(Domain.boundaries-(Binsize/2))+1,End=Domain.boundaries+(Binsize/2))
+}
+
+#' Do TAD Calls with Local Score Differentiator on a Hi-C matrix
+#' 
+#' `Local_score_differentiator` calls topologically associated domains on Hi-C 
+#' matrices. Local score differentiator at the most fundamental level is a 
+#' change point detector, which detects change points in the directionality 
+#' index using various thresholds defined on a local directionality index 
+#' distributions.
+#' The directionality index (DI) is calculated as defined by Dixon et al., 2012 
+#' Nature. Next, the difference of DI is calculated between neighbouring bins to
+#' get the change in DI distribution in each bin. When a DI value goes from a
+#' highly negative value to a highly positive one as expected to occur at domain
+#' boundaries, the ensuing DI difference distribution becomes a very flat 
+#' distribution interjected by very large peaks signifying regions where such
+#' a change may take place. We use two difference vectors, one is the difference
+#' vector between a bin and its adjacent downstream bin and another is the 
+#' difference between a bin and its adjacent upstream bin. Using these vectors,
+#' and the original directionality index, we define domain borders as outliers.
+#' 
+#' To define an outlier, fences are first defined. The fences are defined using
+#' tukeys.constant x inter-quartile range of the directionality index. The upper
+#' fence used for detecting domain starts is the 75th quartile + 
+#' (IQR x tukeys.constant), while the lower fence is the 
+#' 25th quartile - (IQR x tukeys.constant). For domain starts the DI difference
+#' must be greater than or equal to the upper fence, it must be greater than the
+#' DI and the DI must be a finite real value. If strict is TRUE, DI will also
+#' be required to be greater than 0. Similarly, for domain ends the 
+#' DI difference must be lower than or equal to the lower fence, it must be 
+#' lower than the DI and the DI must be a finite real value. If strict is TRUE,
+#' DI will also be required to be lower than 0. 
+#' 
+#' After defining outliers, each domain start will be associated to its 
+#' nearest downstream domain end. If \emph{fill.gaps} is defined as TRUE and
+#' there are domain ends which remain unassociated to a domain start, These 
+#' domain ends will be associated to the bin adjacent to their nearest upstream
+#' domain end. This associations will be marked by metadata columns, gap.fill= 1
+#' and level = 1.
+#' 
+#' This function provides the capability to call very accurante TAD definitions
+#' in a very fast way. 
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @param chrs \strong{Optional}. Default NULL
+#' If present, only TAD calls for elements in \emph{chrs} will be done.
+#' 
+#' @param min.sum \strong{Optional}. Default -1
+#' Process bins in the matrix with row.sums greater than \emph{min.sum}.
+#' 
+#' @param di.window \strong{Optional}. Default 200
+#' Use \emph{di.window} to define the directionality index.
+#' 
+#' @param lookup.window \strong{Optional}. Default 200
+#' Use \emph{lookup.window} local window to call borders. At smaller 
+#' \emph{di.window} values we recommend setting this to 2*\emph{di.window}
+#' 
+#' @param tukeys.constant \strong{Optional}. Default 1.5
+#' \emph{tukeys.constant}*IQR (inter-quartile range) defines the lower and upper
+#' fence values.
+#' 
+#' @param strict \strong{Optional}. Default TRUE
+#' If TRUE, \emph{strict} creates an additional filter on the directionality 
+#' index requiring it to be either greater than or less than 0 on the right tail
+#' or left tail respectively.  
+#' 
+#' @param fill.gaps \strong{Optional}. Default TRUE
+#' If TRUE, this will affect the TAD stiching process. All Border starts are 
+#' stiched to the next downstream border ends. Therefore, at times border ends 
+#' remain unassociated to a border start. These border ends are stiched to the 
+#' adjacent downstream bin from their upstream border end when \emph{fill.gaps} 
+#' is true. 
+#' 
+#' TADs inferred in this way will be annotated with two metadata columns in the 
+#' GRanges object. \emph{gap.fill} will hold a value of 1 and \emph{level} will 
+#' hold a value 1. TADs which were not filled in will hold a gap.fill value of 0 
+#' and a level value of 2.
+#' 
+#' @param ignore.sparse \strong{Optional}. Default TRUE
+#' If TRUE, a matrix which has been defined as sparse during the matrix loading
+#' process will be treated as a dense matrix. The \emph{sparsity.threshold} 
+#' filter will not be applied. Please note, that if a matrix is defined as 
+#' sparse and fill.gaps is TRUE, fill.gaps will be turned off.
+#' 
+#' @param sparsity.threshold \strong{Optional}. Default 0.8
+#' Sparsity threshold relates to the sparsity index, which is computed as the 
+#' number of non-zero bins at a certain distance from the diagonal. If a matrix
+#' is sparse and ignore.sparse is FALSE, bins which have a sparsity index value
+#' below this threshold will be discarded from DI computation.
+#' 
+#' @param remove.empty Not implemented.
+#' After implementation, this will ensure that the presence of centromeric 
+#' regions is accounted for.
+#' 
+#' @param chunk.size \strong{Optional}. Default 500
+#' The size of the matrix chunk to process. This value should be larger than 2x
+#' di.window.
+#' 
+#' @param force.retrieve \strong{Optional}. Default TRUE
+#' If TRUE, this will force the retrieval of a matrix chunk even when the 
+#' retrieval includes interaction points which were not loaded into a Lego 
+#' store (larger chunks). Please note, that this does not mean that DI can be 
+#' computed at distances larger than max distance. Rather, this is meant to aid
+#' faster computation.
+#' 
+#' @return A ranges object containing domain definitions. The starts and ends
+#' of the ranges coincide with the starts and ends of their contained bins from 
+#' the bintable. 
+#' 
+Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL, min.sum = -1, 
+    di.window = 200L, lookup.window = 200L, tukeys.constant=1.5, strict = TRUE, 
+    fill.gaps=TRUE, ignore.sparse=TRUE, sparsity.threshold=0.8,
+    remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE){
 
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     Chromosomes <- ChromInfo[,'chr']
-    if(!is.null(chrs))}{
+    if(!is.null(chrs)){
         Chromosomes <- ChromInfo[ChromInfo[,'chr'] %in% chrs,'chr']
     }
 
@@ -228,13 +343,14 @@ LocalScoreDifferentiator <- function(Lego = NULL, chrs = NULL, min.sum = -1, di.
         if(ignore.sparse){
             sparse=FALSE
         }
-        if(sparse & Fill.gaps){
-            Fill.gaps=FALSE
+        if(sparse & fill.gaps){
+            fill.gaps=FALSE
         }
         cat("[1] Computing DI for",chr,"\n")
         Ranges <- get_directionality_index_by_chunks(Lego = Lego, chr = chr, di.window = di.window, 
             distance = max.distance, chunk.size = chunk.size, sparse=sparse, sparsity.threshold=sparsity.threshold,
             min.sum = min.sum, force = force.retrieve)
+
         RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "row.sums")
         Ranges$row.sums <- RowSums
         cat("[2] Computing DI Differences for",chr,"\n")
@@ -253,26 +369,26 @@ LocalScoreDifferentiator <- function(Lego = NULL, chrs = NULL, min.sum = -1, di.
         cat("[2] Done\n")
         cat("[3] Fetching Outliers ",chr,"\n")
         if(sparse){
-            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(Lookup.window=Lookup.window,
+            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
                 diff.values=Backwards.DI.Difference, values=Ranges$DI.Data, sparse=sparse, row.sums = Ranges$row.sums,
                 min.sum = min.sum, sparsity.idx=SparsityIndex, sparsity.threshold=sparsity.threshold, 
-                Tukeys.constant=Tukeys.constant, tail="lower.tail",strict=strict)
-            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(Lookup.window=Lookup.window,
+                tukeys.constant=tukeys.constant, tail="lower.tail",strict=strict)
+            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
                 diff.values=Forwards.DI.Difference, values=Ranges$DI.Data, sparse=sparse, row.sums = Ranges$row.sums,
                 min.sum = min.sum, sparsity.idx=SparsityIndex, sparsity.threshold=sparsity.threshold,
-                Tukeys.constant=Tukeys.constant, tail="upper.tail", strict=strict)
+                tukeys.constant=tukeys.constant, tail="upper.tail", strict=strict)
         }else{
-            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(Lookup.window=Lookup.window,
+            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
                 diff.values=Backwards.DI.Difference,values=Ranges$DI.Data, row.sums = Ranges$row.sums,
-                min.sum = min.sum, Tukeys.constant=Tukeys.constant,tail="lower.tail",strict=strict)
-            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(Lookup.window=Lookup.window,
+                min.sum = min.sum, tukeys.constant=tukeys.constant,tail="lower.tail",strict=strict)
+            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
                 diff.values=Forwards.DI.Difference,values=Ranges$DI.Data, row.sums = Ranges$row.sums,
-                min.sum = min.sum, Tukeys.constant=Tukeys.constant,tail="upper.tail",strict=strict)
+                min.sum = min.sum, tukeys.constant=tukeys.constant,tail="upper.tail",strict=strict)
         }
         Domain.start.candidates <- Domain.start.candidates[Domain.start.candidates != length(Ranges)]
         Domain.end.candidates <- Domain.end.candidates[Domain.end.candidates != 1]
         cat("[3] Done\n")
-        cat("[4] Creating Domain list for",chr.name,"\n")
+        cat("[4] Creating Domain list for",chr,"\n")
 
         if(!(1 %in% Domain.start.candidates)){
             Domain.start.candidates <- c(1,Domain.start.candidates)
@@ -281,25 +397,17 @@ LocalScoreDifferentiator <- function(Lego = NULL, chrs = NULL, min.sum = -1, di.
             Domain.end.candidates <- c(Domain.end.candidates,length(Ranges))
         }
         Domain.list <- CreateDomainlist(start.vector=Domain.start.candidates,
-            end.vector=Domain.end.candidates,Fill.gaps=Fill.gaps)
-        Domain.Ranges <- MakeGRangesObject(chr=rep(chr.name,nrow(Domain.list)),
+            end.vector=Domain.end.candidates,fill.gaps=fill.gaps)
+        Domain.Ranges <- Lego_make_ranges(Chrom=rep(chr,nrow(Domain.list)),
             Start=start(Ranges[Domain.list$startbin]),
             End=end(Ranges[Domain.list$endbin]))
         cat("[4] Done\n")
         Domain.Ranges$gap.fill <- Domain.list$gap.fill
         Domain.Ranges$level <- Domain.list$level
-        Domain.Ranges$window.size <- DI.Window.size
-        Domain.Ranges$lookup.window <- Lookup.window
+        Domain.Ranges$window.size <- di.window
+        Domain.Ranges$lookup.window <- lookup.window
         return(Domain.Ranges)
     })
     Chrom.domains.ranges <- do.call(c,unlist(Chrom.domains.ranges.list, use.names = TRUE))
-}
-MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
-	Ends <- end(Ranges) 
-	Ends <- Ends[1:(length(Ends)-1)]
-	Starts <- start(Ranges)
-	Starts <- Starts[2:length(Starts)] - 1 
-	Domain.boundaries <- unique(Starts,Ends)
-	Boundary.ranges <- MakeGRangesObject(chr=rep(chr,length(Domain.boundaries)),
-		Start=(Domain.boundaries-(Binsize/2))+1,End=Domain.boundaries+(Binsize/2))
+    return(Chrom.domains.ranges)
 }

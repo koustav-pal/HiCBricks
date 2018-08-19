@@ -53,9 +53,14 @@ Load a NxN dimensional sub-distance  \emph{cis} matrix into the Lego store.
 }
 \examples{
 
+Test.mat <- matrix(NA,nrow = 800, ncol = 800)
+Row <- row(Test.mat)
+Col <- col(Test.mat)
+Dist <- Col - Row
+Matrix.file <- "Test_matrix.txt"
+write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
+row.names = FALSE, col.names = FALSE)
 Lego.file <- "test.hdf"
-Matrix.file <- system.file("extdata", "IMR90_RepA_ICEd_40000_chr19.mat.gz", 
-package = "HiCLegos")
 Lego_load_cis_matrix_till_distance(Lego = Lego.file, chr = "chr19", 
 matrix.file = Matrix.file, delim = " ", distance = 200, remove.prior = TRUE)
 

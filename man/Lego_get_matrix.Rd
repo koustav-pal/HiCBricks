@@ -5,7 +5,7 @@
 \title{Return a matrix subset.}
 \usage{
 Lego_get_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  x.vector = NULL, y.vector = NULL, FUN = NULL)
+  x.vector = NULL, y.vector = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -24,6 +24,10 @@ A one-dimensional numeric vector specifying the rows to subset.}
 
 \item{y.vector}{\strong{Required}.
 A one-dimensional numeric vector specifying the columns to subset.}
+
+\item{force}{\strong{Optional}. Default FALSE
+If true, will force the retrieval operation when matrix contains loaded data
+until a certain distance.}
 
 \item{FUN}{\strong{Optional}.
 If provided a data transformation with FUN will be applied before the matrix

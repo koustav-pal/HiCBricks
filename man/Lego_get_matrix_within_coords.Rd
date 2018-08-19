@@ -5,7 +5,7 @@
 \title{Return a matrix subset between two regions.}
 \usage{
 Lego_get_matrix_within_coords(Lego = NULL, x.coords = NULL,
-  y.coords = NULL, FUN = NULL)
+  y.coords = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -20,6 +20,10 @@ to identify the bins to subset on the row}
 A string specifying the region to subset on the rows. It takes the form
 chr:start:end. An overlap operation with the associated bintable will be done
 to identify the bins to subset on the column}
+
+\item{force}{\strong{Optional}. Default FALSE
+If true, will force the retrieval operation when matrix contains loaded data
+until a certain distance.}
 
 \item{FUN}{\strong{Optional}.
 If provided a data transformation with FUN will be applied before the matrix

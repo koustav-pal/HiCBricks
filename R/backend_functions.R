@@ -20,7 +20,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.matrix.meta.cols = function(){
             Temp <- c(self$hdf.matrix.coverage, self$hdf.matrix.rowSums, self$hdf.matrix.sparsity)
             names(Temp) <- c("bin.cov","row.sums","sparse")
-        }
+        },
         hdf.ranges.protected.names = function(){
             Protect <- c(self$hdf.ranges.dataset.name, self$hdf.ranges.lengths.name, 
                 self$hdf.ranges.chr.name, self$hdf.ranges.offset.name)
@@ -279,13 +279,13 @@ humanize_size <- function(x){
     }
     Size <- x/1024/1024
     if(Size < 1){
-        return(paste(x/1024,"KB"))   
+        return(paste(round(x/1024,2),"KB"))
     }
     Size <- x/1024/1024/1024
     if(Size < 1){
-        return(paste(x/1024/1024,"MB"))   
+        return(paste(round(x/1024/1024,2),"MB"))
     }
-    return(paste(x/1024/1024/1024,"GB"))
+    return(paste(round(x/1024/1024/1024,2),"GB"))
 }
 ._Process_matrix_by_distance <- function(Lego = NULL, Matrix.file = NULL, delim = NULL, Group.path = NULL,
     chr1.len = NULL, chr2.len = NULL, num.rows = 2000, distance = NULL, is.sparse = NULL, compute.sparsity = NULL,

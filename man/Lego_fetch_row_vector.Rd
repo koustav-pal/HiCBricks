@@ -5,8 +5,8 @@
 \title{Return row or col vectors.}
 \usage{
 Lego_fetch_row_vector(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  by = NULL, vector = NULL, regions = NULL, flip = FALSE,
-  FUN = NULL)
+  by = NULL, vector = NULL, regions = NULL, force = FALSE,
+  flip = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -37,6 +37,10 @@ form chr:start:end. These regions will be converted back to their original
 positions and the corresponding rows will be subsetted by the corresponding
 region element. If the length of regions does not match, the subset operation
 will not be done and all elements from the rows will be returned.}
+
+\item{force}{\strong{Optional}. Default FALSE
+If true, will force the retrieval operation when matrix contains loaded data
+until a certain distance.}
 
 \item{flip}{\strong{Optional}. Default FALSE
 If present, will flip everything. This is equivalent to selecting columns,
