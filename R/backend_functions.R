@@ -20,6 +20,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.matrix.meta.cols = function(){
             Temp <- c(self$hdf.matrix.coverage, self$hdf.matrix.rowSums, self$hdf.matrix.sparsity)
             names(Temp) <- c("bin.cov","row.sums","sparse")
+            return(Temp)
         },
         hdf.ranges.protected.names = function(){
             Protect <- c(self$hdf.ranges.dataset.name, self$hdf.ranges.lengths.name, 
@@ -56,6 +57,33 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             Folders <- c(self$hdf.bintable.ranges.group)
             names(Folders) <- c('Bintable')
             return(Folders)            
+        },
+        mcool.bintable.keys = function(version = NULL){
+            if(version <= 1){
+                return(c("bins","chrom_id","start","end"))
+            }
+            if(version == 2){
+                return(c("bins","chrom","start","end"))
+            }
+        },
+        mcool.scaffold.keys = function(version = NULL){
+            if(version < 1){
+                return(c("scaffolds","length","name"))
+            }
+            if(version >= 2){
+                return(c("chroms","length","name"))
+            }
+        },
+        mcool.matrix.keys = function(version = NULL){
+            if(version <1){
+                return(c("matrix","bin1_id","bin2_id","count"))
+            }
+            if(version >=2){
+                return(c("pixels","bin1_id","bin2_id","count"))
+            }
+        },
+        mcool.index.keys = function(){
+            return(c("indexes","bin1_offset","chrom_offset"))
         }
     ),
     private = list(

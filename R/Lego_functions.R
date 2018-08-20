@@ -328,6 +328,9 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL,
 #' @param rangekey \strong{Required}.
 #' The name to use for the ranges within the Lego store.
 #' 
+#' @param remove.existing \strong{Optional}. TRUE
+#' Will remove an existing Ranges by the same name and introduce the new one.
+#' 
 #' @inheritParams Lego_get_chrominfo
 #' 
 #' @examples
@@ -347,17 +350,11 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL,
 #' End <- c(10001,20001,40001,50001,60001)
 #' Test_ranges <- Lego_make_ranges(Chrom = Chrom, Start = Start, End = End)
 #' Lego_add_ranges(Lego = Lego.file, ranges = Test_ranges, 
-#' rangekey = "test_ranges")
+#' rangekey = "test_ranges", remove.existing = TRUE)
 #' 
-#' This will generate an error, as a ranges by the same name already exists
-#' inside this file. You cannot remove objects from the Lego store, so users
-#' are advised to use meaningful names to store their ranges. 
-#' 
-#' While it is possible to remove data from an HDF file, in actuality it is not 
-#' removed. It is only unlinked, but still keeps hogging space.
 #' }
 #' 
-Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
+Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL, remove.existing = TRUE){
     Reference.object <- GenomicMatrix$new()
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
         stop("Object of class Ranges expected")
@@ -367,7 +364,10 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL){
         stop("Ranges must be sorted by chromosome!")
     }
     if(Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
-        stop("rangekey already exists! Cannot proceed further! Please read the documentation to understand Why.")
+        # if(!remove.existing){
+            stop("rangekey already exists! Cannot proceed further! Please read the documentation to understand Why.")            
+        # }
+        # h5delete(Lego, name = Create_Path(c(Reference.object$hdf.ranges.root,rangekey)))
     }
     Metadata.Cols <- names(Ranges.df)[c(4:ncol(Ranges.df))]
     Metadata.list <- lapply(Metadata.Cols,function(x){
@@ -1015,7 +1015,7 @@ Lego_matrix_maxdist = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
 #' 
 Lego_matrix_exists = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     ChromInfo.df <- Lego_get_chrominfo(Lego = Lego)
-    all(c(chr1,chr2) %in% ChromInfo.df[,"chr"])
+    return(all(c(chr1,chr2) %in% ChromInfo.df[,"chr"]))
 }
 
 #' Return the value range of the matrix
@@ -1567,7 +1567,7 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
 #' what = "bin.coverage")
 Lego_get_matrix_mcols = function(Lego = NULL, chr1 = NULL, chr2 = NULL, what = NULL){
     Reference.object <- GenomicMatrix$new()
-    Meta.cols <- Reference.object$hdf.matrix.meta.cols() 
+    Meta.cols <- Reference.object$hdf.matrix.meta.cols()
     if(any(is.null(c(Lego,chr1,chr2,what)))){
         stop("Lego, chr1, chr2, what cannot be NULL.\n")
     }

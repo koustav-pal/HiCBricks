@@ -155,21 +155,14 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
     if(any(di.window > distance)){
         stop("di.window cannot be larger than distance\n")
     }
-    Iterations.number <- (chr.length - (First.non.zero.bin - 1))/chunk.size
-    Iterations <- rep(chunk.size,floor(Iterations.number))
-    if(floor(Iterations.number)!=ceiling(Iterations.number)){
-        cumulative <- sum(Iterations)
-        Iterations <- c(Iterations,((chr.length - (First.non.zero.bin - 1))-cumulative))
-    }
-    Starts <- First.non.zero.bin - 1
-
-    if(length(Iterations)>1){
-        Starts.cumsum <- cumsum(Iterations)
-        Starts <- c(First.non.zero.bin - 1, Starts.cumsum[-length(Starts.cumsum)])
-    }
+    Span <- (chr.length - First.non.zero.bin)
+    Iterations <- Span/chunk.size
+    Starts <- seq(from = First.non.zero.bin, to = chr.length, by = chunk.size)
+    Starts <- Starts[Starts != chr.length]
+    Ends <- c(Starts[-1] -1, chr.length)
     DI.data.list <- lapply(seq_along(Starts), function(x){
-        End <- Starts[x] + Iterations[x]
-        Start <- Starts[x] + 1
+        Start <- Starts[x]
+        End <- Ends[x]
         Position.start <- Start
         Position.end <- End
         Start <- ifelse((Start - di.window) < First.non.zero.bin, First.non.zero.bin, (Start - di.window))
@@ -199,6 +192,9 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
             extend <- extend + 1
         }
         Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
+        # cat((Start - 1),"\n")
+        cat(Position.start,Position.end,"\n")
+        cat(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
         DI.data <- ComputeDirectionalityIndex(Matrix = Matrix, Window.size = di.window, filter = Filter, 
             start = Position.start - (Start - 1), end = Position.end - (Start - 1))
         return(DI.data)
