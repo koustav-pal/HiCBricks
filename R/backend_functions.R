@@ -16,6 +16,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.offset.name = "offset",
         hdf.ranges.chr.name = "chr.names",
         hdf.ranges.lengths.name = "lengths",
+        mcool.resolutions.name = "resolutions",
         Max.vector.size=104857600,
         hdf.matrix.meta.cols = function(){
             Temp <- c(self$hdf.matrix.coverage, self$hdf.matrix.rowSums, self$hdf.matrix.sparsity)
@@ -62,7 +63,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             if(version <= 1){
                 return(c("bins","chrom_id","start","end"))
             }
-            if(version == 2){
+            if(version >= 2){
                 return(c("bins","chrom","start","end"))
             }
         },
@@ -152,7 +153,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     }
     if(return.what == "data"){
         Dataset <- h5read(name = Name, file = Group.Handle, index = Index, start = Start,
-            stride = Stride, count = Count)
+            stride = Stride, count = Count, callGeneric = FALSE)
         H5Gclose(Group.Handle)
         return(Dataset)
     }
@@ -467,4 +468,17 @@ humanize_size <- function(x){
     Attributes <- Reference.object$matrices.chrom.attributes
     Attr.vals <- c(basename(Matrix.file),as.double(Matrix.range),as.integer(is.sparse),as.integer(distance),as.integer(TRUE))
     WriteAttributes(Path = Group.path, File = Lego, Attributes = Attributes, values = Attr.vals, on = "group")
+}
+
+._GetDimensions <- function(group.path = NULL, dataset.path = NULL, File = NULL, return.what = "size"){   
+    File.handler <- ._Lego_Get_Something_(Group.path = group.path, Lego = File, 
+        Name = dataset.path, return.what = "dataset_handle")
+    Dataspace <- H5Dget_space(File.handler)
+    Extents <- H5Sget_simple_extent_dims(Dataspace)
+    if(!is.null(Extents)){
+        return(Extents[[return.what]])
+    }else{
+        return(Extents)
+    }
+    CloseH5Con(Handle = File.handler, type = "dataset")
 }

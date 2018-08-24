@@ -1,19 +1,29 @@
-ReturnH5FileConnection = function(File = NULL){
+ReturnH5FileConnection <- function(File = NULL){
         HDF.File <- File
         HDF.Connection = H5Fopen(name=HDF.File)
         return(HDF.Connection)
 }
-ReturnH5Handler = function(Path=NULL,File = NULL){
-        Temp.connection = ReturnH5FileConnection(File=File)
-        Handle=Temp.connection&Path
+ReturnH5Handler <- function(Path=NULL,File = NULL){
+        Temp.connection <- ReturnH5FileConnection(File=File)
+        Handle <- Temp.connection&Path
         return(Handle)
+}
+ReturnH5Attribute <- function(Handle = NULL, name = NULL, type = NULL){
+    if(!H5Aexists(Handle, name)){
+        CloseH5Con(Handle = Handle, type = type)
+        stop("Attribute ",name,"not found in HDF file.\n")
+    }
+    Attributes <- H5Aread(H5Aopen(Handle,name))
+    return(Attributes)
 }
 CloseH5Con <- function(Handle = NULL, type = NULL){
     if(type == "group"){
         H5Gclose(Handle)
     }else if(type == "dataset"){
         H5Dclose(Handle)
-    }    
+    }else if(type == "file"){
+        H5Fclose(Handle)
+    }
 }
 Create_Path <- function(groups){
    Path.to.file <- ""
@@ -74,25 +84,29 @@ WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, values 
     }
     CloseH5Con(Handle = Lego.handler, type = on)
 }
-GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "group"){
+GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, on = "group", ignore.fun.cast = FALSE){
     Reference.object <- GenomicMatrix$new()
     FUNCasts <- Reference.object$matrices.chrom.attributes.fun.cast
-    Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+    if(is.null(Path)){
+        Lego.handler <- ReturnH5FileConnection(File = File)
+    }else{
+        Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+    }
     Attribute.df <- do.call(cbind,lapply(Attributes, function(An.attribute){
-            if(!H5Aexists(h5obj = Lego.handler, name = An.attribute)){
-                CloseH5Con(Handle = Lego.handler, type = on)
-                stop(An.attribute," not found.\n")
+            Attr.val <- ReturnH5Attribute(Handle = Lego.handler, name = An.attribute, type = on)
+            if(!ignore.fun.cast){
+                Val <- FUNCasts(type = An.attribute)(Attr.val)
+            }else{
+                Val <- Attr.val
             }
-            Attr.handle <- H5Aopen(h5obj = Lego.handler, name = An.attribute)
-            Attr.val <- H5Aread(Attr.handle)
-            H5Aclose(Attr.handle)
-            temp.df <- data.frame(attribute = FUNCasts(type = An.attribute)(Attr.val))
+            temp.df <- data.frame(attribute = Val)
             colnames(temp.df) <- An.attribute 
             temp.df
         }))
     CloseH5Con(Handle = Lego.handler, type = on)
     return(Attribute.df)
 }
+
 # InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL, Data=NULL, Index = NULL,
 #     Start = NULL, Stride = NULL, Count = NULL){
 #     DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, Name = Name, return.what = "group_handle")

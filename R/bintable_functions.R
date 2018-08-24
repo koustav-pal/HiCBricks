@@ -1,6 +1,6 @@
 ._ColIndexError_ <- function(x){
     Error.col <- c("chr","start",NA,NA,NA,"more")
-    ColClasses <- c("character","integer","integer","character","character")
+    ColClasses <- list(is.character,is.numeric,is.numeric,is.character,is.character)
     ColNames <- c("chr","start","end","strand","names")
     Index.type.error <- c("index is missing.")
     Norm.x <- (x - min(x))+1
@@ -15,7 +15,7 @@
     Alist <- list("Names" = ColNames[Norm.x], "Classes" = ColClasses[Norm.x])
     return(Alist)
 }
-Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,2,3), 
+Read_bintable = function(Filename = NULL, read.delim = " ", exec = "cat", col.index = c(1,2,3), 
     chromosomes=NULL, impose.discontinuity=TRUE){
     if(is.null(exec)) {
         stop("exec is not allowed to be null")
@@ -25,7 +25,7 @@ Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,
     ColClasses<- ColMetrics[["Classes"]]
     
     Table <- Filename
-    if(class(Filename)=="character"){
+    if(is.character(Filename)){
         Command <- paste(exec,Filename,sep=" ")
         Table <- fread(input=Command, sep=read.delim,
             stringsAsFactors=FALSE, verbose=FALSE, showProgress=FALSE, data.table=FALSE)
@@ -43,10 +43,10 @@ Read_bintable = function(Filename=NULL,read.delim=" ",exec="cat", col.index=c(1,
     Table.list <- list('main.tab' = Ranges.table, 'stranded' = is.stranded, 'named' = has.names)
     return(Table.list)
 }
-Validate_table = function(Table=NULL,colnames=NULL,colClasses=NULL,col.index=NULL,chrom=NULL) {
+Validate_table = function(Table = NULL, colnames = NULL, colClasses = NULL, col.index = NULL, chrom = NULL) {
     for (i in 1:length(colnames)) {
-        if(class(Table[,i])!=colClasses[i]){
-            stop(paste(colClasses[i],"values expected for",colnames[i],"at col",col.index[i],"
+        if(!colClasses[[i]](Table[,i])){
+            stop(paste("Values expected for",colnames[i],"at col",col.index[i],"
                 found values of class",class(Table[,i])))
         }
     }
@@ -67,7 +67,7 @@ Validate_table = function(Table=NULL,colnames=NULL,colClasses=NULL,col.index=NUL
     #     stop("Table must be sorted by chromosome!")
     # }
 }
-CheckContinuousRanges = function(Table=NULL, StartCol=NULL, EndCol=NULL){
+CheckContinuousRanges = function(Table = NULL, StartCol = NULL, EndCol = NULL){
     Starts<-Table[,StartCol]
     Starts<-Starts[2:length(Starts)]
     End<-Table[,EndCol]
@@ -87,7 +87,7 @@ get_chrom_info <- function(bin.table = NULL, chrom = NULL, FUN = NULL, col.name 
     names(Info) <- chrom
     return(Info)
 }
-Split_genomic_coordinates = function(Coordinate=NULL){
+Split_genomic_coordinates = function(Coordinate = NULL){
     Reference.object <- GenomicMatrix$new()
     Sep <- Reference.object$Ranges.separator
     Coord.Split<-stringr::str_split(pattern=Sep,string=Coordinate)

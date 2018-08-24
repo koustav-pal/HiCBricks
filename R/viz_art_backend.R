@@ -6,7 +6,7 @@
 		if(x > 1000){
 			return(paste(round(x/1000,1), "kb", sep = ""))
 		}
-		if(x > 1){
+		if(x >= 1){
 			return(paste(x/1, "bp", sep = ""))
 		}
 	}, "")
@@ -39,7 +39,7 @@ Get_one_or_two_lego_regions <- function(Legos = NULL, x.coords = NULL, y.coords 
 	Matrix.df.list <- list()
 	for(i in seq_along(Legos)){
 		Lego <- Legos[i]
-		Matrix <- Lego_get_matrix_within_coords(Lego = Lego, x.coords = x.coords, y.coords = y.coords, FUN = FUN)
+		Matrix <- Lego_get_matrix_within_coords(Lego = Lego, x.coords = x.coords, y.coords = y.coords, force = TRUE, FUN = FUN)
 		Region.position.x <- Lego_return_region_position(Lego = Lego, region = x.coords)
 		Region.position.y <- Lego_return_region_position(Lego = Lego, region = y.coords)
 		if(dim(Matrix)[1] != length(Region.position.x) | dim(Matrix)[2] != length(Region.position.y)){
@@ -101,6 +101,9 @@ Make_colours <- function(palette = NULL, extrapolate.on = NULL, direction = 1){
     if(palette %in% rownames(brewer.pal.info)){
     	Category <- brewer.pal.info$category[rownames(brewer.pal.info) == palette]
     	Colours <- brewer.pal(name = palette, n = brewer.pal.info$maxcolors[rownames(brewer.pal.info) == palette])
+    	if(direction == -1){
+    		Colours <- rev(Colours)
+    	}
     }else{
     	viridis.col.breaks <- 12
     	Do.viridis <- TRUE
@@ -225,12 +228,13 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NU
 		distance <- region.end - region.start
 	}
 	Shift.seed <- 0.5
+	Span <- region.end - region.start
 	Unique.groups <- unique(Object[,"groups"])
 	Group.list <- lapply(Unique.groups,function(Lego.x){
 		Domain <- Object[Object[,"groups"] == Lego.x,]
 		Domain.names <- unique(Domain[,"dom.names"])
 		Domain.df.list <- lapply(Domain.names,function(x){
-			current.domain <- Domain[Domain[,"dom.names"]==domain.name,]
+			current.domain <- Domain[Domain[,"dom.names"]==x,]
 			colours <- current.domain$colours[current.domain[,"type"] == "start"]
 		    Start <- current.domain[current.domain[,"type"] == "start", "position"]
 		    End <- current.domain[current.domain[,"type"] == "end", "position"]
@@ -243,6 +247,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NU
 		    }else{
 			    Max.dist <- distance/2
 		    }
+		    Dist.up <- Max.dist
 		    if(Mid.bin - (Max.dist*2) < 0){
 		    	Dist.up <- abs(0 - Mid.bin)/2
 		    }
@@ -252,7 +257,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NU
 		    y2.start <- 0
 		    End.line <- data.frame(x=c(x1.start,x2.start),
             y=c(y1.start,y2.start), colours = colours,
-	    	line.group = paste(x, "end", sep = "."), group = paste("Group",Lego.x,sep = "."))
+	    	line.group = paste(x, "end", sep = "."), group = paste("Group",Lego.x,sep = "."),row.names = NULL)
 		    Dist.down <- Max.dist
 		    if((Mid.bin + (Max.dist*2)) > Span){
 		        Dist.down <- (Span - Mid.bin)/2
@@ -264,8 +269,8 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NU
 		    Start.line <- data.frame(x=c(x1.end,x2.end),
 		            y=c(y1.end,y2.end), colours=colours,
 		            line.group = paste(x, "start", sep = "."),
-		            group=paste("Group",Lego.x,sep = "."))
-		    Lines
+		            group=paste("Group",Lego.x,sep = "."),row.names = NULL)
+		    Lines <- rbind(End.line,Start.line)
 		})
 		Domain.df <- do.call(rbind,Domain.df.list)
 	})
@@ -274,19 +279,19 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL, region.start = NU
 }
 
 Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL, group.col = NULL, 
-	cut.corners = NULL, colour.col = NULL, colours = NULL, colours.names = NULL, region.chr = NULL, 
+	cut.corners = FALSE, colour.col = NULL, colours = NULL, colours.names = NULL, region.chr = NULL, 
 	region.start = NULL, region.end = NULL, distance = NULL, rotate = FALSE){
 	Reference.object <- GenomicMatrix$new()
 	if(!is.null(group.col)){
-		Col.values <- unique(mcols(Ranges,group.col,use.names = TRUE)[[1]])
+		Col.values <- unique(elementMetadata(Ranges)[[group.col]])
 		if(!(length(Col.values) > 2 | class(Col.values)!="numeric")){
 			stop("group.col values must be numeric values of for the two Lego objects.\n")
 		}
 	}else{
 		group.col <- "pseudogroups"
 		Ranges.too <- Ranges
-		mcols(Ranges, group.col, use.names = TRUE) <- 1
-		mcols(Ranges.too, group.col, use.names = TRUE) <- 2
+		elementMetadata(Ranges)[[group.col]] <- 1
+		elementMetadata(Ranges.too)[[group.col]] <- 2
 		Ranges <- c(Ranges,Ranges.too)
 	}
 	
@@ -300,54 +305,52 @@ Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL, group.
 		stop("colours and colour.col have different lengths\n")
 	}else {
 		colour.col <- "pseudo.colour.col"
-		mcols(Ranges, colour.col, use.names = TRUE) <- "My_Group"
+		elementMetadata(Ranges)[[colour.col]] <- "My_Group"
 	}
 	if(is.null(colours.names)){
-		colours.names <- unique(mcols(Ranges, colour.col, use.names = TRUE))
+		colours.names <- unique(elementMetadata(Ranges)[[colour.col]])
 		names(colours) <- colours.names
 	}else{
 		names(colours) <- colours.names
 	}
 
 	chr.ranges <- Ranges[seqnames(Ranges) %in% region.chr]
-	chr.ranges <- chr.ranges[start(chr.ranges) < region.end & end(chr.ranges) > region.start]
+	chr.ranges <- chr.ranges[end(chr.ranges) >= region.start & start(chr.ranges) <= region.end]
 	region <- paste(region.chr, region.start, region.end, sep = Reference.object$Ranges.separator)
 	Region.positions <- Lego_return_region_position(Lego = Legos[1], region = region)
-
 	Range.to.df.list <- lapply(seq_along(Legos),function(Lego.x){
-		pos.ranges <- chr.ranges[mcols(chr.ranges,group.col,use.names = TRUE) == Lego.x]
+		pos.ranges <- chr.ranges[elementMetadata(chr.ranges)[[group.col]] == Lego.x]
 		chrs <- as.vector(seqnames(pos.ranges))
 		start <- start(pos.ranges)
 		end <- end(pos.ranges)
 		A.ranges <- Lego_fetch_range_index(Lego = Legos[Lego.x], chr = chrs, start = start, end = end)
 		Position.list <- A.ranges[seqnames(A.ranges) %in% region.chr]
 		check_if_only_one_ranges <- function(x){
-			!is.na(Position.list$Indexes[[x]])
+			all(!is.na(Position.list$Indexes[[x]]))
 		}
-		if(!all(vapply(1:seq_along(Position.list), check_if_only_one_ranges, TRUE))){
+		if(!all(vapply(seq_along(Position.list), check_if_only_one_ranges, TRUE))){
 			stop("All ranges did not overlap with the bintable.\n")
 		}
-		Range.positions.start <- vapply(1:seq_along(Position.list),function(x){min(Position.list$Indexes[[x]])},1)
-		Range.positions.end <- vapply(1:seq_along(Position.list),function(x){max(Position.list$Indexes[[x]])},1)
-		Range.positions.names <- vapply(1:seq_along(Position.list),function(x){names(Position.list[x])},"")
+		Range.positions.start <- vapply(seq_along(Position.list),function(x){(min(Position.list$Indexes[[x]]))},1)
+		Range.positions.end <- vapply(seq_along(Position.list),function(x){(max(Position.list$Indexes[[x]]))},1)
+		Range.positions.names <- vapply(seq_along(Position.list),function(x){names(Position.list[x])},"")
 		Start.df <- data.frame(dom.names = Range.positions.names, position = Range.positions.start, 
-			groups = Lego.x, type = "start", colours = mcols(Ranges, colour.col, use.names = TRUE))
+			groups = Lego.x, type = "start", colours = elementMetadata(pos.ranges)[[colour.col]])
 		End.df <- data.frame(dom.names = Range.positions.names, position = Range.positions.end, 
-			groups = Lego.x, type = "end", colours = mcols(Ranges, colour.col, use.names = TRUE))
+			groups = Lego.x, type = "end", colours = elementMetadata(pos.ranges)[[colour.col]])
 		All.df <- rbind(Start.df,End.df)
 		All.df$dom.names <- as.character(All.df$dom.names)
+		All.df
 	})
 	Range.to.df <- do.call(rbind, Range.to.df.list)
 	if(rotate){
-		Normal.heatmap.lines <- make_boundaries_for_rotated_heatmap(Object = Range.to.df, 
-			region.start = region.start, region.end = region.end, distance = distance, rotate = rotate)		
+		Normal.heatmap.lines <- make_boundaries_for_rotated_heatmap(Object = Range.to.df, cut.corners = cut.corners,
+			region.start = min(Region.positions), region.end = max(Region.positions), distance = distance)		
 	}else{
 		Normal.heatmap.lines <- make_boundaries_for_heatmap(Object = Range.to.df, region.start = region.start, 
 			region.end = region.end, distance = distance)		
 	}
-	Plot.object <- geom_line(data = Normal.heatmap.lines, aes(x = x, y = y, group = line.group, colour = colours))	
-	Plot.object <- Plot.object + scale_colour_manual(values = colours)
-	return(Plot.object)
+	return(Normal.heatmap.lines)
 }
 
 Get_heatmap_theme <- function(x.axis=TRUE, y.axis=TRUE, 

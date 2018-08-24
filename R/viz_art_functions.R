@@ -167,7 +167,7 @@ Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, 
 	x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL, col.direction = 1, extrapolate.on = NULL, 
 	x.axis.text.size = 10, y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8, legend.text.size = 8, 
 	title.size = 10, tad.ranges = NULL, group.col = NULL, tad.colour.col = NULL, colours = NULL, colours.names = NULL,
-	cut.corners = NULL, highlight.points = NULL, width = 10, height = 6, units = "cm", legend.key.width = unit(3,"cm"), 
+	cut.corners = FALSE, highlight.points = NULL, width = 10, height = 6, units = "cm", legend.key.width = unit(3,"cm"), 
 	legend.key.height = unit(0.5,"cm")){
 
 	Matrix.df <- Get_one_or_two_lego_regions(Legos = Legos, x.coords = x.coords, y.coords = y.coords, 
@@ -232,7 +232,7 @@ Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, 
 	    Boundaries.obj <- Format_boundaries_normal_heatmap(Legos = Legos, Ranges = tad.ranges, group.col = group.col, 
 		cut.corners = cut.corners, colour.col = tad.colour.col, colours = colours, 
 		colours.names = colours.names, region.chr = x.coord.parsed['chr'], 
-		region.start = min(Matrix.df[,'row']), region.end = max(Matrix.df[,'row']), distance = distance,
+		region.start = as.numeric(x.coord.parsed['start']), region.end = as.numeric(x.coord.parsed['end']), distance = distance,
 		rotate = rotate)
 	}
     if(rotate){
@@ -248,7 +248,11 @@ Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, 
 	    xlims <- c(min(Matrix.df$row),max(Matrix.df$row))
 	    ylims <- c(min(Matrix.df$col),max(Matrix.df$col))
     }
-    ThePlot <- ThePlot + Boundaries.obj
+    if(!is.null(tad.ranges)){
+        ThePlot <- ThePlot + geom_line(data = Boundaries.obj, 
+            aes(x = x, y = y, group = line.group, colour = colours)) 
+        ThePlot <- ThePlot + scale_colour_manual(values = colours)
+    }
     ThePlot <- ThePlot + scale_x_continuous(limits = xlims, expand = c(0,0),
     	breaks = x.coord.breaks, labels = x.axis.coord.labs)
     ThePlot <- ThePlot + scale_y_continuous(limits = ylims, expand = c(0,0),

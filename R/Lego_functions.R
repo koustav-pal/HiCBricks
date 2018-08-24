@@ -182,7 +182,6 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
         stop("Variable Bintable cannot be empty. Binning information must be provided at startup")
     }
     # Read in the binning table
-    cat("Reading Bintable:",BinTable,"\n")
     Bintable.list <- Read_bintable(Filename = BinTable, read.delim = bin.delim, exec = exec,
                 col.index = col.index, chromosomes = ChromosomeList,
                 impose.discontinuity = impose.discontinuity)
@@ -229,6 +228,74 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     }
     return(TRUE)
 }
+
+#' Create the entire HDF5 structure and load the bintable from a mcool file
+#' 
+#' `CreateLego_from_mcool` is a wrapper on CreateLego which creates the Lego 
+#' data structure from an mcool file.
+#' 
+#' mcool are a standard 4D nucleome data structure for Hi-C data. Read more
+#' about the 4D nucleome project \href{https://data.4dnucleome.org/}{here}. 
+#' 
+#' @param chrs \strong{Optional}. 
+#' If provided will only create a Lego for these chromosomes (both cis & trans).
+#' 
+#' @inheritParams Lego_load_data_from_mcool
+#' 
+#' @inheritParams CreateLego
+#' 
+#' @seealso \code{\link{Lego_load_data_from_mcool}} to load data from the mcool to
+#' a Lego store.
+#' 
+#' 
+CreateLego_from_mcool <- function(Lego = NULL, mcool = NULL, binsize = NULL, 
+    chrs = NULL, remove.existing = FALSE){
+    Reference.object <- GenomicMatrix$new()
+    if(is.null(mcool)){
+       stop("mcool must be provided as mcool= /path/to/something") 
+    }
+    if(!file.exists(mcool)){
+        stop("mcool not found!")    
+    }
+    resolutions <- Lego_list_mcool_resolutions(mcool = mcool)
+    mcool.version <- GetAttributes(Path = NULL, File=mcool, 
+        Attributes="format-version", on = "file", ignore.fun.cast = TRUE)[,"format-version"]
+    if(!is.null(resolutions)){
+        if(is.null(binsize)){
+            stop("binsize cannot be NULL when resolutions are present..\n")
+        }
+        if(length(binsize) > 1){
+             stop("binsize cannot have more than one value\n")
+        }
+        if(!(as.character(binsize) %in% resolutions)){
+            stop("all binsizes were not found in this mcool file. See all resolutions available with Lego_list_mcool_resolutions\n")
+        }
+    }
+    cooler.remap.chrom <- ._mcool_remap_chromosomes(File = mcool, mcool.version = mcool.version,
+        resolution = !is.null(resolutions), binsize = binsize)
+    ChromNames <- cooler.remap.chrom[,"chr.name"]
+    ChromNames <- ifelse(!is.null(chrs),ChromNames[ChromNames %in% chrs],ChromNames)
+    if(!is.null(chrs)){
+        if(any(!(chrs %in% ChromNames))){
+            stop("Some chrs were not found in this mcool file.\n")
+        }
+        ChromNames <- ChromNames[ChromNames %in% chrs]
+    }
+    mcool_bintable_ranges <- ._mcool_bintable_ranges(mcool.file = mcool, resolution = !is.null(resolutions),
+        mcool.remap.chrom = cooler.remap.chrom, binsize = binsize, mcool.version = mcool.version)
+    mcool_bintable_ranges <- mcool_bintable_ranges[mcool_bintable_ranges[,"chr"] %in% ChromNames,]
+    RetVar <- CreateLego(ChromNames=ChromNames, BinTable=mcool_bintable_ranges, Output.Filename=Lego,
+        remove.existing = remove.existing)
+    return(RetVar)
+}
+
+
+Lego_list_mcool_resolutions <- function(mcool = NULL){
+    return(mcool_list_resolutions(mcool = mcool))
+}
+
+
+
 
 #' Get the chrominfo for the Hi-C experiment.
 #' 
@@ -359,7 +426,7 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL, remove.e
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
         stop("Object of class Ranges expected")
     }
-    Ranges.df <- as.data.frame(ranges)
+    Ranges.df <- as.data.frame(ranges, stringsAsFactors = FALSE)
     if(is.unsorted(Ranges.df$seqnames)){
         stop("Ranges must be sorted by chromosome!")
     }
@@ -552,7 +619,7 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
         Lego = Lego, Name = Reference.object$hdf.ranges.chr.name, return.what = "data")
         if(any(!(chr %in% chromosomes))){
             stop("chr not found!")
-        }        
+        }
         Starts <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
         Lego = Lego, Name = Reference.object$hdf.ranges.offset.name, return.what = "data")
         Lengths <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
@@ -570,9 +637,9 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
     MCols <- Lego_list_ranges_mcols(Lego = Lego, rangekey = rangekey)
     if(class(MCols) == "data.frame"){
         MCols.col <- as.character(MCols[,"m.col"])
-        m.start <- ifelse(is.null(Start),NULL,Start[1])
-        m.stride <- ifelse(is.null(Start),NULL,Stride[1])
-        m.count <- ifelse(is.null(Start),NULL,Count[1])
+        m.start <- Start[1]
+        m.stride <- Stride[1]
+        m.count <- Count[1]
         MCols.DF.list <- lapply(MCols.col,function(x){
             Dataset <- ._Lego_Get_Something_(Group.path = Create_Path(c(Reference.object$hdf.ranges.root, rangekey)),
                 Lego = Lego, Name = x, Start = m.start, Stride = m.stride,
@@ -808,8 +875,8 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
 #' remove.prior = TRUE)
 #' 
 Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL, 
-    matrix.file = NULL, delim = " ", exec = NULL,  
-    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
+    matrix.file = NULL, delim = " ", exec = NULL, remove.prior = FALSE, 
+    num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
 
     Reference.object <- GenomicMatrix$new()
     ListVars <- list(Lego = Lego, chr1 = chr1, chr2 = chr2, matrix.file = matrix.file, is.sparse = is.sparse, 
@@ -854,7 +921,7 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL,
 #' A character vector of length 1 specifying the chromosome corresponding to the
 #' rows and cols of the matrix
 #' 
-#' @param distance \strong{Required}. Default NULL. Not implemented yet.
+#' @param distance \strong{Required}. Default NULL.
 #' For very high-resolution matrices, read times can become extremely slow and
 #' it does not make sense to load the entire matrix into the data structure, as
 #' after a certain distance, the matrix will become extremely sparse. This 
@@ -914,6 +981,61 @@ Lego_load_cis_matrix_till_distance = function(Lego = NULL, chr = NULL,
         sparsity.bins = sparsity.bins)
 }
 
+
+#' Load a NxN dimensional matrix into the Lego store from an mcool file.
+#' 
+#' Read an mcool contact matrix coming out of 4D nucleome projects into a 
+#' Lego store. 
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @inheritParams Lego_load_matrix
+#' 
+#' @param mcool \strong{Required}.
+#' Path to an mcool file. 
+#' 
+#' @param dont.look.for.chr2 \strong{Required}.
+#' At startup, the function will attempt to search for the first occurence 
+#' of a chr2 contact value. This is done to avoid the reading of all chr1
+#' values for every chunk processed. If chr1 and chr2 are equivalent, consider
+#' setting it to FALSE. 
+#' 
+#' @param cooler.batch.size \strong{Optional}. Default 1000000.
+#' The number of values to read per iteration through a mcool file.
+#' 
+#' @param matrix.chunk \strong{Optional}. Default 2000.
+#' The nxn matrix square to fill per iteration in a mcool file.
+#'  
+#' @seealso \code{\link{CreateLego_from_mcool}} to create matrix from an mcool
+#' file.
+#' 
+#'
+Lego_load_data_from_mcool <- function(Lego = NULL, mcool = NULL, chr1 = NULL, chr2 = NULL, binsize = NULL,
+    cooler.batch.size = 1000000, matrix.chunk = 2000, dont.look.for.chr2 = FALSE, remove.prior = FALSE){
+    Reference.object <- GenomicMatrix$new()
+    if(is.null(chr1) | is.null(chr2)){
+        stop("chr1, chr2 cannot be NULL.\n")
+    }
+    if(length(chr1) != length(chr2) | length(chr1) != 1){
+        stop("chr1, chr2 are expected to be of length 1.\n")   
+    }
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("Provided chromosomes do not exist in the chrominfo table\n")
+    }
+    if(Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2) & !remove.prior){
+        stop("A matrix was preloaded before. Use remove.prior = TRUE to force value replacement\n")
+    }
+    resolutions <- Lego_list_mcool_resolutions(mcool = mcool)
+    if(!is.null(resolutions) & is.null(binsize)){
+        stop("binsize must be provided when different resolutions are present in an mcool file.\n")
+    }
+    if(!(binsize %in% resolutions)){
+        stop("binsize not found in mcool file. Please check available binsizes with Lego_list_mcool_resolutions.\n")
+    }
+    ._Process_mcool(Lego = Lego, File = mcool, cooler.batch.size = cooler.batch.size, binsize = binsize,
+    matrix.chunk = matrix.chunk, chr1 = chr1, chr2 = chr2, dont.look.for.chr2 = dont.look.for.chr2,
+    resolution = !is.null(resolutions))
+}
 
 #' Check if a matrix has been loaded for a chromosome pair.
 #' 
@@ -1041,6 +1163,30 @@ Lego_matrix_minmax = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Extent <- c(Matrix.list[Filter, "min"],Matrix.list[Filter, "max"])
     return(Extent)
 }
+
+#' Return the dimensions of a matrix
+#' 
+#' @inheritParams Lego_get_chrominfo
+#' 
+#' @inheritParams Lego_load_matrix
+#' 
+#' @return Returns the dimensions of a Hi-C matrix for any given 
+#' chromosome pair.
+#' 
+#' @examples
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_matrix_dimensions(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19")
+#'
+Lego_matrix_dimensions = function(Lego=NULL, chr1=NULL, chr2=NULL){
+    if(!Lego_matrix_exists(Lego = Lego, chr1 = chr1, chr2 = chr2)){
+        stop("chr1 chr2 pairs were not found\n")
+    }
+    Reference.object <- GenomicMatrix$new()
+    ._GetDimensions(group.path = Create_Path(c(Reference.object$hdf.matrices.root,chr1,chr2)), 
+        dataset.path =Reference.object$hdf.matrix.name, File = Lego)
+    return(Extents$size)
+}
+
 
 #' Return the filename of the loaded matrix
 #' 
