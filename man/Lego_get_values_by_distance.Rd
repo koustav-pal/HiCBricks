@@ -5,7 +5,7 @@
 \title{Return values separated by a certain distance.}
 \usage{
 Lego_get_values_by_distance(Lego = NULL, chr = NULL, distance = NULL,
-  constrain.region = NULL, batch.size = 500, FUN = NULL)
+    constrain.region = NULL, batch.size = 500, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -35,17 +35,17 @@ Returns a numeric vector of length N depending on the presence of
 constrain.region, FUN and distance from the main diagonal.
 }
 \description{
-\code{Lego_get_values_by_distance} can fetch values with or without transformation
-or subsetted by a certain distance. Please note, this module is not an
-iterable module.
+\code{Lego_get_values_by_distance} can fetch values with or without
+transformation or subsetted by a certain distance. Please note,
+this module is not an iterable module.
 }
 \examples{
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
 Lego_get_values_by_distance(Lego = Lego.file, chr = "chr19", distance = 0)
 
 Failsafe_median <- function(x){
-     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
-     return(median(x))
+    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
+    return(median(x))
 }
 
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")

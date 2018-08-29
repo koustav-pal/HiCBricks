@@ -5,10 +5,10 @@
 \title{Do TAD Calls with Local Score Differentiator on a Hi-C matrix}
 \usage{
 Lego_local_score_differentiator(Lego = NULL, chrs = NULL,
-  min.sum = -1, di.window = 200L, lookup.window = 200L,
-  tukeys.constant = 1.5, strict = TRUE, fill.gaps = TRUE,
-  ignore.sparse = TRUE, sparsity.threshold = 0.8,
-  remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE)
+    min.sum = -1, di.window = 200L, lookup.window = 200L,
+    tukeys.constant = 1.5, strict = TRUE, fill.gaps = TRUE,
+    ignore.sparse = TRUE, sparsity.threshold = 0.8,
+    remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -45,8 +45,8 @@ is true.
 
 TADs inferred in this way will be annotated with two metadata columns in the
 GRanges object. \emph{gap.fill} will hold a value of 1 and \emph{level} will
-hold a value 1. TADs which were not filled in will hold a gap.fill value of 0
-and a level value of 2.}
+hold a value 1. TADs which were not filled in will hold a gap.fill value of
+0 and a level value of 2.}
 
 \item{ignore.sparse}{\strong{Optional}. Default TRUE
 If TRUE, a matrix which has been defined as sparse during the matrix loading
@@ -119,4 +119,10 @@ and level = 1.
 
 This function provides the capability to call very accurante TAD definitions
 in a very fast way.
+}
+\examples{
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+TAD_ranges <- Lego_local_score_differentiator(Lego = Lego.file, 
+chrs = "chr19", di.window = 10, lookup.window = 30, strict = TRUE, 
+fill.gaps = TRUE, chunk.size = 500)
 }

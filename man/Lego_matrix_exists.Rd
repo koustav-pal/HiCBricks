@@ -11,21 +11,21 @@ Lego_matrix_exists(Lego = NULL, chr1 = NULL, chr2 = NULL)
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-rows of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-columns of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the columns of the matrix}
 }
 \value{
-Returns a logical vector of length 1, specifying if the matrix exists
-or not.
+Returns a logical vector of length 1, specifying if the matrix
+exists or not.
 }
 \description{
-Matrices are created when the bintable is loaded and the chromosome names are
-provided. If a user is in doubt regarding whether a matrix is present or not
-it is useful to check this function. If the Bintable did not contain a
+Matrices are created when the bintable is loaded and the chromosome names
+are provided. If a user is in doubt regarding whether a matrix is present or
+not it is useful to check this function. If the Bintable did not contain a
 particular chromosome, any matrices for that chromosome would not be present
 in the file
 }

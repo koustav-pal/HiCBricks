@@ -5,12 +5,12 @@
 #' This function provides the capability to plot various types of heatmaps from
 #' Hi-C data. 
 #' \itemize{
-#' 	\item One sample heatmap.
-#' 	\item Two sample heatmap (One sample on upper and other on lower).
-#' 	\item All of the above with 90 degree rotation.
-#' 	\item All of the above but with signal capped at a certain value.
-#' 	\item All of the above but filtered by distance.
-#' 	\item All of the above with TADs/TAD borders plotted on top [experimental].
+#'  \item One sample heatmap.
+#'  \item Two sample heatmap (One sample on upper and other on lower).
+#'  \item All of the above with 90 degree rotation.
+#'  \item All of the above but with signal capped at a certain value.
+#'  \item All of the above but filtered by distance.
+#'  \item All of the above with TADs/TAD borders plotted on top.
 #' }
 #' @section Output and Input related parameters.
 #' 
@@ -116,6 +116,9 @@
 #' corresponding to the column which should be used to define different TAD
 #' categories.
 #' 
+#' @param line.width \strong{Optional}. Default 0.5
+#' When plotting TADs set the width of the plotted lines
+#' 
 #' @param cut.corners \strong{Optional}. Default FALSE
 #' if cut.corners is TRUE, TAD borders will not be truncated, and they will
 #' span until the end of visible heatmap.
@@ -161,109 +164,156 @@
 #' @param legend.key.height \strong{Optional}. Default unit(0.5,"cm")
 #' Defines the legend key height.
 #' 
-Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, y.coords = NULL, 
-	FUN = NULL, value.cap = NULL, distance = NULL, rotate = FALSE, x.axis = TRUE, x.axis.title = NULL,
-	y.axis = TRUE, y.axis.title = NULL, title = NULL, legend.title = NULL, return.object=FALSE,
-	x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL, col.direction = 1, extrapolate.on = NULL, 
-	x.axis.text.size = 10, y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8, legend.text.size = 8, 
-	title.size = 10, tad.ranges = NULL, group.col = NULL, tad.colour.col = NULL, colours = NULL, colours.names = NULL,
-	cut.corners = FALSE, highlight.points = NULL, width = 10, height = 6, units = "cm", legend.key.width = unit(3,"cm"), 
-	legend.key.height = unit(0.5,"cm")){
+#' @examples
+#' FailSafe_log10 <- function(x){
+#'      x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+#'      return(log10(x+1))
+#' }
+#' 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' Lego_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
+#' Legos = Lego.file, x.coords = "chr19:5000000:10000000", palette = "Reds",
+#' y.coords = "chr19:5000000:10000000", FUN = FailSafe_log10, 
+#' value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
+#' legend.key.height = unit(0.3,"cm"))
+#' 
+Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL, 
+    y.coords = NULL, FUN = NULL, value.cap = NULL, distance = NULL, 
+    rotate = FALSE, x.axis = TRUE, x.axis.title = NULL, y.axis = TRUE, 
+    y.axis.title = NULL, title = NULL, legend.title = NULL, return.object=FALSE,
+    x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL, 
+    col.direction = 1, extrapolate.on = NULL, x.axis.text.size = 10, 
+    y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8, 
+    legend.text.size = 8, title.size = 10, tad.ranges = NULL, group.col = NULL, 
+    tad.colour.col = NULL, colours = NULL, colours.names = NULL, 
+    cut.corners = FALSE, highlight.points = NULL, width = 10, height = 6, 
+    line.width = 0.5, units = "cm", legend.key.width = unit(3,"cm"), 
+    legend.key.height = unit(0.5,"cm")){
 
-	Matrix.df <- Get_one_or_two_lego_regions(Legos = Legos, x.coords = x.coords, y.coords = y.coords, 
-		distance = distance, value.cap = value.cap, FUN = FUN)
-	if(nrow(Matrix.df)==0){
-		stop("The matrix was empty!")
-	}
-	list_of_coords <- list("x.coords" = x.coords, "y.coords" = y.coords)
+    Matrix.df <- Get_one_or_two_lego_regions(Legos = Legos, x.coords = x.coords,
+        y.coords = y.coords, distance = distance, value.cap = value.cap, 
+        FUN = FUN)
+    if(nrow(Matrix.df)==0){
+        stop("The matrix was empty!")
+    }
+    list_of_coords <- list("x.coords" = x.coords, "y.coords" = y.coords)
 
-	Parsed_string <- ._Parse_genomic_coordinates(list_of_coords)
+    Parsed_string <- ._Parse_genomic_coordinates(list_of_coords)
     x.coord.parsed <- Parsed_string[["x.coords"]]
     y.coord.parsed <- Parsed_string[["y.coords"]]
-    x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), to = max(Matrix.df$row), 
-    	how.many = x.axis.num.breaks, two.sample = FALSE)
-    x.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], chr = x.coord.parsed['chr'], positions = x.coord.breaks)
+    x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
+        to = max(Matrix.df$row), how.many = x.axis.num.breaks, 
+        two.sample = FALSE)
+    x.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], 
+        chr = x.coord.parsed['chr'], positions = x.coord.breaks)
 
     two.sample <- (rotate & length(Legos)==2)
-    y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), to = max(Matrix.df$row), 
-    	how.many = x.axis.num.breaks, two.sample = two.sample)
-    y.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], chr = y.coord.parsed['chr'], positions = abs(y.coord.breaks))
+    y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
+        to = max(Matrix.df$row), how.many = x.axis.num.breaks, 
+        two.sample = two.sample)
+    y.axis.coord.labs <- Make_axis_labels(Lego = Legos[1], 
+        chr = y.coord.parsed['chr'], positions = abs(y.coord.breaks))
 
-    Colours <- Make_colours(palette = palette, extrapolate.on = extrapolate.on, direction = col.direction)
+    Colours <- Make_colours(palette = palette, 
+        extrapolate.on = extrapolate.on, direction = col.direction)
     # go from min val to mid to max val
     two.sample <- (length(Legos)==2)
-    Matrix.df$rescale <- rescale_values_for_colours(Object = Matrix.df, two.sample = two.sample)
-    Value.dist <- make_colour_breaks(Object = Matrix.df, how.many = length(Colours), two.sample = two.sample)
+    Matrix.df$rescale <- rescale_values_for_colours(
+        Object = Matrix.df, two.sample = two.sample)
+    Value.dist <- make_colour_breaks(Object = Matrix.df, 
+        how.many = length(Colours), two.sample = two.sample)
     
-    Legend.breaks.list <- get_legend_breaks(Object = Matrix.df, how.many = 5, value.cap = value.cap, colours = Colours,
-    	two.sample = two.sample)
+    Legend.breaks.list <- get_legend_breaks(Object = Matrix.df, 
+        how.many = 5, value.cap = value.cap, colours = Colours,
+        two.sample = two.sample)
     Colour.breaks <- Legend.breaks.list[["col.breaks"]]
     Colour.labs <- Legend.breaks.list[["col.labs"]]
     Colours <- Legend.breaks.list[["cols"]]
     if(rotate){
-    	y.coord.breaks <- y.coord.breaks - min(y.coord.breaks)
-    	x.coord.breaks <- x.coord.breaks - min(x.coord.breaks)
-    	if(length(Legos)==2){
-    		Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0,]
-    		Lower.tri.map <- Matrix.df[Matrix.df$dist <= 0,]
-    		Lower.tri.map$dist <- abs(Lower.tri.map$dist)
-    		Upper.rotated.map <- RotateHeatmap(Matrix=Upper.tri.map, value.var="rescale", upper = TRUE)
-    		Lower.rotated.map <- RotateHeatmap(Matrix=Lower.tri.map, value.var="rescale", upper = FALSE) 
-    		Entire.rotated.map <- rbind(Upper.rotated.map,Lower.rotated.map)
-    		y.coord.breaks <- y.coord.breaks/2
-    		y.coord.breaks <- c(rev(y.coord.breaks)*-1,y.coord.breaks)
-			y.axis.coord.labs <- c(rev(y.axis.coord.labs),y.axis.coord.labs)
-    	}else{
-    		Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0,]
-    		Entire.rotated.map <- RotateHeatmap(Matrix=Upper.tri.map, value.var="rescale", upper = TRUE)
-    		y.coord.breaks <- y.coord.breaks/2
-    	}
+        y.coord.breaks <- y.coord.breaks - min(y.coord.breaks)
+        x.coord.breaks <- x.coord.breaks - min(x.coord.breaks)
+        if(length(Legos)==2){
+            Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0,]
+            Lower.tri.map <- Matrix.df[Matrix.df$dist <= 0,]
+            Lower.tri.map$dist <- abs(Lower.tri.map$dist)
+            Upper.rotated.map <- RotateHeatmap(Matrix=Upper.tri.map, 
+                value.var="rescale", upper = TRUE)
+            Lower.rotated.map <- RotateHeatmap(Matrix=Lower.tri.map, 
+                value.var="rescale", upper = FALSE) 
+            Entire.rotated.map <- rbind(Upper.rotated.map,Lower.rotated.map)
+            y.coord.breaks <- y.coord.breaks/2
+            y.coord.breaks <- c(rev(y.coord.breaks)*-1,y.coord.breaks)
+            y.axis.coord.labs <- c(rev(y.axis.coord.labs),y.axis.coord.labs)
+        }else{
+            Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0,]
+            Entire.rotated.map <- RotateHeatmap(Matrix=Upper.tri.map, 
+                value.var="rescale", upper = TRUE)
+            y.coord.breaks <- y.coord.breaks/2
+        }
     }
 
-	# require(ggplot2)
-	Lego_theme <- Get_heatmap_theme(x.axis=x.axis, y.axis=y.axis, text.size = text.size, 
-		x.axis.text.size = x.axis.text.size, y.axis.text.size = y.axis.text.size,
-		legend.title.text.size = legend.title.text.size, legend.text.size = legend.text.size, 
-		title.size = title.size, legend.key.width = legend.key.width, legend.key.height =legend.key.height)
-	Labels <- Get_heatmap_titles(title = title, x.axis.title = x.axis.title, y.axis.title = y.axis.title, 
-		legend.title = legend.title, x.coords = x.coords, y.coords = y.coords, rotate = rotate)
+    # require(ggplot2)
+    Lego_theme <- Get_heatmap_theme(x.axis=x.axis, y.axis=y.axis, 
+        text.size = text.size, x.axis.text.size = x.axis.text.size, 
+        y.axis.text.size = y.axis.text.size, 
+        legend.title.text.size = legend.title.text.size, 
+        legend.text.size = legend.text.size, 
+        title.size = title.size, legend.key.width = legend.key.width, 
+        legend.key.height =legend.key.height)
+    Labels <- Get_heatmap_titles(title = title, x.axis.title = x.axis.title, 
+        y.axis.title = y.axis.title, legend.title = legend.title, 
+        x.coords = x.coords, y.coords = y.coords, rotate = rotate)
     Boundaries.obj <- NULL
-	if(!is.null(tad.ranges)){
-	    Boundaries.obj <- Format_boundaries_normal_heatmap(Legos = Legos, Ranges = tad.ranges, group.col = group.col, 
-		cut.corners = cut.corners, colour.col = tad.colour.col, colours = colours, 
-		colours.names = colours.names, region.chr = x.coord.parsed['chr'], 
-		region.start = as.numeric(x.coord.parsed['start']), region.end = as.numeric(x.coord.parsed['end']), distance = distance,
-		rotate = rotate)
-	}
+    if(!is.null(tad.ranges)){
+        Boundaries.obj <- Format_boundaries_normal_heatmap(Legos = Legos, 
+            Ranges = tad.ranges, group.col = group.col, 
+        cut.corners = cut.corners, colour.col = tad.colour.col, 
+        colours = colours, colours.names = colours.names, 
+        region.chr = x.coord.parsed['chr'], 
+        region.start = as.numeric(x.coord.parsed['start']), 
+        region.end = as.numeric(x.coord.parsed['end']), distance = distance,
+        rotate = rotate)
+    }
+
     if(rotate){
-	    ThePlot <- ggplot(Entire.rotated.map, aes(x = xcoords, y = ycoords))
-	    ThePlot <- ThePlot + geom_polygon(aes(fill = values, group = ids))
-	    xlims <- c(0,max(Entire.rotated.map[,"xcoords"]))
-	    ylims <- c(min(Entire.rotated.map[,"ycoords"]),max(Entire.rotated.map[,"ycoords"]))
-	    y.coord.breaks <- seq(ceiling(min(Entire.rotated.map[,"ycoords"])),ceiling(max(Entire.rotated.map[,"ycoords"])),length.out = y.axis.num.breaks)
-    	y.axis.coord.labs <- y.coord.breaks*2
+        ids <- xcoords <- ycoords <- NULL
+        ThePlot <- ggplot(Entire.rotated.map, aes(x = xcoords, y = ycoords))
+        ThePlot <- ThePlot + geom_polygon(aes(fill = values, group = ids))
+        xlims <- c(0,max(Entire.rotated.map[,"xcoords"]))
+        ylims <- c(min(Entire.rotated.map[,"ycoords"]),
+            max(Entire.rotated.map[,"ycoords"]))
+        y.coord.breaks <- seq(ceiling(min(Entire.rotated.map[,"ycoords"])),
+            ceiling(max(Entire.rotated.map[,"ycoords"])),
+            length.out = y.axis.num.breaks)
+        y.axis.coord.labs <- y.coord.breaks*2
     }else{
-	    ThePlot <- ggplot(Matrix.df, aes(x = row, y = col))
-	    ThePlot <- ThePlot + geom_tile(aes(fill = rescale))
-	    xlims <- c(min(Matrix.df$row),max(Matrix.df$row))
-	    ylims <- c(min(Matrix.df$col),max(Matrix.df$col))
+        ThePlot <- ggplot(Matrix.df, aes(x = row, y = col))
+        ThePlot <- ThePlot + geom_tile(aes(fill = rescale))
+        xlims <- c(min(Matrix.df$row) - 0.5,max(Matrix.df$row) + 0.5)
+        ylims <- c(min(Matrix.df$col) - 0.5,max(Matrix.df$col) + 0.5)
     }
     if(!is.null(tad.ranges)){
+        line.group <- x <- y <- NULL
         ThePlot <- ThePlot + geom_line(data = Boundaries.obj, 
-            aes(x = x, y = y, group = line.group, colour = colours)) 
+            aes(x = x, y = y, group = line.group, colour = colours), 
+            size = line.width) 
         ThePlot <- ThePlot + scale_colour_manual(values = colours)
     }
     ThePlot <- ThePlot + scale_x_continuous(limits = xlims, expand = c(0,0),
-    	breaks = x.coord.breaks, labels = x.axis.coord.labs)
+        breaks = x.coord.breaks, labels = x.axis.coord.labs)
     ThePlot <- ThePlot + scale_y_continuous(limits = ylims, expand = c(0,0),
-    	breaks = y.coord.breaks, labels = y.axis.coord.labs)
+        breaks = y.coord.breaks, labels = y.axis.coord.labs)
     ThePlot <- ThePlot + scale_fill_gradientn(legend.title,values = Value.dist, 
-    	breaks = Colour.breaks, labels = Colour.labs, colors = Colours)
+        breaks = Colour.breaks, labels = Colour.labs, colors = Colours)
     ThePlot<-ThePlot+ Lego_theme
     # return(Entire.rotated.map)
-    ThePlot<-ThePlot+labs(title = Labels['title'], x = Labels['x.axis'], y = Labels['y.axis'])
-    ggsave(filename = File, plot = ThePlot, width = width, height = height, units = units)
+    ThePlot<-ThePlot+labs(title = Labels['title'], x = Labels['x.axis'], 
+        y = Labels['y.axis'])
+    ggsave(filename = File, plot = ThePlot, width = width, height = height, 
+        units = units)
     if(return.object){
-	    return(ThePlot)
+        return(ThePlot)
+    }else{
+        return(TRUE)
     }
 }

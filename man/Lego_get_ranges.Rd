@@ -27,9 +27,9 @@ return a GRanges object.
 \details{
 If a rangekey is present, the ranges will be retrieve and a GRanges
 constructed. Metadata columns will also be added. If these are rangekeys
-other than "Bintable", and had been added using Lego_add_ranges the width and
-Strand columns may appear as metadata columns. These will most likely be
-artifacts from converting the original ranges object to a data.frame.
+other than "Bintable", and had been added using Lego_add_ranges the width
+and Strand columns may appear as metadata columns. These will most likely
+be artifacts from converting the original ranges object to a data.frame.
 }
 \examples{
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")

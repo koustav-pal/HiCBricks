@@ -5,7 +5,7 @@
 \title{Return a matrix subset between two regions.}
 \usage{
 Lego_get_matrix_within_coords(Lego = NULL, x.coords = NULL,
-  y.coords = NULL, force = FALSE, FUN = NULL)
+    y.coords = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -13,44 +13,48 @@ A string specifying the path to the Lego store created with CreateLego.}
 
 \item{x.coords}{\strong{Required}.
 A string specifying the region to subset on the rows. It takes the form
-chr:start:end. An overlap operation with the associated bintable will be done
-to identify the bins to subset on the row}
+chr:start:end. An overlap operation with the associated bintable will be
+done to identify the bins to subset on the row}
 
 \item{y.coords}{\strong{Required}.
 A string specifying the region to subset on the rows. It takes the form
-chr:start:end. An overlap operation with the associated bintable will be done
-to identify the bins to subset on the column}
+chr:start:end. An overlap operation with the associated bintable will be
+done to identify the bins to subset on the column}
 
 \item{force}{\strong{Optional}. Default FALSE
-If true, will force the retrieval operation when matrix contains loaded data
-until a certain distance.}
+If true, will force the retrieval operation when matrix contains loaded
+data until a certain distance.}
 
 \item{FUN}{\strong{Optional}.
-If provided a data transformation with FUN will be applied before the matrix
-is returned.}
+If provided a data transformation with FUN will be applied before
+the matrix is returned.}
 }
 \value{
 Returns a matrix of dimension x.coords binned length by y.coords
 binned length. This may differ based on FUN.
 }
 \description{
-\code{Lego_get_matrix_within_coords} will fetch a matrix subset after creating an
-overlap operation between both regions and the bintable associated to the
-Lego store. This function calls \code{\link{Lego_get_matrix}}.
+\code{Lego_get_matrix_within_coords} will fetch a matrix subset after
+creating an overlap operation between both regions and the bintable
+associated to the Lego store.
+This function calls \code{\link{Lego_get_matrix}}.
 }
 \examples{
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
 Lego_get_matrix_within_coords(Lego = Lego.file, 
-x.coords = "chr19:40000:2000000", y.coords = "chr19:40000:2000000")
+x.coords = "chr19:40000:2000000", 
+y.coords = "chr19:40000:2000000")
 
 Lego_get_matrix_within_coords(Lego = Lego.file, 
-x.coords = "chr19:40000:2000000", y.coords = "chr19:40000:2000000", 
+x.coords = "chr19:40000:2000000", 
+y.coords = "chr19:40000:2000000", 
 FUN = mean)
 
 Lego_get_matrix_within_coords(Lego = Lego.file, 
-x.coords = "chr19:40000:2000000", y.coords = "chr19:40000:2000000", 
+x.coords = "chr19:40000:2000000", 
+y.coords = "chr19:40000:2000000", 
 FUN = median)
- 
+
 }
 \seealso{
 \code{\link{Lego_get_matrix}} to get matrix by using matrix

@@ -5,21 +5,21 @@
 \title{Load a NxM dimensional matrix into the Lego store.}
 \usage{
 Lego_load_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  matrix.file = NULL, delim = " ", exec = NULL,
-  remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-  sparsity.bins = 100)
+    matrix.file = NULL, delim = " ", exec = NULL,
+    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
+    sparsity.bins = 100)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-rows of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-columns of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the columns of the matrix}
 
 \item{matrix.file}{\strong{Required}.
 A character vector of length 1 specifying the name of the file to load as a
@@ -49,6 +49,9 @@ matrices.}
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
 }
+\value{
+Returns TRUE if all went well.
+}
 \description{
 Load a NxM dimensional matrix into the Lego store.
 }
@@ -63,7 +66,7 @@ write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 Lego.file <- "test.hdf"
 Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
-matrix.file = Matrix.file, delim = " ", exec = "gunzip -c", 
+matrix.file = Matrix.file, delim = " ", exec = "cat", 
 remove.prior = TRUE)
 
 }

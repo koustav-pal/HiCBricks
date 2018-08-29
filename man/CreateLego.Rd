@@ -5,28 +5,29 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 CreateLego(ChromNames = NULL, BinTable = NULL, bin.delim = "\\t",
-  col.index = c(1, 2, 3), impose.discontinuity = TRUE,
-  ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
-  remove.existing = FALSE)
+    col.index = c(1, 2, 3), impose.discontinuity = TRUE,
+    ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
+    remove.existing = FALSE)
 }
 \arguments{
 \item{ChromNames}{\strong{Required}
 A character vector containing the chromosomes to be considered for the
-dataset. This string is used to verify the presence of all chromosomes in the
-provided bitable.}
+dataset. This string is used to verify the presence of all chromosomes in
+the provided bitable.}
 
 \item{BinTable}{\strong{Required}
-A string containing the path to the file to load as the binning table for the
-Hi-C experiment. The number of entries per chromosome defines the dimension
-of the associated Hi-C data matrices. For example, if chr1 contains 250
-entries in the binning table, the \emph{cis} Hi-C data matrix for chr1 will be
-expected to contain 250 rows and 250 cols. Similary, if the same binning
-table contained 150 entries for chr2, the \emph{trans} Hi-C matrices for chr1,chr2
-will be a matrix with dimension 250 rows and 150 cols.
+A string containing the path to the file to load as the binning table for
+the Hi-C experiment. The number of entries per chromosome defines the
+dimension of the associated Hi-C data matrices. For example, if chr1
+contains 250 entries in the binning table, the \emph{cis} Hi-C data matrix for
+chr1 will be expected to contain 250 rows and 250 cols. Similary, if the
+same binning table contained 150 entries for chr2, the \emph{trans} Hi-C
+matrices for chr1,chr2 will be a matrix with dimension 250 rows and
+150 cols.
 
-There are no constraints on the bintable format. As long as the table is in a
-delimited format, the corresponding table columns can be outlined with the
-associated parameters. The columns of importance are chr, start and end.
+There are no constraints on the bintable format. As long as the table is
+in a delimited format, the corresponding table columns can be outlined with
+the associated parameters. The columns of importance are chr, start and end.
 
 It is recommended to always use binning tables where the end and start of
 consecutive ranges are not the same. If they are the same, this may lead to
@@ -38,13 +39,14 @@ A character vector of length 1 specifying the delimiter used in the file
 containing the binning table.}
 
 \item{col.index}{\strong{Optional}. Default "c(1,2,3)".
-A character vector of length 3 containing the indexes of the required columns
-in the binning table. the first index, corresponds to the chr column, the
-second to the start column and the third to the end column.}
+A character vector of length 3 containing the indexes of the required
+columns in the binning table. the first index, corresponds to the chr
+column, the second to the start column and the third to the end column.}
 
 \item{impose.discontinuity}{\strong{Optional}. Default TRUE.
 If TRUE, this parameter ensures a check to make sure that required the end
-and start coordinates of consecutive entries are not the same per chromosome.}
+and start coordinates of consecutive entries are not the same per
+chromosome.}
 
 \item{ChunkSize}{\strong{Optional}.
 A numeric vector of length 1. If provided, the HDF dataset will use this
@@ -109,8 +111,8 @@ near the diagonal
 \item Base.ranges - \strong{group}, Ranges tables for quick and easy
 access. Additional ranges tables are added here under separate group names.
 \itemize{
-\item Bintable - \strong{group} - The main binning table associated to
-a Lego.
+\item Bintable - \strong{group} - The main binning table associated
+to a Lego.
 \itemize{
 \item ranges - \strong{dataset} - Contains the three main columns
 chr, start and end.
@@ -124,26 +126,27 @@ in the given ranges table.
 }
 \item Base.metadata - \strong{group}, A place to store metadata info
 \itemize{
-\item chromosomes - \strong{dataset} - Metadata information specifying
-the chromosomes present in this particular Lego file.
+\item chromosomes - \strong{dataset} - Metadata information
+specifying the chromosomes present in this particular Lego file.
 \item other metadata tables.
 }
 }
 }
 \examples{
 Bintable.path <- system.file("extdata", 
-"Bintable_40kb.txt.gz", package = "HiCLegos")
+"Bintable_40kb.txt", package = "HiCLegos")
 Chromosomes <- "chr19"
-CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path,
-Output.Filename = "test.hdf", exec = "gunzip -c", remove.existing = TRUE)
+CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
+bin.delim = " ", Output.Filename = "test.hdf", exec = "cat", 
+remove.existing = TRUE)
 
 \dontrun{
 Bintable.path <- system.file("extdata", 
-"Bintable_40kb.txt.gz", package = "HiCLegos")
+"Bintable_40kb.txt", package = "HiCLegos")
 Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
 CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
 impose.discontinuity=TRUE, col.index = c(1,2,3),
-Output.Filename = "test.hdf", exec = "gunzip -c", remove.existing = TRUE)
+Output.Filename = "test.hdf", exec = "cat", remove.existing = TRUE)
 
 This will cause an error as the file located at Bintable.path,
 contains coordinates for only chromosome 19. For this code to work, either

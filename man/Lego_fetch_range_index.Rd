@@ -2,11 +2,11 @@
 % Please edit documentation in R/Lego_functions.R
 \name{Lego_fetch_range_index}
 \alias{Lego_fetch_range_index}
-\title{Returns the position of the supplied ranges in the binning table associated
-to the Hi-C experiment.}
+\title{Returns the position of the supplied ranges in the binning table
+associated to the Hi-C experiment.}
 \usage{
 Lego_fetch_range_index(Lego = NULL, chr = NULL, start = NULL,
-  end = NULL, names = NULL, type = "any")
+    end = NULL, names = NULL, type = "any")
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -17,7 +17,8 @@ A character vector of length N specifying the chromosomes to select from
 the ranges.}
 
 \item{start}{\strong{Required}.
-A numeric vector of length N specifying the start positions in the chromosome}
+A numeric vector of length N specifying the start positions in the
+chromosome}
 
 \item{end}{\strong{Required}.
 A numeric vector of length N specifying the end positions in the chromosome}
@@ -28,8 +29,8 @@ absent, names will take the form chr:start:end.}
 
 \item{type}{\strong{Optional}. Default any
 Type of overlap operation to do. It should be one of two, any or within.
-any considers any overlap (atleast 1 bp) between the provided ranges and the
-binning table.}
+any considers any overlap (atleast 1 bp) between the provided ranges and
+the binning table.}
 }
 \value{
 Returns a GenomicRanges object of same length as the chr, start, end
@@ -53,7 +54,8 @@ Chrom <- c("chr19","chr19")
 Start <- c(1,40000)
 End <- c(1000000,2000000)
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
-Test_Run <- Lego_fetch_range_index(Lego = Lego.file, chr = Chrom, start = Start, end = End)
+Test_Run <- Lego_fetch_range_index(Lego = Lego.file, chr = Chrom, 
+start = Start, end = End)
 Test_Run$Indexes[[1]]
 
 }

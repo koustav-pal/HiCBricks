@@ -5,19 +5,19 @@
 \title{Get the matrix metadata columns in the Lego store.}
 \usage{
 Lego_get_matrix_mcols(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  what = NULL)
+    what = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-rows of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-columns of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the columns of the matrix}
 
 \item{what}{\strong{Required}
 A character vector of length 1 specifying the matrix metric to retrieve}

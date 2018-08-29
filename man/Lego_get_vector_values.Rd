@@ -5,19 +5,19 @@
 \title{Return a N dimensional vector selection.}
 \usage{
 Lego_get_vector_values(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
+    xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-rows of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-columns of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the columns of the matrix}
 
 \item{xaxis}{\strong{Required}.
 A 1 dimensional vector containing the rows to retrieve. Gaps in this vector
@@ -34,19 +34,19 @@ If provided a data transformation with FUN will be applied before the vector
 is returned.}
 
 \item{force}{\strong{Optional}. Default FALSE
-If true, will force the retrieval operation when matrix contains loaded data
-until a certain distance.}
+If true, will force the retrieval operation when matrix contains loaded
+data until a certain distance.}
 }
 \value{
 Returns a vector of length yaxis if length of xaxis is 1. Else
 returns a matrix of dimension xaxis length by yaxis length.
 }
 \description{
-\code{Lego_get_vector_values} is the base function being used by all other matrix
-retrieval functions.
+\code{Lego_get_vector_values} is the base function being used by all
+other matrix retrieval functions.
 }
 \section{Note}{
- Whatever the length of xaxis or yaxis may be, the coordinates
+Whatever the length of xaxis or yaxis may be, the coordinates
 under consideration will range from min(xaxis) to max(xaxis) on the rows or
 min(yaxis) to max(yaxis) on the columns.
 }

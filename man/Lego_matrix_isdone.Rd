@@ -11,12 +11,12 @@ Lego_matrix_isdone(Lego = NULL, chr1 = NULL, chr2 = NULL)
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-rows of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the rows of the matrix}
 
 \item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to the
-columns of the matrix}
+A character vector of length 1 specifying the chromosome corresponding to
+the columns of the matrix}
 }
 \value{
 Returns a logical vector of length 1, specifying if a matrix has

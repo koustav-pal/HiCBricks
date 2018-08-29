@@ -2,7 +2,8 @@
 % Please edit documentation in R/Lego_functions.R
 \name{Lego_list_ranges_mcols}
 \alias{Lego_list_ranges_mcols}
-\title{Find out what metadata columns are associated to a ranges with a certain name}
+\title{Find out what metadata columns are associated to a ranges with a certain
+name}
 \usage{
 Lego_list_ranges_mcols(Lego = NULL, rangekey = NULL)
 }
@@ -26,6 +27,5 @@ ranges if it is present in the Lego store.
 \examples{
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
 Lego_list_ranges_mcols(Lego = Lego.file, rangekey = "test_ranges")
-
 
 }

@@ -1,18 +1,22 @@
 ._get_first_nonzero_bin <- function(Lego = NULL, chr = NULL){
-	RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "row.sums")
+    RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
+        what = "row.sums")
     return(min(which(RowSums > 0)))
 }
 ._get_sparsity_index <- function(Lego = NULL, chr = NULL){
-    Sparsity.index <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "sparsity")
-    return(Sparsity.Index)
+    Sparsity.index <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr,
+        what = "sparsity")
+    return(Sparsity.index)
 }
-Backwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,sparsity.threshold=NULL){
+Backwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,
+    sparsity.threshold=NULL){
         if(is.null(Vector)){
             stop("Vector variable cannot be empty.")
         }
         if(sparse){
             VectorDiff <- rep(NA,length(Vector))
-            temp.diff <- rev(diff(rev(Vector[sparsity.idx > sparsity.threshold])))
+            temp.diff <- rev(diff(
+                rev(Vector[sparsity.idx > sparsity.threshold])))
             temp.diff[length(temp.diff)+1] <- 0
             VectorDiff[sparsity.idx > sparsity.threshold] <- temp.diff
         }else{
@@ -21,7 +25,8 @@ Backwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,spar
         }
         return(VectorDiff)
 }
-Forwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,sparsity.threshold=NULL){
+Forwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,
+    sparsity.threshold=NULL){
         if(is.null(Vector)){
             stop("Vector variable cannot be empty.")
         }
@@ -36,8 +41,10 @@ Forwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,spars
         }
         return(VectorDiff)
 }
-ComputeOutlierOverIQRInsideWindow <- function(lookup.window=NULL,diff.values=NULL,values=NULL, row.sums = NULL,
-        min.sum = NULL, tukeys.constant=NULL,tail=NULL,sparse=FALSE,strict = FALSE,sparsity.idx=NULL,sparsity.threshold=NULL){
+ComputeOutlierOverIQRInsideWindow <- function(lookup.window=NULL,
+    diff.values=NULL,values=NULL, row.sums = NULL,
+        min.sum = NULL, tukeys.constant=NULL,tail=NULL,
+        sparse=FALSE,strict = FALSE,sparsity.idx=NULL,sparsity.threshold=NULL){
         seq.over.value <- seq_along(diff.values)
         Filter <- row.sums > min.sum
         if(sparse){
@@ -46,8 +53,10 @@ ComputeOutlierOverIQRInsideWindow <- function(lookup.window=NULL,diff.values=NUL
         seq.over.value <- seq.over.value[Filter]
         seq.over.seq <- seq_along(seq.over.value)
         outlier.list <- lapply(seq.over.seq,function(x.seq){
-            lookup.window.range <- ((x.seq - lookup.window) : (x.seq + lookup.window))
-            lookup.window.range <- seq.over.value[lookup.window.range[lookup.window.range>0 & lookup.window.range<=max(seq.over.seq)]]
+            lookup.window.range <- (
+                (x.seq - lookup.window) : (x.seq + lookup.window))
+            lookup.window.range <- seq.over.value[lookup.window.range[
+            lookup.window.range>0 & lookup.window.range<=max(seq.over.seq)]]
             offset <- (min(lookup.window.range)-1)
             diff.value.window <- diff.values[lookup.window.range]
             value.window <- values[lookup.window.range]
@@ -76,7 +85,7 @@ ComputeOutlierOverIQRInsideWindow <- function(lookup.window=NULL,diff.values=NUL
                 outliers <- lookup.window.range[outliers]
             }
             outliers
-         })
+        })
         outlier.vector.dups <- do.call(c,outlier.list)
         outlier.vector.uniq.sorted <- sort(unique(outlier.vector.dups))
         return(outlier.vector.uniq.sorted)
@@ -91,34 +100,42 @@ CreateDomainlist <- function(start.vector=NULL,end.vector=NULL,fill.gaps=NULL){
     Domains.by.end.df <- NULL
     Domains.by.assumption.df <- NULL
     if(fill.gaps){
-        uncurated.ends <- end.vector[!(end.vector %in% Domains.by.start.df[,"endbin"])]
+        uncurated.ends <- end.vector[
+        !(end.vector %in% Domains.by.start.df[,"endbin"])]
         if(length(uncurated.ends) > 0){
             Domains.by.end.list <- lapply(uncurated.ends,function(x){
-                data.frame(startbin=(max(Domains.by.start.df$endbin[Domains.by.start.df$endbin<x])+1),endbin=x)
+                data.frame(startbin=(
+                    max(Domains.by.start.df$endbin[
+                        Domains.by.start.df$endbin<x])+1),endbin=x)
             })
             Domains.by.end.df <- do.call(rbind,Domains.by.end.list)
             Domains.by.end.df$gap.fill <- as.numeric(TRUE)
             Domains.by.end.df$level <- 1
         }
     }
-    All.Domains <- rbind(Domains.by.start.df,Domains.by.end.df,Domains.by.assumption.df)
+    All.Domains <- rbind(Domains.by.start.df,
+        Domains.by.end.df,
+        Domains.by.assumption.df)
     All.Domains.sorted <- All.Domains[order(All.Domains$startbin),]
     return(All.Domains.sorted)
 }
-ComputeDirectionalityIndex <- function(Matrix = NULL, Window.size=NULL, filter = NULL, start = NULL, end = NULL){
-    Sequence <- 1:nrow(Matrix)
+ComputeDirectionalityIndex <- function(Matrix = NULL, Window.size=NULL, 
+    filter = NULL, start = NULL, end = NULL){
+    Sequence <- seq_len(nrow(Matrix))
     Sequence <- Sequence[start:end]
     DI.Data <- rep(NA,length(Sequence))
     Bins.to.process <- Sequence[filter[start:end]]
-    All.bins <- 1:nrow(Matrix)
+    All.bins <- seq_len(nrow(Matrix))
     All.bins <- All.bins[filter]
     DI.list <- vapply(Bins.to.process,function(i){
             Upstream<-0
             Downstream<-0
             My.DI.Data <- NA
             Relative.mid <- which(All.bins == i)
-            Window.range <- c((Relative.mid - Window.size) : (Relative.mid + Window.size))
-            Window.range <- All.bins[Window.range[Window.range >= 1 & Window.range <= length(All.bins)]]
+            Window.range <- c(
+                (Relative.mid - Window.size) : (Relative.mid + Window.size))
+            Window.range <- All.bins[
+            Window.range[Window.range >= 1 & Window.range <= length(All.bins)]]
             Upstream.range <- Window.range[Window.range < i]
             Downstream.range <- Window.range[Window.range > i]
             Row.vector <- Matrix[i,]
@@ -133,21 +150,27 @@ ComputeDirectionalityIndex <- function(Matrix = NULL, Window.size=NULL, filter =
             if( Expected == 0 | Upstream == Downstream ){
                 My.DI.Data <- 0
             }else{
-                # $DI = ( ($B - $A)/abs($B - $A) ) *( (($A - $E)**2)/$E + (($B - $E)**2)/$E);
-                My.DI.Data <- ((Downstream - Upstream)/abs(Downstream - Upstream)) * (((Upstream - Expected)^2)/Expected + ((Downstream - Expected)^2)/Expected)
+                My.DI.Data <- (
+                    (Downstream - Upstream)/abs(Downstream - Upstream)
+                    ) * (
+                    ((Upstream - Expected)^2)/Expected + (
+                        (Downstream - Expected)^2)/Expected)
             }
         },1)
     DI.Data[Sequence %in% Bins.to.process] <- DI.list
     return(DI.Data)
 }
-get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.window = NULL, distance = NULL,
-    chunk.size = 500, sparse = FALSE, sparsity.threshold = 0.8, min.sum = -1, force = FALSE){
+get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, 
+    di.window = NULL, distance = NULL, chunk.size = 500, sparse = FALSE, 
+    sparsity.threshold = 0.8, min.sum = -1, force = FALSE){
     Ranges <- Lego_get_bintable(Lego = Lego, chr = chr)
     First.non.zero.bin <- ._get_first_nonzero_bin(Lego = Lego, chr = chr)
     chr.length <- length(Ranges)
-    RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "row.sums")
+    RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
+        what = "row.sums")
     if(sparse){
-        SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "sparsity")
+        SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, 
+            chr2 = chr, what = "sparsity")
     }
     if((chunk.size - (di.window*2))/di.window < 10){
         stop("chunk.size is too small for this di.window\n")
@@ -165,8 +188,10 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
         End <- Ends[x]
         Position.start <- Start
         Position.end <- End
-        Start <- ifelse((Start - di.window) < First.non.zero.bin, First.non.zero.bin, (Start - di.window))
-        End <- ifelse((End + di.window) > chr.length, chr.length, (End + di.window))
+        Start <- ifelse((Start - di.window) < First.non.zero.bin, 
+            First.non.zero.bin, (Start - di.window))
+        End <- ifelse((End + di.window) > chr.length, 
+            chr.length, (End + di.window))
         RowSums.subset <- RowSums[Start:End]
         Filter <- RowSums.subset > min.sum
         if(sparse){
@@ -176,12 +201,12 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
         Total.length <- length(Filter)
         Filter.extend.length <- length(which(!Filter))
         True.length <- length(which(Filter))
+        extend <- Filter.extend.length
         while(True.length < Total.length){
-            if(i == 1){
-                extend <- Filter.extend.length
-            }
-            Start <- ifelse((Start - extend) < First.non.zero.bin, First.non.zero.bin, Start - extend)
-            End <- ifelse((End + extend) > chr.length, chr.length, (End + extend))
+            Start <- ifelse((Start - extend) < First.non.zero.bin, 
+                First.non.zero.bin, Start - extend)
+            End <- ifelse((End + extend) > chr.length, 
+                chr.length, (End + extend))
             RowSums.subset <- RowSums[Start:End]
             Filter <- RowSums.subset > min.sum
             if(sparse){
@@ -191,12 +216,15 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
             True.length <- length(which(Filter))
             extend <- extend + 1
         }
-        Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
+        Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, 
+            chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
         # cat((Start - 1),"\n")
         cat(Position.start,Position.end,"\n")
         cat(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
-        DI.data <- ComputeDirectionalityIndex(Matrix = Matrix, Window.size = di.window, filter = Filter, 
-            start = Position.start - (Start - 1), end = Position.end - (Start - 1))
+        DI.data <- ComputeDirectionalityIndex(Matrix = Matrix, 
+            Window.size = di.window, filter = Filter, 
+            start = Position.start - (Start - 1), 
+            end = Position.end - (Start - 1))
         return(DI.data)
     })
     DI.data <- do.call(c, DI.data.list)
@@ -206,12 +234,14 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, di.windo
 }
 MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
     Ends <- end(Ranges) 
-    Ends <- Ends[1:(length(Ends)-1)]
+    Ends <- Ends[seq_len(length(Ends)-1)]
     Starts <- start(Ranges)
-    Starts <- Starts[2:length(Starts)] - 1 
+    Starts <- Starts[seq_len(length(Starts))[-1]] - 1 
     Domain.boundaries <- unique(Starts,Ends)
-    Boundary.ranges <- MakeGRangesObject(chr=rep(chr,length(Domain.boundaries)),
-        Start=(Domain.boundaries-(Binsize/2))+1,End=Domain.boundaries+(Binsize/2))
+    Boundary.ranges <- Lego_make_ranges(
+        Chrom=rep(chr,length(Domain.boundaries)),
+        Start=(Domain.boundaries-(Binsize/2))+1,
+        End=Domain.boundaries+(Binsize/2))
 }
 
 #' Do TAD Calls with Local Score Differentiator on a Hi-C matrix
@@ -287,8 +317,8 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' 
 #' TADs inferred in this way will be annotated with two metadata columns in the 
 #' GRanges object. \emph{gap.fill} will hold a value of 1 and \emph{level} will 
-#' hold a value 1. TADs which were not filled in will hold a gap.fill value of 0 
-#' and a level value of 2.
+#' hold a value 1. TADs which were not filled in will hold a gap.fill value of
+#' 0 and a level value of 2.
 #' 
 #' @param ignore.sparse \strong{Optional}. Default TRUE
 #' If TRUE, a matrix which has been defined as sparse during the matrix loading
@@ -321,17 +351,20 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' of the ranges coincide with the starts and ends of their contained bins from 
 #' the bintable. 
 #' 
-Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL, min.sum = -1, 
-    di.window = 200L, lookup.window = 200L, tukeys.constant=1.5, strict = TRUE, 
-    fill.gaps=TRUE, ignore.sparse=TRUE, sparsity.threshold=0.8,
+#' @examples
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+#' TAD_ranges <- Lego_local_score_differentiator(Lego = Lego.file, 
+#' chrs = "chr19", di.window = 10, lookup.window = 30, strict = TRUE, 
+#' fill.gaps = TRUE, chunk.size = 500)
+Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL, 
+    min.sum = -1, di.window = 200L, lookup.window = 200L, tukeys.constant=1.5, 
+    strict = TRUE, fill.gaps=TRUE, ignore.sparse=TRUE, sparsity.threshold=0.8,
     remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE){
-
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     Chromosomes <- ChromInfo[,'chr']
     if(!is.null(chrs)){
         Chromosomes <- ChromInfo[ChromInfo[,'chr'] %in% chrs,'chr']
     }
-
     Chrom.domains.ranges.list <- lapply(Chromosomes, function(chr){
         Ranges <- Lego_get_bintable(Lego = Lego, chr = chr)
         sparse <- Lego_matrix_issparse(Lego = Lego, chr1 = chr, chr2 = chr)
@@ -343,46 +376,78 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL, min.sum = 
             fill.gaps=FALSE
         }
         cat("[1] Computing DI for",chr,"\n")
-        Ranges <- get_directionality_index_by_chunks(Lego = Lego, chr = chr, di.window = di.window, 
-            distance = max.distance, chunk.size = chunk.size, sparse=sparse, sparsity.threshold=sparsity.threshold,
+        Ranges <- get_directionality_index_by_chunks(Lego = Lego, chr = chr, 
+            di.window = di.window, 
+            distance = max.distance, chunk.size = chunk.size, sparse=sparse, 
+            sparsity.threshold=sparsity.threshold,
             min.sum = min.sum, force = force.retrieve)
 
-        RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "row.sums")
+        RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
+            what = "row.sums")
         Ranges$row.sums <- RowSums
         cat("[2] Computing DI Differences for",chr,"\n")
         if(sparse){
-            SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, what = "sparsity")
-            Backwards.DI.Difference <- Backwards.Difference(Vector = Ranges$DI.Data, sparse = sparse,
-                sparsity.idx = SparsityIndex, sparsity.threshold = sparsity.threshold)
-            Forwards.DI.Difference <- Forwards.Difference(Vector = Ranges$DI.Data, sparse = sparse,
-                sparsity.idx = SparsityIndex, sparsity.threshold = sparsity.threshold)
+            SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, 
+                chr2 = chr, what = "sparsity")
+            Backwards.DI.Difference <- Backwards.Difference(
+                Vector = Ranges$DI.Data, sparse = sparse,
+                sparsity.idx = SparsityIndex, 
+                sparsity.threshold = sparsity.threshold)
+            Forwards.DI.Difference <- Forwards.Difference(
+                Vector = Ranges$DI.Data, sparse = sparse,
+                sparsity.idx = SparsityIndex, 
+                sparsity.threshold = sparsity.threshold)
         }else{
-            Backwards.DI.Difference <- Backwards.Difference(Vector=Ranges$DI.Data)
-            Forwards.DI.Difference <- Forwards.Difference(Vector=Ranges$DI.Data)
+            Backwards.DI.Difference <- Backwards.Difference(
+                Vector=Ranges$DI.Data)
+            Forwards.DI.Difference <- Forwards.Difference(
+                Vector=Ranges$DI.Data)
         }
         Ranges$backward.Differences <- Backwards.DI.Difference
         Ranges$forward.Differences <- Forwards.DI.Difference
         cat("[2] Done\n")
         cat("[3] Fetching Outliers ",chr,"\n")
         if(sparse){
-            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
-                diff.values=Backwards.DI.Difference, values=Ranges$DI.Data, sparse=sparse, row.sums = Ranges$row.sums,
-                min.sum = min.sum, sparsity.idx=SparsityIndex, sparsity.threshold=sparsity.threshold, 
-                tukeys.constant=tukeys.constant, tail="lower.tail",strict=strict)
-            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
-                diff.values=Forwards.DI.Difference, values=Ranges$DI.Data, sparse=sparse, row.sums = Ranges$row.sums,
-                min.sum = min.sum, sparsity.idx=SparsityIndex, sparsity.threshold=sparsity.threshold,
-                tukeys.constant=tukeys.constant, tail="upper.tail", strict=strict)
+            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(
+                lookup.window=lookup.window,
+                diff.values=Backwards.DI.Difference, 
+                values=Ranges$DI.Data, sparse=sparse, 
+                row.sums = Ranges$row.sums,
+                min.sum = min.sum, sparsity.idx=SparsityIndex, 
+                sparsity.threshold=sparsity.threshold, 
+                tukeys.constant=tukeys.constant, 
+                tail="lower.tail",strict=strict)
+            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(
+                lookup.window=lookup.window,
+                diff.values=Forwards.DI.Difference, values=Ranges$DI.Data, 
+                sparse=sparse, row.sums = Ranges$row.sums,
+                min.sum = min.sum, sparsity.idx=SparsityIndex, 
+                sparsity.threshold=sparsity.threshold,
+                tukeys.constant=tukeys.constant, tail="upper.tail", 
+                strict=strict)
         }else{
-            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
-                diff.values=Backwards.DI.Difference,values=Ranges$DI.Data, row.sums = Ranges$row.sums,
-                min.sum = min.sum, tukeys.constant=tukeys.constant,tail="lower.tail",strict=strict)
-            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(lookup.window=lookup.window,
-                diff.values=Forwards.DI.Difference,values=Ranges$DI.Data, row.sums = Ranges$row.sums,
-                min.sum = min.sum, tukeys.constant=tukeys.constant,tail="upper.tail",strict=strict)
+            Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(
+                lookup.window=lookup.window,
+                diff.values=Backwards.DI.Difference,
+                values=Ranges$DI.Data, 
+                row.sums = Ranges$row.sums,
+                min.sum = min.sum, 
+                tukeys.constant=tukeys.constant,
+                tail="lower.tail",strict=strict)
+            Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(
+                lookup.window=lookup.window,
+                diff.values=Forwards.DI.Difference,
+                values=Ranges$DI.Data, 
+                row.sums = Ranges$row.sums,
+                min.sum = min.sum, 
+                tukeys.constant=tukeys.constant,
+                tail="upper.tail",
+                strict=strict)
         }
-        Domain.start.candidates <- Domain.start.candidates[Domain.start.candidates != length(Ranges)]
-        Domain.end.candidates <- Domain.end.candidates[Domain.end.candidates != 1]
+        Domain.start.candidates <- Domain.start.candidates[
+        Domain.start.candidates != length(Ranges)]
+        Domain.end.candidates <- Domain.end.candidates[
+        Domain.end.candidates != 1]
         cat("[3] Done\n")
         cat("[4] Creating Domain list for",chr,"\n")
 
@@ -404,6 +469,7 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL, min.sum = 
         Domain.Ranges$lookup.window <- lookup.window
         return(Domain.Ranges)
     })
-    Chrom.domains.ranges <- do.call(c,unlist(Chrom.domains.ranges.list, use.names = TRUE))
+    Chrom.domains.ranges <- do.call(c,unlist(Chrom.domains.ranges.list, 
+        use.names = TRUE))
     return(Chrom.domains.ranges)
 }

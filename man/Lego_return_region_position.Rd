@@ -11,8 +11,8 @@ Lego_return_region_position(Lego = NULL, region = NULL)
 A string specifying the path to the Lego store created with CreateLego.}
 
 \item{region}{\strong{Required}.
-A character vector of length 1 specifying the region to overlap. It must take
-the form chr:start:end.}
+A character vector of length 1 specifying the region to overlap. It must
+take the form chr:start:end.}
 }
 \value{
 Returns a 1 dimensional vector containing the position of the
@@ -30,9 +30,10 @@ so the user has to make iterative calls to the module itself.
 This may seem to be a poor design choice at first glance, but I do not
 think this to be the case. By not being iterable, this function circumvents
 the problem of how to structure the data for the user. If one more element
-was accepted, the return object would have become a list, which increases the
-data structure complexity significantly for users who are just starting out
-with R. Therefore this problem is left for the users themselves to deal with.
+was accepted, the return object would have become a list, which increases
+the data structure complexity significantly for users who are just starting
+out with R. Therefore this problem is left for the users themselves to
+deal with.
 }
 
 \examples{

@@ -5,18 +5,19 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 Lego_vizart_plot_heatmap(File = NULL, Legos = NULL, x.coords = NULL,
-  y.coords = NULL, FUN = NULL, value.cap = NULL, distance = NULL,
-  rotate = FALSE, x.axis = TRUE, x.axis.title = NULL,
-  y.axis = TRUE, y.axis.title = NULL, title = NULL,
-  legend.title = NULL, return.object = FALSE, x.axis.num.breaks = 5,
-  y.axis.num.breaks = 5, palette = NULL, col.direction = 1,
-  extrapolate.on = NULL, x.axis.text.size = 10,
-  y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8,
-  legend.text.size = 8, title.size = 10, tad.ranges = NULL,
-  group.col = NULL, tad.colour.col = NULL, colours = NULL,
-  colours.names = NULL, cut.corners = NULL, highlight.points = NULL,
-  width = 10, height = 6, units = "cm", legend.key.width = unit(3,
-  "cm"), legend.key.height = unit(0.5, "cm"))
+    y.coords = NULL, FUN = NULL, value.cap = NULL, distance = NULL,
+    rotate = FALSE, x.axis = TRUE, x.axis.title = NULL,
+    y.axis = TRUE, y.axis.title = NULL, title = NULL,
+    legend.title = NULL, return.object = FALSE, x.axis.num.breaks = 5,
+    y.axis.num.breaks = 5, palette = NULL, col.direction = 1,
+    extrapolate.on = NULL, x.axis.text.size = 10,
+    y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8,
+    legend.text.size = 8, title.size = 10, tad.ranges = NULL,
+    group.col = NULL, tad.colour.col = NULL, colours = NULL,
+    colours.names = NULL, cut.corners = FALSE, highlight.points = NULL,
+    width = 10, height = 6, line.width = 0.5, units = "cm",
+    legend.key.width = unit(3, "cm"), legend.key.height = unit(0.5,
+    "cm"))
 }
 \arguments{
 \item{File}{\strong{Required}
@@ -147,6 +148,9 @@ Width of the output file units.}
 \item{height}{\strong{Optional}. Default 6cm
 Height of the output file in units.}
 
+\item{line.width}{\strong{Optional}. Default 0.5
+When plotting TADs set the width of the plotted lines}
+
 \item{units}{\strong{Optional}. Default cm
 Defines the units of the output file width and height.}
 
@@ -155,6 +159,10 @@ Defines the legend key width.}
 
 \item{legend.key.height}{\strong{Optional}. Default unit(0.5,"cm")
 Defines the legend key height.}
+}
+\value{
+If return.object is set to TRUE, the constructed ggplot2 object will
+be returned. Else TRUE.
 }
 \description{
 \code{Lego_vizart_plot_heatmap} creates various heatmaps and plots TADs.
@@ -168,30 +176,21 @@ Hi-C data.
 \item All of the above with 90 degree rotation.
 \item All of the above but with signal capped at a certain value.
 \item All of the above but filtered by distance.
-\item All of the above with TADs/TAD borders plotted on top \link{experimental}.
+\item All of the above with TADs/TAD borders plotted on top.
 }
-}
-\section{Output and Input related parameters.}{
-NA
 }
 
-\section{Data filtering and transforming parameters.}{
-NA
+\examples{
+FailSafe_log10 <- function(x){
+    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+    return(log10(x+1))
 }
 
-\section{Axis parameters}{
-NA
-}
+Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
+Lego_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
+Legos = Lego.file, x.coords = "chr19:5000000:10000000", palette = "Reds",
+y.coords = "chr19:5000000:10000000", FUN = FailSafe_log10, 
+value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
+legend.key.height = unit(0.3,"cm"))
 
-\section{Annotation parameters}{
-NA
 }
-
-\section{Colours}{
-NA
-}
-
-\section{Size parameters}{
-NA
-}
-
