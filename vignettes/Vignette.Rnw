@@ -657,9 +657,9 @@ Name <- paste("LSD",
     di_window,
     lookup_window,
     Chromosome,sep = "_")
-Lego_add_ranges(Lego = "test.hdf", 
-    ranges = TAD_ranges, 
-    rangekey = Name)
+#Lego_add_ranges(Lego = "test.hdf", 
+#    ranges = TAD_ranges, 
+#    rangekey = Name)
 @
 
 \section{ Fetching associated ranges from a Lego file}
@@ -672,8 +672,8 @@ users can fetch the required rangekeys.
 <<eval=TRUE, echo=TRUE >>=
 
 Lego_list_rangekeys(Lego = "test.hdf")
-TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
-    rangekey = Name)
+#TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
+#    rangekey = Name)
 @
 
 \section{ Creating pretty heatmaps using HiCLegos}
@@ -890,7 +890,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
 \begin{figure}[htbp]
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal7, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal5>>
+<<chr19-5MB-10MB-normal7>>
 @
 \caption{Rotated Hi-C matrix with TADs.}
 \label{fig:Fig7}
