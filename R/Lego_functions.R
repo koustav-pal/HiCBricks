@@ -569,7 +569,9 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL,
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
         stop("Object of class Ranges expected")
     }
-    Ranges.df <- as.data.frame(ranges, stringsAsFactors = FALSE)
+    Ranges.df <- as.data.frame(ranges)
+    Which.factor <- vapply(seq_len(ncol(Ranges.df)), is.factor, TRUE)
+    Ranges.df[,Which.factor] <- as.character(Ranges.df[,Which.factor])
     if(is.unsorted(Ranges.df$seqnames)){
         stop("Ranges must be sorted by chromosome!")
     }
@@ -930,9 +932,6 @@ Lego_get_bintable = function(Lego = NULL, chr = NULL){
 Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL, 
     end = NULL, names = NULL, type = "any"){
     AllTypes<-c("any","within")
-    Check_numeric <- function(x){
-        return(is.numeric(x) | is.integer(x))
-    }
     if( any(!(type %in% AllTypes)) ){
         stop("type takes one of two arguments: c(\"any\",\"within\")")
     }
@@ -943,8 +942,8 @@ Lego_fetch_range_index = function(Lego = NULL, chr = NULL, start = NULL,
     if(any(!(chr %in% ChromInfo[,'chr']))){
         stop("Provided chr does not exist in chromosome list.\n")
     }
-    if(any(!is.character(chr) | 
-        !Check_numeric(start) | !Check_numeric(end))){
+    if(any(!is.character(chr) | !._Check_numeric(start) | 
+        !._Check_numeric(end))){
         stop("Provided chr, start, end do not match expected class ",
             "definitions of character, numeric, numeric\n")
     }
@@ -1693,7 +1692,7 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL,
         stop("This function processes single process calls at a time. ",
             "Setup an Iterator for more functionality")
     }
-    if( class(x.coords)!="character" | class(y.coords)!="character" ){
+    if( !is.character(x.coords) | !is.character(y.coords) ){
         stop("Two string variables were expected for x.coords & y.coords, ",
             "found x.coords class ", class(x.coords), 
             " and y.coords class ", 
@@ -1768,8 +1767,7 @@ Lego_get_matrix_within_coords = function(Lego = NULL, x.coords=NULL,
 Lego_get_matrix = function(Lego = NULL, chr1=NULL, chr2=NULL, x.vector=NULL,
     y.vector=NULL, force = FALSE, FUN=NULL){
     # cat(" Rows: ",x.vector," Cols: ",y.vector,"\n")
-    if(any(!(class(x.vector) %in% c("numeric","integer")) | 
-        !(class(y.vector) %in% c("numeric","integer")))){
+    if(any(!._Check_numeric(x.vector) | !._Check_numeric(y.vector))){
         stop("x.vector and y.vector must be numeric.\n")
     }
     if(is.null(chr1) | is.null(chr2) | is.null(x.vector) | is.null(y.vector)){
@@ -1871,22 +1869,24 @@ Lego_fetch_row_vector = function(Lego = NULL, chr1=NULL, chr2=NULL, by=NULL,
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     ChromosomeList <- ChromInfo[,"chr"]
     max.dist <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr1, chr2 = chr2)
-    if(class(chr1)!="character" | class(chr2)!="character"){
+    if(!is.character(chr1) | !is.character(chr2)){
         stop("Provided Chromosomes does not appear to be of class character")
     }
     if(!Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2)){
         stop(chr1,chr2," matrix is yet to be loaded.")
     }
     if(by=="position"){
-        Class.type <- c("numeric","integer")
+        Class.type <- ._Check_numeric
+        Class.exp <- c("numeric","integer")
     }
     if(by=="ranges"){
-        Class.type <- "character"
+        Class.type <- is.character
+        Class.exp <- "character"
     }
-    if(!(class(vector) %in% Class.type)){
+    if(!Class.type(vector)){
         stop("vector must be of class",
-            ifelse(length(Class.type)>1,paste(Class.type,collapse=" or "),
-                paste(Class.type)),"when by has value ",by)
+            ifelse(length(Class.exp)>1,paste(Class.exp,collapse=" or "),
+                paste(Class.exp)),"when by has value ",by)
     }
     if(length(Chrom.all)>2){
         stop("This module is not iterable")
@@ -1985,7 +1985,7 @@ Lego_get_vector_values = function(Lego = NULL, chr1=NULL, chr2=NULL, xaxis=NULL,
     }
     ChromInfo <- Lego_get_chrominfo(Lego = Lego)
     ChromosomeList <- ChromInfo[,"chr"]
-    if(class(chr1)!="character" | class(chr2)!="character"){
+    if(!is.character(chr1) | !is.character(chr2)){
         stop("Provided Chromosomes does not appear to be of class character")
     }
     if(!Lego_matrix_isdone(Lego = Lego, chr1 = chr1, chr2 = chr2)){

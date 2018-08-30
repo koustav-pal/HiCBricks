@@ -337,7 +337,7 @@ Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL,
     Reference.object <- GenomicMatrix$new()
     if(!is.null(group.col)){
         Col.values <- unique(elementMetadata(Ranges)[[group.col]])
-        if(!(length(Col.values) > 2 | class(Col.values)!="numeric")){
+        if(!(length(Col.values) > 2 | !is.numeric(Col.values))){
             stop("group.col values must be numeric ",
                 "values of for the two Lego objects.\n")
         }

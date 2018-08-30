@@ -106,9 +106,8 @@ Split_genomic_coordinates = function(Coordinate = NULL){
     Chrom<-Coord.Split[[1]][1]
     start<-as.numeric(Coord.Split[[1]][2])
     stop<-as.numeric(Coord.Split[[1]][3])
-    if(any(class(Chrom)!="character" | 
-        class(start)!="numeric" | 
-        class(stop)!="numeric")){
+    if(any(!is.character(Chrom) | !is.numeric(start) | 
+        !is.numeric(stop))){
         stop("Provided chromosome,start,end do not match expected ",
             "class definitions of character, numeric, numeric")
     }

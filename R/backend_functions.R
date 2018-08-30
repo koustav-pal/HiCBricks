@@ -135,6 +135,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         
     )
 )
+._Check_numeric <- function(x){
+    return(is.numeric(x) | is.integer(x))
+}
+
 
 ._GenerateRandomName_ <- function(){
     Seed <- format(Sys.time(),"%Y-%m-%d_%H-%M-%S")
