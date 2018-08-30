@@ -9,7 +9,7 @@ Authors@R: c(
     person("Carmen", "Livi", ,"carmen.livi@ifom.eu", c("ctb")))
 Maintainer: Koustav Pal <koustav.pal@ifom.eu>
 License: MIT + file LICENSE
-Depends: R (>= 3.6), utils, curl, rhdf5, R6, grid
+Depends: R (>= 3.5), utils, curl, rhdf5, R6, grid
 Imports: ggplot2, viridis, RColorBrewer, scales, reshape2, stringr, data.table, GenomeInfoDb, GenomicRanges, stats, IRanges, grDevices, S4Vectors, digest
 Encoding: UTF-8
 LazyData: true
