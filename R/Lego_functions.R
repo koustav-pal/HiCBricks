@@ -572,9 +572,6 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL,
     Ranges.df <- as.data.frame(ranges)
     Which.factor <- vapply(seq_len(ncol(Ranges.df)), is.factor, TRUE)
     Ranges.df[,Which.factor] <- as.character(Ranges.df[,Which.factor])
-    if(is.unsorted(Ranges.df$seqnames)){
-        stop("Ranges must be sorted by chromosome!")
-    }
     if(Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
         # if(!remove.existing){
             stop("rangekey already exists! Cannot proceed further! ",

@@ -561,19 +561,19 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
 ###################################################
 ### code chunk number 43: chr19-5MB-10MB-normal7 (eval = FALSE)
 ###################################################
-## Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
-##     Legos = "test.hdf", 
-##     tad.ranges = TAD_ranges, 
-##     x.coords = "chr19:5000000:10000000", 
-##     y.coords = "chr19:5000001:10000000", 
-##     FUN = Failsafe_log10, 
-##     value.cap = 0.99, 
-##     legend.title = "Log10 Hi-C signal", 
-##     palette = "Reds", 
-##     width = 15, 
-##     height = 5, 
-##     rotate = TRUE,
-##     return.object=TRUE) 
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
+    Legos = "test.hdf", 
+    tad.ranges = TAD_ranges, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000001:10000000", 
+    FUN = Failsafe_log10, 
+    value.cap = 0.99, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "Reds", 
+    width = 15, 
+    height = 5, 
+    rotate = TRUE,
+    return.object=TRUE) 
 
 
 ###################################################

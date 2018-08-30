@@ -287,6 +287,8 @@ Lego_vizart_plot_heatmap = function(File = NULL, Legos = NULL, x.coords = NULL,
             length.out = y.axis.num.breaks)
         y.axis.coord.labs <- y.coord.breaks*2
     }else{
+        Matrix.df$row <- Matrix.df$row - 0.5
+        Matrix.df$col <- Matrix.df$col - 0.5
         ThePlot <- ggplot(Matrix.df, aes(x = row, y = col))
         ThePlot <- ThePlot + geom_tile(aes(fill = rescale))
         xlims <- c(min(Matrix.df$row) - 0.5,max(Matrix.df$row) + 0.5)

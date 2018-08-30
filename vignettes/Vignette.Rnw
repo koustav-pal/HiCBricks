@@ -686,7 +686,7 @@ most basic commands required to generate a heatmap.
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
-    y.coords = "chr19:5000001:10000000", 
+    y.coords = "chr19:5000000:10000000", 
     palette = "Reds", 
     width = 10, 
     height = 11, 
@@ -722,7 +722,7 @@ Failsafe_log10 <- function(x){
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
-    y.coords = "chr19:5000001:10000000", 
+    y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
     legend.title = "Log10 Hi-C signal", 
     palette = "Reds", 
@@ -754,7 +754,7 @@ the 'value.cap' argument.
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
-    y.coords = "chr19:5000001:10000000", 
+    y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
@@ -787,7 +787,7 @@ of this argument triggers presence of the greater than or less than sign
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
-    y.coords = "chr19:5000001:10000000", 
+    y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
@@ -818,7 +818,7 @@ need to modify the 'width' and
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
-    y.coords = "chr19:5000001:10000000", 
+    y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
@@ -842,45 +842,47 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
 \noindent We can now also plot the TADs on these plots. 
 
 
-%<<eval=FALSE, label=chr19-5MB-10MB-normal6, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal6, include=FALSE, echo=FALSE>>=
 
-%Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
-%    Legos = "test.hdf", 
-%    tad.ranges = TAD_ranges, 
-%    x.coords = "chr19:5000000:10000000", 
-%    y.coords = "chr19:5000001:10000000", 
-%    colours = "#E0CA3C", 
-%    FUN = Failsafe_log10, 
-%    value.cap = 0.99, 
-%    legend.title = "Log10 Hi-C signal", 
-%    palette = "Reds", 
-%    width = 10, 
-%    height = 11,
-%    return.object=TRUE)
-%@
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
+   Legos = Lego.file, 
+   tad.ranges = TAD_ranges, 
+   x.coords = "chr19:5000000:10000000", 
+   y.coords = "chr19:5000000:10000000", 
+   colours = "#E0CA3C", 
+   FUN = Failsafe_log10, 
+   value.cap = 0.99, 
+   legend.title = "Log10 Hi-C signal", 
+   palette = "Reds", 
+   width = 10, 
+   height = 11,
+   return.object=TRUE)
+@
 
-%\begin{figure}[htbp]
-%\centering
-%<<eval=TRUE,label=chr19-5MB-10MB-normal6, fig=TRUE, echo=FALSE>>=
-%<<chr19-5MB-10MB-normal6>>
-%@
-%\caption{Hi-C matrix with TADs.}
-%\label{fig:Fig6}
-%\end{figure}
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal6, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal6>>
+@
+\caption{Hi-C matrix with TADs.}
+\label{fig:Fig6}
+\end{figure}
 
 
 <<eval=FALSE, label=chr19-5MB-10MB-normal7, include=FALSE, echo=FALSE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
-    Legos = "test.hdf", 
-    tad.ranges = TAD_ranges, 
+    Legos = Lego.file, 
+    tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000", 
-    y.coords = "chr19:5000001:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    colours = "#E0CA3C",
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
     palette = "Reds", 
     width = 15, 
-    height = 5, 
+    height = 9,
+    cut.corners = TRUE,
     rotate = TRUE,
     return.object=TRUE) 
 @

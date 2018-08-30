@@ -219,8 +219,8 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 Groups <- rep(paste(domain.name,Lego.x,c(1,2),sep = "."), 
                     each = 2)
             }else if(Start >= region.start & End <= region.end){
-                Coord.list <- list(x1 = c(Start,Start,End), 
-                    y1 = c(Start,End,End))
+                Coord.list <- list(x1 = c(Start - 1,Start - 1,End), 
+                    y1 = c(Start - 1,End,End))
                 Groups <- rep(paste(domain.name,Lego.x,sep = "."), 
                     each = 3)
                 My.end <- End
@@ -229,8 +229,9 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                     My.end <- Start + distance
                     My.Start <- End - distance
                 }
-                Coord.list <- list(x1 = c(Start,Start,My.Start,End), 
-                    y1 = c(Start,My.end,End,End))
+                Coord.list <- list(x1 = c(Start - 1,Start - 1,
+                    My.Start - 1,End), 
+                    y1 = c(Start - 1,My.end,End,End))
                 Groups <- rep(paste(domain.name,Lego.x,
                     c(1,2),
                     sep = "."), each = 2)
@@ -239,19 +240,20 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 if((End - Start) > distance){
                     End <- Start + distance
                 }
-                Coord.list <- list(x1 = c(Start,Start), y1 = c(Start,End))
+                Coord.list <- list(x1 = c(Start - 1,Start - 1),
+                 y1 = c(Start - 1,End))
                 Groups <- rep(paste(domain.name,Lego.x,sep = "."),2)
             }
             if(Lego.x == 2){
                 Coord.list <- rev(Coord.list)
             }
-            Line <- data.frame(x = Coord.list[[1]] - 0.5, 
-                y = Coord.list[[2]] + 0.5, colours = colours,
+            Line <- data.frame(x = Coord.list[[1]], 
+                y = Coord.list[[2]], colours = colours,
                 line.group = Groups, group = paste("Group",Lego.x,sep = "."))
             if(length(Unique.groups)==1){
                 Coord.list <- rev(Coord.list)
-                Line.2 <- data.frame(x = Coord.list[[1]] - 0.5,
-                y = Coord.list[[2]] + 0.5, colours = colours,
+                Line.2 <- data.frame(x = Coord.list[[1]],
+                y = Coord.list[[2]], colours = colours,
                 line.group = Groups, group = paste("Group",Lego.x+1,sep = "."))
                 Line <- rbind(Line,Line.2)
             }
