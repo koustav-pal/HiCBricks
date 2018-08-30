@@ -824,7 +824,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
-    palette = "Reds", 
+    palette = "cividis", 
     width = 15, 
     height = 5, 
     rotate = TRUE,
@@ -837,7 +837,8 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
 <<eval=TRUE,label=chr19-5MB-10MB-normal5, fig=TRUE, echo=FALSE>>=
 <<chr19-5MB-10MB-normal5>>
 @
-\caption{Rotated Hi-C matrix with corrected plot-sizes.}
+\caption{Rotated Hi-C matrix with corrected plot-sizes and using a different 
+color palette.}
 \label{fig:Fig5}
 \end{figure}
 
@@ -877,7 +878,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
     tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
-    colours = "#E0CA3C",
+    colours = "black",
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 

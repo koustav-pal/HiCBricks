@@ -2,27 +2,27 @@
 ### Encoding: UTF-8
 
 ###################################################
-### code chunk number 1: Vignette.Rnw:125-126
+### code chunk number 1: Vignette.Rnw:127-128
 ###################################################
 options(width=80)
 
 
 ###################################################
-### code chunk number 2: Vignette.Rnw:157-159 (eval = FALSE)
+### code chunk number 2: Vignette.Rnw:159-161 (eval = FALSE)
 ###################################################
 ## 
 ## Lego_list_mcool_normalisations(names.only = TRUE)
 
 
 ###################################################
-### code chunk number 3: Vignette.Rnw:166-168 (eval = FALSE)
+### code chunk number 3: Vignette.Rnw:168-170 (eval = FALSE)
 ###################################################
 ## 
 ## Lego_list_mcool_normalisations(names.only = FALSE)
 
 
 ###################################################
-### code chunk number 4: Vignette.Rnw:174-177 (eval = FALSE)
+### code chunk number 4: Vignette.Rnw:176-179 (eval = FALSE)
 ###################################################
 ## 
 ## mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
@@ -30,7 +30,7 @@ options(width=80)
 
 
 ###################################################
-### code chunk number 5: Vignette.Rnw:206-225 (eval = FALSE)
+### code chunk number 5: Vignette.Rnw:208-227 (eval = FALSE)
 ###################################################
 ## 
 ## Output.lego <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.lego"
@@ -54,7 +54,7 @@ options(width=80)
 
 
 ###################################################
-### code chunk number 6: Vignette.Rnw:253-290
+### code chunk number 6: Vignette.Rnw:255-292
 ###################################################
 
 library("HiCLegos")
@@ -96,7 +96,7 @@ Lego_load_matrix(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 7: Vignette.Rnw:296-303
+### code chunk number 7: Vignette.Rnw:298-305
 ###################################################
 
 Lego_load_cis_matrix_till_distance(Lego = Lego.file, 
@@ -108,7 +108,7 @@ Lego_load_cis_matrix_till_distance(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 8: Vignette.Rnw:312-318
+### code chunk number 8: Vignette.Rnw:314-320
 ###################################################
 
 Lego.file <- system.file("extdata", 
@@ -119,14 +119,14 @@ Lego_list_rangekeys(Lego.file)
 
 
 ###################################################
-### code chunk number 9: Vignette.Rnw:325-327
+### code chunk number 9: Vignette.Rnw:327-329
 ###################################################
 
 Lego_get_bintable(Lego.file)
 
 
 ###################################################
-### code chunk number 10: Vignette.Rnw:333-336
+### code chunk number 10: Vignette.Rnw:335-338
 ###################################################
 
 Lego_get_ranges(Lego = Lego.file, 
@@ -134,7 +134,7 @@ Lego_get_ranges(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 11: Vignette.Rnw:342-346
+### code chunk number 11: Vignette.Rnw:344-348
 ###################################################
 
 Lego_get_ranges(Lego = Lego.file, 
@@ -143,7 +143,7 @@ Lego_get_ranges(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 12: Vignette.Rnw:354-358
+### code chunk number 12: Vignette.Rnw:356-360
 ###################################################
 
 testRun=Lego_return_region_position(Lego = Lego.file, 
@@ -152,7 +152,7 @@ head(testRun)
 
 
 ###################################################
-### code chunk number 13: Vignette.Rnw:368-373
+### code chunk number 13: Vignette.Rnw:370-375
 ###################################################
 
 testRun=Lego_fetch_range_index(Lego = Lego.file, 
@@ -162,7 +162,7 @@ testRun=Lego_fetch_range_index(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 14: Vignette.Rnw:395-399
+### code chunk number 14: Vignette.Rnw:397-401
 ###################################################
 
 Values <- Lego_get_values_by_distance(Lego = Lego.file, 
@@ -171,7 +171,7 @@ Values <- Lego_get_values_by_distance(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 15: Vignette.Rnw:404-414
+### code chunk number 15: Vignette.Rnw:406-416
 ###################################################
 
 Failsafe_median_log10 <- function(x){
@@ -186,7 +186,7 @@ Lego_get_values_by_distance(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 16: Vignette.Rnw:421-432
+### code chunk number 16: Vignette.Rnw:423-434
 ###################################################
 
 Failsafe_median_log10 <- function(x){
@@ -202,7 +202,7 @@ Lego_get_values_by_distance(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 17: Vignette.Rnw:440-445
+### code chunk number 17: Vignette.Rnw:442-447
 ###################################################
 
 Sub.matrix <- Lego_get_matrix_within_coords(Lego = Lego.file, 
@@ -212,7 +212,7 @@ Sub.matrix <- Lego_get_matrix_within_coords(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 18: Vignette.Rnw:450-459
+### code chunk number 18: Vignette.Rnw:452-461
 ###################################################
 
 x.axis <- 5000000/40000
@@ -226,7 +226,7 @@ Sub.matrix <- Lego_get_matrix(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 19: Vignette.Rnw:472-483
+### code chunk number 19: Vignette.Rnw:474-485
 ###################################################
 
 Coordinate <- c("chr19:1:40000","chr19:40001:80000")
@@ -242,7 +242,7 @@ Test_Run <- Lego_fetch_row_vector(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 20: Vignette.Rnw:488-499
+### code chunk number 20: Vignette.Rnw:490-501
 ###################################################
 
 Coordinate <- c(1,2)
@@ -258,14 +258,14 @@ Test_Run <- Lego_fetch_row_vector(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 21: Vignette.Rnw:522-524
+### code chunk number 21: Vignette.Rnw:524-526
 ###################################################
 
 Lego_list_matrix_mcols()
 
 
 ###################################################
-### code chunk number 22: Vignette.Rnw:529-538
+### code chunk number 22: Vignette.Rnw:531-540
 ###################################################
 
 Lego.file <- system.file("extdata", 
@@ -279,7 +279,7 @@ testRun <- Lego_get_matrix_mcols(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 23: Vignette.Rnw:548-552
+### code chunk number 23: Vignette.Rnw:550-554
 ###################################################
 
 Lego_matrix_isdone(Lego = Lego.file, 
@@ -288,7 +288,7 @@ Lego_matrix_isdone(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 24: Vignette.Rnw:557-561
+### code chunk number 24: Vignette.Rnw:559-563
 ###################################################
 
 Lego_matrix_issparse(Lego = Lego.file, 
@@ -297,7 +297,7 @@ Lego_matrix_issparse(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 25: Vignette.Rnw:566-570
+### code chunk number 25: Vignette.Rnw:568-572
 ###################################################
 
 Lego_matrix_maxdist(Lego = Lego.file, 
@@ -306,7 +306,7 @@ Lego_matrix_maxdist(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 26: Vignette.Rnw:575-579
+### code chunk number 26: Vignette.Rnw:577-581
 ###################################################
 
 Lego_matrix_minmax(Lego = Lego.file, 
@@ -315,7 +315,7 @@ Lego_matrix_minmax(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 27: Vignette.Rnw:584-588
+### code chunk number 27: Vignette.Rnw:586-590
 ###################################################
 
 Lego_matrix_minmax(Lego = Lego.file, 
@@ -324,7 +324,7 @@ Lego_matrix_minmax(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 28: Vignette.Rnw:593-597
+### code chunk number 28: Vignette.Rnw:595-599
 ###################################################
 
 Lego_matrix_dimensions(Lego = Lego.file, 
@@ -333,7 +333,7 @@ Lego_matrix_dimensions(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 29: Vignette.Rnw:602-606
+### code chunk number 29: Vignette.Rnw:604-608
 ###################################################
 
 Lego_matrix_filename(Lego = Lego.file, 
@@ -342,7 +342,7 @@ Lego_matrix_filename(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 30: Vignette.Rnw:620-636
+### code chunk number 30: Vignette.Rnw:622-638
 ###################################################
 
 Lego.file <- system.file("extdata", 
@@ -363,25 +363,25 @@ TAD_ranges <- Lego_local_score_differentiator(Lego = Lego.file,
 
 
 ###################################################
-### code chunk number 31: Vignette.Rnw:654-662
+### code chunk number 31: Vignette.Rnw:656-664
 ###################################################
 
 Name <- paste("LSD",
     di_window,
     lookup_window,
     Chromosome,sep = "_")
-Lego_add_ranges(Lego = "test.hdf", 
-    ranges = TAD_ranges, 
-    rangekey = Name)
+#Lego_add_ranges(Lego = "test.hdf", 
+#    ranges = TAD_ranges, 
+#    rangekey = Name)
 
 
 ###################################################
-### code chunk number 32: Vignette.Rnw:672-676
+### code chunk number 32: Vignette.Rnw:674-678
 ###################################################
 
 Lego_list_rangekeys(Lego = "test.hdf")
-TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
-    rangekey = Name)
+#TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
+#    rangekey = Name)
 
 
 ###################################################
@@ -532,7 +532,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
 ##     FUN = Failsafe_log10, 
 ##     value.cap = 0.99, 
 ##     legend.title = "Log10 Hi-C signal", 
-##     palette = "Reds", 
+##     palette = "cividis", 
 ##     width = 15, 
 ##     height = 5, 
 ##     rotate = TRUE,
@@ -550,7 +550,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
-    palette = "Reds", 
+    palette = "cividis", 
     width = 15, 
     height = 5, 
     rotate = TRUE,
@@ -604,7 +604,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf",
 ##     tad.ranges = TAD_ranges,
 ##     x.coords = "chr19:5000000:10000000", 
 ##     y.coords = "chr19:5000000:10000000", 
-##     colours = "#E0CA3C",
+##     colours = "black",
 ##     FUN = Failsafe_log10, 
 ##     value.cap = 0.99, 
 ##     legend.title = "Log10 Hi-C signal", 
@@ -619,18 +619,20 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf",
 ###################################################
 ### code chunk number 46: chr19-5MB-10MB-normal7
 ###################################################
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
     Legos = Lego.file, 
+    tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
+    colours = "black",
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
     palette = "Reds", 
     width = 15, 
-    height = 5, 
+    height = 9,
+    cut.corners = TRUE,
     rotate = TRUE,
-    return.object=TRUE)
-
+    return.object=TRUE) 
 
 
