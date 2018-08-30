@@ -135,6 +135,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         
     )
 )
+
 ._Check_numeric <- function(x){
     return(is.numeric(x) | is.integer(x))
 }
