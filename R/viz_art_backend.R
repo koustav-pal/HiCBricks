@@ -241,7 +241,7 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                     End <- Start + distance
                 }
                 Coord.list <- list(x1 = c(Start - 1,Start - 1),
-                 y1 = c(Start - 1,End))
+                y1 = c(Start - 1,End))
                 Groups <- rep(paste(domain.name,Lego.x,sep = "."),2)
             }
             if(Lego.x == 2){
