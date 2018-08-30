@@ -369,7 +369,7 @@ Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL,
         names(colours) <- colours.names
     }
 
-    chr.ranges <- Ranges[seqnames(Ranges) %in% region.chr]
+    chr.ranges <- Ranges[seqnames(Ranges) == region.chr]
     chr.ranges <- chr.ranges[end(chr.ranges) >= region.start & 
     start(chr.ranges) <= region.end]
     region <- paste(region.chr, region.start, region.end, 
@@ -384,7 +384,7 @@ Format_boundaries_normal_heatmap <- function(Legos = NULL, Ranges = NULL,
         end <- end(pos.ranges)
         A.ranges <- Lego_fetch_range_index(Lego = Legos[Lego.x], chr = chrs, 
             start = start, end = end)
-        Position.list <- A.ranges[seqnames(A.ranges) %in% region.chr]
+        Position.list <- A.ranges[seqnames(A.ranges) == region.chr]
         check_if_only_one_ranges <- function(x){
             all(!is.na(Position.list$Indexes[[x]]))
         }
