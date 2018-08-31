@@ -80,8 +80,7 @@ frame=single}%, label=Output}
     \raggedleft % Right align the text
     \large % Increase the font size
     {\Large Koustav Pal}\\[4pt] % Extra space after name
-    IFOM\\
-    Institution Name\\[4pt] % Extra space before URL
+    IFOM\\[4pt] % Extra space before URL
     %\texttt{LaTeXTemplates.com}\\
     \hfill\rule{0.2\linewidth}{1pt}% Horizontal line, first argument width, 
     %second thickness
@@ -138,15 +137,18 @@ use a randomly chosen H1-hESC Hi-C data using DpnII:
 \url{https://data.4dnucleome.org/files-processed/
 4DNFI7JNCNFB/@@download/4DNFI7JNCNFB.mcool}
 
-You can download the file using curl. 
-%<<eval=FALSE, echo=TRUE,tidy=TRUE >>=
-%curl_download(url = "https://data.4dnucleome.org/
-%files-processed/4DNFI7JNCNFB/@@download/4DNFI7JNCNFB.mcool",
-%destfile = "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-%@
-It contains normalised Hi-C data on H1-hESC cells using the DpnII enzyme. 
-Note that there are a few normalisation weights available within the sample. 
-We can check what normalisation weights are available using 
+\noindent You can download the file using curl. It contains normalised Hi-C 
+data on H1-hESC cells using the DpnII enzyme. 
+
+<<eval=FALSE, echo=TRUE,tidy=TRUE >>=
+curl_download(url = "https://data.4dnucleome.org/files-
+    processed/4DNFI7JNCNFB/@@download/4DNFI7JNCNFB.mcool",
+    destfile = "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+@
+
+\noindent Note that there are a few normalisation weights available within 
+the sample. We can check what normalisation weights are available using 
+
 Lego\_list\_mcool\_normalisations() function. Please note, that this function 
 does not list the normalisation weights available within the mcool file, 
 but rather lists normalisation factors that HiCLegos accepts from the mcool 
@@ -188,7 +190,7 @@ well designed pre-existing formats, but rather to create a straightforward,
 memory efficient storage and retrieval library for already existing Hi-C 
 data formats in R.  
 
-Although it is possible to load all chromosomes in a single Lego object, 
+\noindent Although it is possible to load all chromosomes in a single Lego object, 
 this is not recommended because,
 \begin{enumerate}
     \item It is not possible for multiple processes to concurrently access 
@@ -207,7 +209,8 @@ cis-interaction maps for that chromosome.
 
 <<eval=FALSE, echo=TRUE >>=
 
-Output.lego <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.lego"
+Output.lego <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-
+    normalised-chr1.lego"
 mcool <- mcoolName
 
 CreateLego_from_mcool(Lego = Output.lego, 
@@ -245,6 +248,7 @@ matrices, this option should be set to FALSE allowing the function to
 locate the first occurence of a chr1 vs chr2 interaction. 'remove.prior' 
 defaults to FALSE and prevents users from loading datasets twice.  
 
+\newpage
 
 \section{ Loading other datasets as Lego objects}
 
@@ -304,6 +308,8 @@ Lego_load_cis_matrix_till_distance(Lego = Lego.file,
     distance = 100, 
     remove.prior = TRUE)
 @
+
+\newpage
 
 \section{Accessing ranges objects in a lego store}
 
@@ -379,6 +385,8 @@ testRun=Lego_fetch_range_index(Lego = Lego.file,
 for each element in the provided [chr,start,end] vectors, with a 
 'NumericList' column 'Indexes' corresponding to the overlapping row/col 
 coordinate of that matrix.
+
+\newpage
 
 \section{ Accessing matrices in a lego store}
 
@@ -540,12 +548,12 @@ testRun <- Lego_get_matrix_mcols(Lego = Lego.file,
 
 @
 
-\subsection{ Matrix utility functions}
+\section{ Matrix utility functions}
 
 There are several utility functions that a user may take advantage 
 of to do various checks. 
 
-\subsubsection{ Check if a matrix has been loaded into the Lego store}
+\subsection{ Check if a matrix has been loaded into the Lego store}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -554,7 +562,7 @@ Lego_matrix_isdone(Lego = Lego.file,
     chr2 = "chr19")
 @
 
-\subsubsection{ Check if a matrix was defined as a sparse matrix}
+\subsection{ Check if a matrix was defined as a sparse matrix}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -563,7 +571,7 @@ Lego_matrix_issparse(Lego = Lego.file,
     chr2 = "chr19")
 @
 
-\subsubsection{ Check the maximum distance until which a matrix was loaded}
+\subsection{ Check the maximum distance until which a matrix was loaded}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -572,7 +580,7 @@ Lego_matrix_maxdist(Lego = Lego.file,
     chr2 = "chr19")
 @
 
-\subsubsection{ Check if a matrix was defined}
+\subsection{ Check if a matrix was defined}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -581,7 +589,7 @@ Lego_matrix_minmax(Lego = Lego.file,
     chr2 = "chr19")
 @
 
-\subsubsection{ Check the minimum and maximum values of a matrix}
+\subsection{ Check the minimum and maximum values of a matrix}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -590,7 +598,7 @@ Lego_matrix_minmax(Lego = Lego.file,
     chr2 = "chr19")
 @
 
-\subsubsection{ Get the matrix dimensions, irrespective of the maxdist value}
+\subsection{ Get the matrix dimensions, irrespective of the maxdist value}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -599,7 +607,7 @@ Lego_matrix_dimensions(Lego = Lego.file,
     chr2 = "chr19")
 @
 
-\subsubsection{ Get the filename of a loaded matrix}
+\subsection{ Get the filename of a loaded matrix}
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -607,6 +615,8 @@ Lego_matrix_filename(Lego = Lego.file,
     chr1 = "chr19", 
     chr2 = "chr19")
 @
+
+\newpage
 
 \section{ Call Topologically Associated Domains with Local score 
 differentiator (LSD)}
@@ -664,6 +674,8 @@ Name <- paste("LSD",
 #    rangekey = Name)
 @
 
+\newpage
+
 \section{ Fetching associated ranges from a Lego file}
 
 Since a lego store is an on-disk database, it is possible to fetch ranges 
@@ -678,13 +690,16 @@ Lego_list_rangekeys(Lego = "test.hdf")
 #    rangekey = Name)
 @
 
+
+\newpage
+
 \section{ Creating pretty heatmaps using HiCLegos}
 
 Using HiCLegos functions, users can plot pretty Hi-C heatmaps. In 
 the following we list the 
 most basic commands required to generate a heatmap. 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal, include=FALSE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
@@ -704,17 +719,19 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
 \label{fig:Fig1}
 \end{figure}
 
+
 \noindent Notice the 'palette' argument. It requires the user to 
 provide a palette name from either the 'RColorBrewer' or 'viridis' colour 
 palettes. It is not possible at this time to provide user defined 
 colour palettes. 
+
 
 \noindent Since we are directly plotting the Hi-C signal, the colours may seem 
 a bit muted (Figure \ref{fig:Fig1}). We should go ahead and change that 
 with a $log_{10}$ transformation, which will squeeze the signal distribution 
 and make it pretty (Figure \ref{fig:Fig2}).
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal2, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal2, include=FALSE, echo=TRUE>>=
 
 Failsafe_log10 <- function(x){
     x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
@@ -752,7 +769,7 @@ which tends to blow up the entire distribution in a heatmap plot. We can pull
 in these values to create a more uniform and prettier picture, with 
 the 'value.cap' argument.
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal3, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal3, include=FALSE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
@@ -784,7 +801,7 @@ of this argument triggers presence of the greater than or less than sign
 
 \noindent Sometimes, it is desirable to plot the heatmap as a rotated heatmap. 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal4, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal4, include=FALSE, echo=TRUE>>=
 
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf", 
     Legos = Lego.file, 
@@ -798,7 +815,6 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
     height = 11, 
     rotate = TRUE,
     return.object=TRUE)
-
 @
 
 \begin{figure}[htbp]
@@ -811,12 +827,12 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
 \end{figure}
 
 
-\noindent But this looks ugly \ref{fig:Fig4}. To fix it we 
+\noindent But this looks ugly (Figure \ref{fig:Fig4}). To fix it we 
 need to modify the 'width' and 
 'height' as the rotated plots are broader than they are taller 
 (Figure \ref{fig:Fig5}). 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal5, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal5, include=FALSE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
@@ -829,7 +845,6 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
     height = 5, 
     rotate = TRUE,
     return.object=TRUE)
-
 @
 
 \begin{figure}[htbp]
@@ -845,7 +860,7 @@ color palette.}
 \noindent We can now also plot the TADs on these plots. 
 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal6, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal6, include=FALSE, echo=TRUE>>=
 
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
     Legos = Lego.file, 
@@ -872,17 +887,17 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf",
 \end{figure}
 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal7, include=FALSE, echo=FALSE>>=
+<<eval=FALSE, label=chr19-5MB-10MB-normal7, include=FALSE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
     Legos = Lego.file, 
     tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
-    colours = "black",
+    colours = "red",
     FUN = Failsafe_log10, 
     value.cap = 0.99, 
     legend.title = "Log10 Hi-C signal", 
-    palette = "Reds", 
+    palette = "cividis", 
     width = 15, 
     height = 9,
     cut.corners = TRUE,
@@ -895,7 +910,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
 <<eval=TRUE,label=chr19-5MB-10MB-normal7, fig=TRUE, echo=FALSE>>=
 <<chr19-5MB-10MB-normal7>>
 @
-\caption{Rotated Hi-C matrix with TADs.}
+\caption{Rotated Hi-C matrix with TADs and a differen color palette.}
 \label{fig:Fig7}
 \end{figure}
 
