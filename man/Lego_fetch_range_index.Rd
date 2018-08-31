@@ -35,15 +35,15 @@ the binning table.}
 \value{
 Returns a GenomicRanges object of same length as the chr, start, end
 vectors provided. The object is returned with an additional column, Indexes.
-Indexes is a column of class \code{\link[IRanges]{IntegerList}}, which is
-part of the larger \code{\link[IRanges]{AtomicList}} superset. This
+Indexes is a column of class \code{IRanges::IntegerList}, which is
+part of the larger \code{IRanges::AtomicList} superset. This
 "Indexes" column can be accessed like a normal GRanges column with the
 additional list accessor [[]] in place of the normal vector accessor [].
 }
 \description{
 \code{Lego_fetch_range_index} constructs a ranges object using
 \code{\link{Lego_make_ranges}}, creates an overlap operation using
-\code{\link[GenomicRanges]{findOverlaps}}, where the constructed ranges is
+\code{GenomicRanges::findOverlaps}, where the constructed ranges is
 the \emph{subject} and the Hi-C experiment associated binning table is the
 \emph{query}. The return of this object is a list of ranges with their
 corresponding indices in the binning table.
