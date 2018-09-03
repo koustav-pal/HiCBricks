@@ -570,8 +570,12 @@ Lego_add_ranges = function(Lego = NULL, ranges = NULL, rangekey = NULL,
         stop("Object of class Ranges expected")
     }
     Ranges.df <- as.data.frame(ranges)
-    Which.factor <- vapply(seq_len(ncol(Ranges.df)), is.factor, TRUE)
-    Ranges.df[,Which.factor] <- as.character(Ranges.df[,Which.factor])
+    Which.factor <- which(vapply(seq_len(ncol(Ranges.df)), function(x){
+            is.factor(Ranges.df[,x])
+        }, TRUE))
+    Ranges.df[,Which.factor] <- vapply(Which.factor,function(x){
+        as.character(Ranges.df[,x])
+    },rep("a",nrow(Ranges.df)))
     if(Lego_rangekey_exists(Lego = Lego, rangekey = rangekey)){
         # if(!remove.existing){
             stop("rangekey already exists! Cannot proceed further! ",
