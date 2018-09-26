@@ -422,8 +422,8 @@ humanize_size <- function(x){
             Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
             Sparsity.Index <- c(Sparsity.Index,Metrics.list[["sparsity"]])
 
-            cat("Inserting Data at location:",Start[1],Start[2],"\n")
-            cat("Data length:",Count[1],"\n")
+            message("Inserting Data at location:",Start[1],Start[2],"\n")
+            message("Data length:",Count[1],"\n")
             ._Lego_Put_Something_(Group.path=Group.path, Lego = Lego, 
                 Name = Reference.object$hdf.matrix.name,
                 data = Matrix, Start = Start, Stride = Stride, Count = Count)
@@ -433,7 +433,7 @@ humanize_size <- function(x){
             Matrix <- NULL
             num.rows <- ifelse((i + num.rows) >= chr1.len, 
                 chr1.len - i, num.rows)
-            cat("Loaded",humanize_size(Object.size),"of data...\n")
+            message("Loaded",humanize_size(Object.size),"of data...\n")
         }
         i<-i+1
     }
@@ -510,7 +510,7 @@ humanize_size <- function(x){
         Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, 
             na.strings="NA", stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, 
             dec=".", showProgress=TRUE))
-        cat("Read",Iter,"lines after Skipping",Skip,"lines\n")
+        message("Read",Iter,"lines after Skipping",Skip,"lines\n")
 
         Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, 
             compute.sparsity = compute.sparsity, sparsity.bins = sparsity.bins, 
@@ -528,8 +528,8 @@ humanize_size <- function(x){
             Start <- c(Start.row,1)
             Stride <- c(1,1)
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
-            cat("Inserting Data at location:",Start[1],"\n")
-            cat("Data length:",Count[1],"\n")
+            message("Inserting Data at location:",Start[1],"\n")
+            message("Data length:",Count[1],"\n")
             ._Lego_Put_Something_(Group.path=Group.path, Lego = Lego, 
                 Name = Reference.object$hdf.matrix.name,
                 data = Cumulative.data, Start = Start, Stride = Stride, 
@@ -537,9 +537,9 @@ humanize_size <- function(x){
             Start.row <- Start.row + Count[1]
             Set.col <- TRUE
             Cumulative.data <- NULL
-            cat("Loaded ",Obj.size," bytes of data...\n")
+            message("Loaded ",Obj.size," bytes of data...\n")
         }
-        cat("Read ",(Skip+Iter),"records...\n")
+        message("Read ",(Skip+Iter),"records...\n")
         i<-i+1
     }
     ._Lego_WriteArray_(Lego = Lego, Path = Group.path, 

@@ -172,7 +172,7 @@ make_mcool_iterations <- function(Start.pos = NULL, End.pos = NULL,
 find_chr2_start_position <- function(File = NULL, iterations = NULL, 
     resolution = FALSE, binsize = NULL, start.1 = NULL, end.1 = NULL, 
     start.2 = NULL, end.2 = NULL, mcool.version = NULL){
-    cat("Finding start of chr2 values...\n")
+    message("Finding start of chr2 values...\n")
     Reference.object <- GenomicMatrix$new()
     Matrix.Keys <- Reference.object$mcool.matrix.keys(version = mcool.version)
     if(resolution){
@@ -196,7 +196,7 @@ find_chr2_start_position <- function(File = NULL, iterations = NULL,
         Bin1_id <- Bin1_id + 1
         if(any(Bin2_id > start.2)){
             if(all(Bin1_id > end.1)){
-                cat(start.1,"\n")
+                message(start.1,"\n")
                 stop("bin1 ids exceeded chr1 reads!")
             }
             if(all(Bin2_id > end.2)){
@@ -238,7 +238,7 @@ populate_matrix_with_values <- function(Lego = NULL, File = NULL,
                     ends.2.sub[y] - chrom2.offset),
                 "of", max(ends.2.sub) - chrom2.offset, "cols.")
 
-            cat(Message,"\n")
+            message(Message,"\n")
             rowspan <- (ends.1[x] - starts.1[x]) + 1
             colspan <- (ends.2.sub[y] - starts.2.sub[y]) + 1
             col.offset <- starts.2.sub[y] - chrom2.offset - 1
@@ -260,7 +260,7 @@ populate_matrix_with_values <- function(Lego = NULL, File = NULL,
                     Lego = File, Index = list(Index), Name = Matrix.Keys[3], 
                     return.what = "data")
                 Bin2_id <- Bin2_id + 1
-                cat("Read",length(c(iter.start[m]:iter.end[m])),"records.\n")
+                message("Read",length(c(iter.start[m]:iter.end[m])),"records.\n")
                 Filter.1 <- Bin1_id >= starts.1[x] & Bin1_id <= ends.1[x]
                 Filter.2 <- Bin2_id >= starts.2.sub[y] & 
                 Bin2_id <= ends.2.sub[y]
@@ -476,7 +476,7 @@ insert_data_and_computemetrics_both_matrices <- function(Lego = NULL,
         Lego = mcool.file, 
         Name = Bintable.end, return.what = "data")        
     if(length(unique(length(Chrom),length(Start),length(End)))==1){
-        cat("All ok! Chrom, Start, End have matching lengths...\n")
+        message("All ok! Chrom, Start, End have matching lengths...\n")
     }else{
         stop("All is not ok! Chrom, Start, End don't have matching lengths...",
             c(length(Chrom),length(Start),length(End)),"\n")

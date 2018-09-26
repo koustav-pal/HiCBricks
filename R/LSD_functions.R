@@ -219,8 +219,8 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL,
         Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, 
             chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
         # cat((Start - 1),"\n")
-        cat(Position.start,Position.end,"\n")
-        cat(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
+        message(Position.start,Position.end,"\n")
+        message(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
         DI.data <- ComputeDirectionalityIndex(Matrix = Matrix, 
             Window.size = di.window, filter = Filter, 
             start = Position.start - (Start - 1), 
@@ -375,7 +375,7 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
         if(sparse & fill.gaps){
             fill.gaps=FALSE
         }
-        cat("[1] Computing DI for",chr,"\n")
+        message("[1] Computing DI for",chr,"\n")
         Ranges <- get_directionality_index_by_chunks(Lego = Lego, chr = chr, 
             di.window = di.window, 
             distance = max.distance, chunk.size = chunk.size, sparse=sparse, 
@@ -385,7 +385,7 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
         RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
             what = "row.sums")
         Ranges$row.sums <- RowSums
-        cat("[2] Computing DI Differences for",chr,"\n")
+        message("[2] Computing DI Differences for",chr,"\n")
         if(sparse){
             SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, 
                 chr2 = chr, what = "sparsity")
@@ -405,8 +405,8 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
         }
         Ranges$backward.Differences <- Backwards.DI.Difference
         Ranges$forward.Differences <- Forwards.DI.Difference
-        cat("[2] Done\n")
-        cat("[3] Fetching Outliers ",chr,"\n")
+        message("[2] Done\n")
+        message("[3] Fetching Outliers ",chr,"\n")
         if(sparse){
             Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(
                 lookup.window=lookup.window,
@@ -448,8 +448,8 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
         Domain.start.candidates != length(Ranges)]
         Domain.end.candidates <- Domain.end.candidates[
         Domain.end.candidates != 1]
-        cat("[3] Done\n")
-        cat("[4] Creating Domain list for",chr,"\n")
+        message("[3] Done\n")
+        message("[4] Creating Domain list for",chr,"\n")
 
         if(!(1 %in% Domain.start.candidates)){
             Domain.start.candidates <- c(1,Domain.start.candidates)
@@ -462,7 +462,7 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
         Domain.Ranges <- Lego_make_ranges(Chrom=rep(chr,nrow(Domain.list)),
             Start=start(Ranges[Domain.list$startbin]),
             End=end(Ranges[Domain.list$endbin]))
-        cat("[4] Done\n")
+        message("[4] Done\n")
         Domain.Ranges$gap.fill <- Domain.list$gap.fill
         Domain.Ranges$level <- Domain.list$level
         Domain.Ranges$window.size <- di.window
