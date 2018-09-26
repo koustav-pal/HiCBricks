@@ -1,0 +1,943 @@
+\documentclass[a4paper,11pt]{article}
+
+%\documentclass[a4paper]{article}
+
+\usepackage[margin=1.5in]{geometry}
+%\usepackage[left=3cm, right=3cm, top=3cm]{geometry}
+%\usepackage[left= 2cm, righttextwidth=10cm]{geometry}
+
+%\usepackage[latin1]{inputenc}
+
+%\VignetteIndexEntry{HiCLegos}
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+
+\usepackage[english]{babel}
+\usepackage{fontenc}
+\usepackage{graphicx}
+%\usepackage[colorlinks=false, linktocpage=true]{hyperref}
+\usepackage[hidelinks]{hyperref}
+
+
+\usepackage{xcolor}
+\usepackage{sectsty}
+\sectionfont{\color{blue}}  % sets colour of subsection
+\subsectionfont{\color{cyan}}  % sets colour of sections
+
+\usepackage{Sweave}
+\DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=1.2em, 
+frame=single}%, label=Input, labelposition=topline}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=1.2em,
+frame=single}%, label=Output}
+
+
+\begin{document}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This title page was downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Authors:
+% Frits Wenneker and Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%%%%%
+
+
+
+\definecolor{grey}{rgb}{0.9,0.9,0.9} % Colour of the box surrounding the title
+
+
+\begin{titlepage} % Suppresses displaying the page number on the title page 
+%and  the subsequent page counts as page 1
+
+\colorbox{grey}{
+    \parbox[t]{0.93\textwidth}{ % Outer full width box
+        \parbox[t]{0.91\textwidth}{ % Inner box for inner right text margin
+        \raggedleft % Right align the text
+        \fontsize{50pt}{80pt}\selectfont % Title font size, the first 
+        %argument is the font 
+        %size and the second is the line spacing, adjust depending on title 
+        %length
+        \vspace{0.7cm} % Space between the start of the title and the 
+        %top of the grey box
+
+            Store,\\
+            retrieve and plot\\
+            Hi-C data with HiCLegos\\
+
+        \vspace{0.7cm} % Space between the end of the title and the bottom of 
+        %the grey box
+                }
+        }
+}
+\vfill % Space between the title box and author information
+
+\parbox[t]{0.93\textwidth}{ % Box to inset this section slightly
+    \raggedleft % Right align the text
+    \large % Increase the font size
+    {\Large Koustav Pal}\\[4pt] % Extra space after name
+    IFOM\\[4pt] % Extra space before URL
+    %\texttt{LaTeXTemplates.com}\\
+    \hfill\rule{0.2\linewidth}{1pt}% Horizontal line, first argument width, 
+    %second thickness
+}
+\end{titlepage}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+HiCLegos is a storage and retrieval library for high-resolution Hi-C data. 
+This library attempts to encapsulate the entire HDF data structure and present 
+accessor functions allowing users to access and manipulate Hi-C data without 
+having to deal with the structural complexity associated to dealing with HDF 
+files. Please note, HiCLegos is not meant to compete with other data formats. 
+Instead it is a library to better facilitate access to Hi-C data stored in 
+various formats. Therefore, it is not possible at this time to create a direct 
+mirror of for example, mcool files. mcool files, for the uninitiated are a 
+standard data format for the 4D nucleome project and better facilitates the 
+storage of very large experiments within a single data file. HiCLegos, on 
+the other hand stores the complete matrix, as opposed to the upper triangle 
+in mcools files. As you will see in this vignette, it is a very simple task 
+to import entire resolutions/normalizations from a standard 4DN mcool file 
+to a Lego object.  
+With HiCLegos, in this vignette you will;
+\begin{enumerate}
+    \item Create a lego for a single chromosomes
+    \item do TAD calls on this lego files
+    \item keep the tad calls (or any ranges object) associated to the Lego 
+    file for future reference
+    \item and later on retrieve them for quick plotting and viewing with 
+    HiCLego functions
+\end{enumerate} 
+
+\newpage
+
+
+<<echo=FALSE>>=
+options(width=80)
+@
+\newpage
+
+
+\section{Loading 4DN mcool files as Lego objects}
+
+In this exercise we will download a file from the 4DN data portal at 
+\url{https://data.4dnucleome.org/}. For the purposes of this vignette we will 
+use a randomly chosen H1-hESC Hi-C data using DpnII: 
+\url{https://data.4dnucleome.org/files-processed/
+4DNFI7JNCNFB/@@download/4DNFI7JNCNFB.mcool}
+
+\noindent You can download the file using curl. It contains normalised Hi-C 
+data on H1-hESC cells using the DpnII enzyme. 
+
+<<eval=FALSE, echo=TRUE,tidy=TRUE >>=
+curl_download(url = "https://data.4dnucleome.org/files-
+    processed/4DNFI7JNCNFB/@@download/4DNFI7JNCNFB.mcool",
+    destfile = "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+@
+
+\noindent Note that there are a few normalisation weights available within 
+the sample. We can check what normalisation weights are available using 
+
+Lego\_list\_mcool\_normalisations() function. Please note, that this function 
+does not list the normalisation weights available within the mcool file, 
+but rather lists normalisation factors that HiCLegos accepts from the mcool 
+files. Notice, the human readable names and the actual dataset names, 
+what you are interested in are the human readable names, which makes the type 
+of normalisation apparent. Such as for example, KR is an abbreviation for 
+the Knight Ruitz matrix balancing algorithm introduced by Rao et al., 
+2014 \cite{Rao2014}.  
+
+<<eval=FALSE, echo=TRUE >>=
+
+Lego_list_mcool_normalisations(names.only = TRUE)
+@
+
+\noindent This lists only the human-readable names. To see both the 
+abbreviation and the base column name, will list all names including their 
+linked columns in the HDF file.
+
+<<eval=FALSE, echo=TRUE >>=
+
+Lego_list_mcool_normalisations(names.only = FALSE)
+@
+
+\noindent The 4D nucleome project bins their data into several different 
+resolutions, to check out the available resolutions, it is as simple as: 
+
+<<eval=FALSE, echo=TRUE >>=
+
+mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+Lego_list_mcool_resolutions(mcool = filename)
+@
+
+
+\noindent Once, you have viewed all of the listed resolutions, we can go 
+ahead and create Lego blocks from these files. Please note, that users cannot 
+load multiple resolutions in a single Lego file, this is because the aim of 
+HiCLegos is not to create an alternative storage format to already very 
+well designed pre-existing formats, but rather to create a straightforward, 
+memory efficient storage and retrieval library for already existing Hi-C 
+data formats in R.  
+
+\noindent Although it is possible to load all chromosomes in a single Lego object, 
+this is not recommended because,
+\begin{enumerate}
+    \item It is not possible for multiple processes to concurrently access 
+    the same HDF file. Therefore, it hinders parallelization.
+    \item The presence of multiple matrices in the same file, results 
+    in an increase in read and write speeds.  
+\end{enumerate}
+
+\noindent Instead when using very large matrices, users are encouraged 
+to separate the matrices chromosome by chromosome into different lego 
+objects. For the purposes of this vignette, we want to do TAD calls 
+with the local score differentiator (LSD) module and finally plot these TAD 
+calls. We can now go ahead and create a Lego corresponding for a single 
+chromosome from the downloaded mcool file and import data relevant to the 
+cis-interaction maps for that chromosome.  
+
+<<eval=FALSE, echo=TRUE >>=
+
+Output.lego <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-
+    normalised-chr1.lego"
+mcool <- mcoolName
+
+CreateLego_from_mcool(Lego = Output.lego, 
+    mcool = mcool, 
+    binsize = 10000, 
+    chrs = "chr1")
+
+Lego_load_data_from_mcool(Lego = Output.lego, 
+    mcool = mcool, 
+    chr1 = "chr1", 
+    chr2 = "chr1", 
+    binsize = 10000,
+    cooler.batch.size = 1000000, 
+    matrix.chunk = 2000, 
+    dont.look.for.chr2 = TRUE, 
+    remove.prior = TRUE,
+    norm.factor = "Iterative-Correction")
+@
+
+\noindent The first function creates the basic Lego structure, whereas the 
+second function loads data into the structure. Using the param 'chrs', users 
+can limit the structure created to the relevant chromosomes or if left NULL, 
+will create the structure for all chromosome pairs. Please note, that if the 
+length of chrs is 2, 4 interaction maps will be created. Two for the `cis` 
+interaction maps and two for the 'trans' interaction maps.  
+
+\noindent Notice, that there are a few options allowing users to manipulate 
+data read and write speeds. 'cooler.batch.size' determines the number of 
+records read per iteration through an mcool file. 'matrix.chunk' determines 
+the size of the matrix square that will be loaded per iteration through an 
+mcool file. If you are loading 'cis' matrices, it is recommended to set the 
+'dont.look.for.chr2' parameter to TRUE, as the first read records for chr1 
+will always correspond to those originating from chr2. In cases of trans 
+matrices, this option should be set to FALSE allowing the function to 
+locate the first occurence of a chr1 vs chr2 interaction. 'remove.prior' 
+defaults to FALSE and prevents users from loading datasets twice.  
+
+\newpage
+
+\section{ Loading other datasets as Lego objects}
+
+Currently, HiCLegos only supports data import from 2D matrices 
+and mcool files with more to come. If you have a 2D matrix, you can 
+load it like:
+
+<<eval=TRUE, echo=TRUE >>=
+
+library("HiCLegos")
+
+Bintable.path <- system.file("extdata", 
+    "Bintable_40kb.txt", 
+    package = "HiCLegos")
+
+Chromosomes <- "chr19"
+CreateLego(ChromNames = Chromosomes, 
+    BinTable = Bintable.path, 
+    bin.delim = " ", 
+    Output.Filename = "test.hdf", 
+    exec = "cat", 
+    remove.existing = TRUE)
+
+Test.mat <- matrix(NA,nrow = 800, ncol = 800)
+Row <- row(Test.mat)
+Col <- col(Test.mat)
+Dist <- Col - Row
+Matrix.file <- "Test_matrix.txt"
+
+write.table(x = Dist, 
+    file = Matrix.file, 
+    sep = " ", 
+    quote = FALSE,
+    row.names = FALSE, 
+    col.names = FALSE)
+
+Lego.file <- "test.hdf"
+
+Lego_load_matrix(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19",
+    matrix.file = Matrix.file, 
+    delim = " ", 
+    exec = "cat",
+    remove.prior = TRUE)
+@
+
+\noindent If you have a very large 2D cis matrix, you can load data 
+till a certain distance:
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_load_cis_matrix_till_distance(Lego = Lego.file, 
+    chr = "chr19", 
+    matrix.file = Matrix.file, 
+    delim = " ", 
+    distance = 100, 
+    remove.prior = TRUE)
+@
+
+\newpage
+
+\section{Accessing ranges objects in a lego store}
+
+HiCLegos implementes different fetch/get methods. Users can list 
+attributes of a Lego object and they can fetch the same objects. 
+Users have access to Ranges objects and matrix subset operations.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego.file <- system.file("extdata", 
+    "test.hdf", 
+    package = "HiCLegos")
+
+Lego_list_rangekeys(Lego.file)
+@
+
+\noindent This lists the available rangekeys in the Lego file. Alternatively, 
+tf you are interested in only the bintable associated to the Hi-C experiment, 
+you can: 
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_get_bintable(Lego.file)
+@
+
+\noindent Otherwise, you can retrieve the object using Lego\_get\_ranges the 
+method called by Lego\_get\_bintable.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_get_ranges(Lego = Lego.file, 
+    rangekey = "Bintable")
+@
+
+\noindent You can also subset the retrieved ranges by the chromosome 
+of interest.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_get_ranges(Lego = Lego.file, 
+    rangekey = "Bintable", 
+    chr = "chr19")
+@
+
+\subsection{ Identifying matrix row/col using ranges operations}
+
+Users may sometimes find it useful to identify the corresponding 
+matrix row/col for a particular coordinate. Then it it as simple as: 
+
+<<eval=TRUE, echo=TRUE >>=
+
+testRun=Lego_return_region_position(Lego = Lego.file, 
+    region = "chr19:5000000:10000000")
+head(testRun)
+@
+
+\noindent This does a 'within' overlap operation and returns the corresponding 
+coordinates. Therefore, sometimes when the region of interest is smaller 
+than the ranges corresponding to the particular matrix region of interest, 
+this function may fail.
+To have more fine-grain control, users may choose to use 
+Lego\_fetch\_range\_index which is called by Lego\_return\_region\_position. 
+
+<<eval=TRUE, echo=TRUE >>=
+
+testRun=Lego_fetch_range_index(Lego = Lego.file, 
+    chr = "chr19", 
+    start = 5000000, 
+    end = 10000000)
+@ 
+
+\noindent This function will return a GRanges object containing one row 
+for each element in the provided [chr,start,end] vectors, with a 
+'NumericList' column 'Indexes' corresponding to the overlapping row/col 
+coordinate of that matrix.
+
+\newpage
+
+\section{ Accessing matrices in a lego store}
+
+There are three ways to subset matrices.
+\begin{itemize}
+    \item By distance
+    \item Selecting sub-matrices
+    \item Selecting rows or columns 
+\end{itemize}
+
+\subsection{Retrieving points separated by a certain distance}
+
+It is possible to get the interactions between genomic loci 
+separated by a certain distance.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Values <- Lego_get_values_by_distance(Lego = Lego.file, 
+    chr = "chr19", 
+    distance = 4)
+@
+
+\noindent Users can also choose to transform it during retrieval
+
+<<eval=TRUE, echo=TRUE >>=
+
+Failsafe_median_log10 <- function(x){
+    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+    return(median(log10(x+1)))
+}
+
+Lego_get_values_by_distance(Lego = Lego.file, 
+    chr = "chr19", 
+    distance = 4, 
+    FUN = Failsafe_median_log10)
+@
+
+
+\noindent They can even subset the values by a certain region of interest
+
+
+<<eval=TRUE, echo=TRUE >>=
+
+Failsafe_median_log10 <- function(x){
+    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+    return(median(log10(x+1)))
+}
+
+Lego_get_values_by_distance(Lego = Lego.file, 
+    chr = "chr19", 
+    distance = 4, 
+    constrain.region = "chr19:1:5000000", 
+    FUN = Failsafe_median_log10)
+@
+
+\subsection{ Retrieving subsets of a matrix}
+
+HiCLegos, implements word-alike retrieval of sub-matrices. That means, you 
+can retrieve data using coordinate in coordinate like fashion.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Sub.matrix <- Lego_get_matrix_within_coords(Lego = Lego.file, 
+    x.coords="chr19:5000001:10000000", 
+    force = TRUE,
+    y.coords = "chr19:5000001:10000000")
+@
+
+\noindent This is the same as: 
+
+<<eval=TRUE, echo=TRUE >>=
+
+x.axis <- 5000000/40000
+y.axis <- 10000000/40000
+
+Sub.matrix <- Lego_get_matrix(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19", 
+    x.vector = c(x.axis:y.axis), 
+    y.vector = c(x.axis:y.axis))
+@
+
+\noindent Notice, that this selection is not the same as the previous one and 
+it has one more row and column. This is because the region of 
+interest spans from 5000001:10000000, which starts from the 
+'x.axis + 1' and not from 'x.axis'. 
+
+\noindent Finally, it is also possible to fetch entire rows and columns. 
+Users can do so either with names, which correspond to names of the matrix 
+rows/cols from the bintable. If these are names, it is required to specify 
+'by = "ranges" '.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Coordinate <- c("chr19:1:40000","chr19:40001:80000")
+Lego.file <- system.file("extdata", 
+    "test.hdf", 
+    package = "HiCLegos")
+Test_Run <- Lego_fetch_row_vector(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19", 
+    by = "ranges", 
+    vector = Coordinate,
+    regions = c("chr19:1:1000000", "chr19:40001:2000000"))
+@
+
+\noindent Users can also choose to fetch data 'by = "positions" '.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Coordinate <- c(1,2)
+Lego.file <- system.file("extdata", 
+    "test.hdf", 
+    package = "HiCLegos")
+Test_Run <- Lego_fetch_row_vector(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19", 
+    by = "position", 
+    vector = Coordinate,
+    regions = c("chr19:1:1000000", "chr19:40001:2000000"))
+@
+
+\noindent If regions is provided, it will subset the corresponding 
+row/col by the specified region. \textit{regions} must be in coordinate 
+format as shown below. 
+
+\subsection{ Accessing matrix metadata columns}
+
+There are several metrics which are computed at the time of matrix load. 
+Principally,
+\begin{itemize}
+    \item \textit{bin.coverage} quantifies the proportion of non-zero rows/cols
+    \item \textit{row.sums} quantifies the total signal value of any row
+    \item \textit{sparsity} quantifies the proportion of non-zero values 
+    at a certain distance from the diagonal
+\end{itemize}
+
+\noindent Sparsity is only quantified if a matrix is defined as sparse during 
+matrix load.
+
+Users can check the names of the various matrix metadata columns. 
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_list_matrix_mcols()
+@
+
+\noindent And then fetch one such metadata column
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego.file <- system.file("extdata", 
+    "test.hdf", 
+    package = "HiCLegos")
+testRun <- Lego_get_matrix_mcols(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19", 
+    what = "row.sums")
+
+@
+
+\section{ Matrix utility functions}
+
+There are several utility functions that a user may take advantage 
+of to do various checks. 
+
+\subsection{ Check if a matrix has been loaded into the Lego store}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_isdone(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\subsection{ Check if a matrix was defined as a sparse matrix}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_issparse(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\subsection{ Check the maximum distance until which a matrix was loaded}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_maxdist(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\subsection{ Check if a matrix was defined}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_minmax(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\subsection{ Check the minimum and maximum values of a matrix}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_minmax(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\subsection{ Get the matrix dimensions, irrespective of the maxdist value}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_dimensions(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\subsection{ Get the filename of a loaded matrix}
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_matrix_filename(Lego = Lego.file, 
+    chr1 = "chr19", 
+    chr2 = "chr19")
+@
+
+\newpage
+
+\section{ Call Topologically Associated Domains with Local score 
+differentiator (LSD)}
+
+Local score differentiator (LSD) is a TAD calling procedure based on the 
+directionality index introduced by Dixon et al., 2012 \cite{Dixon2012}. 
+It partitions the genome into segments based on the local directionality 
+index distribution. We first introduced this procedure with our study 
+Pal et al., 2018 \cite{Pal2018}. This has been adapted to work with 
+HiCLegos to show how different analysis procedures can take advantage 
+of the HiCLegos accessor functions.   
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego.file <- system.file("extdata", 
+    "test.hdf", 
+    package = "HiCLegos")
+
+
+Chromosome <- "chr19"
+di_window <- 10
+lookup_window <- 30
+TAD_ranges <- Lego_local_score_differentiator(Lego = Lego.file, 
+    chrs = Chromosome, 
+    di.window = di_window, 
+    lookup.window = lookup_window, 
+    strict = TRUE, 
+    fill.gaps=TRUE, 
+    chunk.size = 500)
+@
+
+\noindent 'lookup.window' value corresponds to the local window used to subset 
+the directionality index distribution. Setting 'strict' to TRUE, 
+adds another additional filter wherein the directionality index is required 
+to be less than or greater than 0 at potential change points identifying 
+a domain boundary. LSD works by identifying domain starts and ends, if a 
+particular domain start was not identified, but the adjacent domain end was 
+identified, 'fill.gaps' if set to TRUE, will infer the adjacent bin 
+from the adjacent domain end as a domain start bin and create a domain. 
+Any domains identified by 'fill.gaps' are annotated under the 
+'level' column in the resulting GRanges object with the value 2. 
+'chunk.size' corresponds to the size of the square to retrieve and process per 
+iteration.  
+
+\noindent These TAD calls can also be stored along with the Lego file.
+
+<<eval=TRUE, echo=TRUE >>=
+
+Name <- paste("LSD",
+    di_window,
+    lookup_window,
+    Chromosome,sep = "_")
+#Lego_add_ranges(Lego = "test.hdf", 
+#    ranges = TAD_ranges, 
+#    rangekey = Name)
+@
+
+\newpage
+
+\section{ Fetching associated ranges from a Lego file}
+
+Since a lego store is an on-disk database, it is possible to fetch ranges 
+objects associated to the lego store. Users can first list the available 
+ranges objects. Once, they have identified the available rangekeys, 
+users can fetch the required rangekeys. 
+
+<<eval=TRUE, echo=TRUE >>=
+
+Lego_list_rangekeys(Lego = "test.hdf")
+#TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
+#    rangekey = Name)
+@
+
+
+\newpage
+
+\section{ Creating pretty heatmaps using HiCLegos}
+
+Using HiCLegos functions, users can plot pretty Hi-C heatmaps. In 
+the following we list the 
+most basic commands required to generate a heatmap. 
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal, include=FALSE, echo=TRUE>>=
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
+    Legos = Lego.file, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    palette = "Reds", 
+    width = 10, 
+    height = 11, 
+    return.object=TRUE)
+@
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal>>
+@
+\caption{Simple heatmap generated with HiCLegos.}
+\label{fig:Fig1}
+\end{figure}
+
+
+\noindent Notice the 'palette' argument. It requires the user to 
+provide a palette name from either the 'RColorBrewer' or 'viridis' colour 
+palettes. It is not possible at this time to provide user defined 
+colour palettes. 
+
+
+\noindent Since we are directly plotting the Hi-C signal, the colours may seem 
+a bit muted (Figure \ref{fig:Fig1}). We should go ahead and change that 
+with a $log_{10}$ transformation, which will squeeze the signal distribution 
+and make it pretty (Figure \ref{fig:Fig2}).
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal2, include=FALSE, echo=TRUE>>=
+
+Failsafe_log10 <- function(x){
+    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+    return(log10(x+1))
+}
+
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf", 
+    Legos = Lego.file, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    FUN = Failsafe_log10, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "Reds", 
+    width = 10, 
+    height = 11,
+    return.object=TRUE)
+@
+
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal2, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal2>>
+@
+\caption{Heatmap using $log_{10}$ transformation for signal distribution.}
+\label{fig:Fig2}
+\end{figure}
+
+\noindent Notice, how we created a new function for $log_{10}$ transformation. 
+This function and others like it can be provided with the argument 'FUN'. 
+This is an already much more dense heatmap. 
+
+\noindent Sometimes, the Hi-C signal distribution is biased by extreme values 
+which tends to blow up the entire distribution in a heatmap plot. We can pull 
+in these values to create a more uniform and prettier picture, with 
+the 'value.cap' argument.
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal3, include=FALSE, echo=TRUE>>=
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf", 
+    Legos = Lego.file, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    FUN = Failsafe_log10, 
+    value.cap = 0.99, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "Reds", 
+    width = 10, 
+    height = 11, 
+    return.object=TRUE)
+@
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal3, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal3>>
+@
+\caption{Heatmap using \textit{value.cap} argument}
+\label{fig:Fig3}
+\end{figure}
+
+
+\noindent 'value.cap' takes as input a value ranging from 0,1 identifying the 
+quantile at which the threshold will be applied. Also note, how the presence 
+of this argument triggers presence of the greater than or less than sign 
+(Figure \ref{fig:Fig3}). 
+
+
+\noindent Sometimes, it is desirable to plot the heatmap as a rotated heatmap. 
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal4, include=FALSE, echo=TRUE>>=
+
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf", 
+    Legos = Lego.file, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    FUN = Failsafe_log10, 
+    value.cap = 0.99, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "Reds", 
+    width = 10, 
+    height = 11, 
+    rotate = TRUE,
+    return.object=TRUE)
+@
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal4, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal4>>
+@
+\caption{Rotated heatmap created by HiCLegos.}
+\label{fig:Fig4}
+\end{figure}
+
+
+\noindent But this looks ugly (Figure \ref{fig:Fig4}). To fix it we 
+need to modify the 'width' and 
+'height' as the rotated plots are broader than they are taller 
+(Figure \ref{fig:Fig5}). 
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal5, include=FALSE, echo=TRUE>>=
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
+    Legos = Lego.file, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    FUN = Failsafe_log10, 
+    value.cap = 0.99, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "cividis", 
+    width = 15, 
+    height = 5, 
+    rotate = TRUE,
+    return.object=TRUE)
+@
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal5, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal5>>
+@
+\caption{Rotated Hi-C matrix with corrected plot-sizes and using a different 
+color palette.}
+\label{fig:Fig5}
+\end{figure}
+
+\noindent We can now also plot the TADs on these plots. 
+
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal6, include=FALSE, echo=TRUE>>=
+
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
+    Legos = Lego.file, 
+    tad.ranges = TAD_ranges, 
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    colours = "#E0CA3C", 
+    FUN = Failsafe_log10, 
+    value.cap = 0.99, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "Reds", 
+    width = 10, 
+    height = 11,
+    return.object=TRUE)
+@
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal6, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal6>>
+@
+\caption{Hi-C matrix with TADs.}
+\label{fig:Fig6}
+\end{figure}
+
+
+<<eval=FALSE, label=chr19-5MB-10MB-normal7, include=FALSE, echo=TRUE>>=
+Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
+    Legos = Lego.file, 
+    tad.ranges = TAD_ranges,
+    x.coords = "chr19:5000000:10000000", 
+    y.coords = "chr19:5000000:10000000", 
+    colours = "red",
+    FUN = Failsafe_log10, 
+    value.cap = 0.99, 
+    legend.title = "Log10 Hi-C signal", 
+    palette = "cividis", 
+    width = 15, 
+    height = 9,
+    cut.corners = TRUE,
+    rotate = TRUE,
+    return.object=TRUE) 
+@
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal7, fig=TRUE, echo=FALSE>>=
+<<chr19-5MB-10MB-normal7>>
+@
+\caption{Rotated Hi-C matrix with TADs and a differen color palette.}
+\label{fig:Fig7}
+\end{figure}
+
+
+
+\newpage
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{unsrt}
+
+\begin{thebibliography}{10}
+
+\bibitem{Rao2014}
+Rao SS, Huntley MH, Durand NC, Stamenova EK, Bochkov ID, Robinson JT, 
+Sanborn AL, Machol I, Omer AD, Lander ES and Aiden EL
+\newblock{A 3D map of the human genome at kilobase resolution reveals 
+principles of chromatin looping.}
+\newblock {Cell, 2014}
+
+
+\bibitem{Dixon2012}
+Dixon JR, Selvaraj S, Yue F, Kim A, Li Y, Shen Y, Hu M, Liu JS and Ren B
+\newblock {Topological domains in mammalian genomes identified by 
+analysis of chromatin interactions.}
+\newblock {Nature 2012}
+
+
+
+\end{thebibliography}
+
+\end{document}
