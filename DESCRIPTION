@@ -12,7 +12,6 @@ License: MIT + file LICENSE
 Depends: R (>= 3.5), utils, curl, rhdf5, R6, grid
 Imports: ggplot2, viridis, RColorBrewer, scales, reshape2, stringr, data.table, GenomeInfoDb, GenomicRanges, stats, IRanges, grDevices, S4Vectors, digest
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1
 biocViews: DataImport, Infrastructure, Software, Technology, Sequencing, HiC
