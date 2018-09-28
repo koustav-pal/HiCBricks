@@ -699,7 +699,10 @@ Using HiCLegos functions, users can plot pretty Hi-C heatmaps. In
 the following we list the 
 most basic commands required to generate a heatmap. 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal, include=FALSE, echo=TRUE>>=
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal, fig=TRUE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
@@ -708,12 +711,6 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
     width = 10, 
     height = 11, 
     return.object=TRUE)
-@
-
-\begin{figure}[htbp]
-\centering
-<<eval=TRUE,label=chr19-5MB-10MB-normal, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal>>
 @
 \caption{Simple heatmap generated with HiCLegos.}
 \label{fig:Fig1}
@@ -769,7 +766,11 @@ which tends to blow up the entire distribution in a heatmap plot. We can pull
 in these values to create a more uniform and prettier picture, with 
 the 'value.cap' argument.
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal3, include=FALSE, echo=TRUE>>=
+
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal3, fig=TRUE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
@@ -781,12 +782,6 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf",
     width = 10, 
     height = 11, 
     return.object=TRUE)
-@
-
-\begin{figure}[htbp]
-\centering
-<<eval=TRUE,label=chr19-5MB-10MB-normal3, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal3>>
 @
 \caption{Heatmap using \textit{value.cap} argument}
 \label{fig:Fig3}
@@ -801,7 +796,11 @@ of this argument triggers presence of the greater than or less than sign
 
 \noindent Sometimes, it is desirable to plot the heatmap as a rotated heatmap. 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal4, include=FALSE, echo=TRUE>>=
+
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal4, fig=TRUE, echo=TRUE>>=
 
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf", 
     Legos = Lego.file, 
@@ -816,12 +815,6 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
     rotate = TRUE,
     return.object=TRUE)
 @
-
-\begin{figure}[htbp]
-\centering
-<<eval=TRUE,label=chr19-5MB-10MB-normal4, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal4>>
-@
 \caption{Rotated heatmap created by HiCLegos.}
 \label{fig:Fig4}
 \end{figure}
@@ -832,7 +825,11 @@ need to modify the 'width' and
 'height' as the rotated plots are broader than they are taller 
 (Figure \ref{fig:Fig5}). 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal5, include=FALSE, echo=TRUE>>=
+
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal5, fig=TRUE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
     Legos = Lego.file, 
     x.coords = "chr19:5000000:10000000", 
@@ -846,12 +843,6 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
     rotate = TRUE,
     return.object=TRUE)
 @
-
-\begin{figure}[htbp]
-\centering
-<<eval=TRUE,label=chr19-5MB-10MB-normal5, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal5>>
-@
 \caption{Rotated Hi-C matrix with corrected plot-sizes and using a different 
 color palette.}
 \label{fig:Fig5}
@@ -860,8 +851,10 @@ color palette.}
 \noindent We can now also plot the TADs on these plots. 
 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal6, include=FALSE, echo=TRUE>>=
 
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal6, fig=TRUE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
     Legos = Lego.file, 
     tad.ranges = TAD_ranges, 
@@ -876,18 +869,15 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf",
     height = 11,
     return.object=TRUE)
 @
-
-\begin{figure}[htbp]
-\centering
-<<eval=TRUE,label=chr19-5MB-10MB-normal6, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal6>>
-@
 \caption{Hi-C matrix with TADs.}
 \label{fig:Fig6}
 \end{figure}
 
 
-<<eval=FALSE, label=chr19-5MB-10MB-normal7, include=FALSE, echo=TRUE>>=
+
+\begin{figure}[htbp]
+\centering
+<<eval=TRUE,label=chr19-5MB-10MB-normal7, fig=TRUE, echo=TRUE>>=
 Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
     Legos = Lego.file, 
     tad.ranges = TAD_ranges,
@@ -904,13 +894,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
     rotate = TRUE,
     return.object=TRUE) 
 @
-
-\begin{figure}[htbp]
-\centering
-<<eval=TRUE,label=chr19-5MB-10MB-normal7, fig=TRUE, echo=FALSE>>=
-<<chr19-5MB-10MB-normal7>>
-@
-\caption{Rotated Hi-C matrix with TADs and a differen color palette.}
+\caption{Rotated Hi-C matrix with TADs and a different color palette.}
 \label{fig:Fig7}
 \end{figure}
 
