@@ -165,12 +165,16 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     Output.Filename=NULL, exec="cat", remove.existing=FALSE){
     H5close()
     Dir.path <- dirname(Output.Filename)
+    if(Dir.path == "."){
+        warning("HDF file will be created in",
+            "current working directory.\n")
+    }
     Filename <- basename(Output.Filename)
     Working.File <- file.path(normalizePath(Dir.path),Filename)
     Reference.object <- GenomicMatrix$new()
     Root.folders <- Reference.object$GetRootFolders()
     if(is.null(ChromNames) | length(ChromNames) == 0){
-        stop("Variable ChromNames cannot be empty")   
+        stop("Variable ChromNames cannot be empty")
     }
     HDF.File <- file.path(Working.File)
     if(file.exists(HDF.File)){
