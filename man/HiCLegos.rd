@@ -84,7 +84,7 @@ corresponding to coordinates spelled out in human readable format.
 \itemize{
 \item \code{\link{Lego_local_score_differentiator}} - Use the LSD TAD calling
 procedure to do some TAD calls.
-\item \code{\link{Lego_vizart_plot_heatmaps}} - Plot pretty heatmaps.
+\item \code{\link{Lego_vizart_plot_heatmap}} - Plot pretty heatmaps.
 }
 }
 \section{Utility functions}{
@@ -126,8 +126,8 @@ then this function will tell you until what distance data was loaded.
 normalisation vectors that can be present in a mcool file.
 \item \code{\link{Lego_mcool_normalisation_exists}} - Check if a specific
 normalisation vector exists in an mcool file.
-\item \code{\link{Lego_mcool_resolutions}} - List the resolutions present in an
-mcool file.
+\item \code{\link{Lego_list_mcool_resolutions}} - List the resolutions present 
+in an mcool file.
 }
 }
 
