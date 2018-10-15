@@ -5,7 +5,7 @@
 \title{Return a N dimensional vector selection.}
 \usage{
 Lego_get_vector_values(Lego = NULL, chr1 = NULL, chr2 = NULL,
-    xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
+  xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -46,7 +46,7 @@ returns a matrix of dimension xaxis length by yaxis length.
 other matrix retrieval functions.
 }
 \section{Note}{
-Whatever the length of xaxis or yaxis may be, the coordinates
+ Whatever the length of xaxis or yaxis may be, the coordinates
 under consideration will range from min(xaxis) to max(xaxis) on the rows or
 min(yaxis) to max(yaxis) on the columns.
 }

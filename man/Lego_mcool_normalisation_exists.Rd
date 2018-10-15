@@ -5,7 +5,7 @@
 \title{Check if a normalisation exists in an mcool file.}
 \usage{
 Lego_mcool_normalisation_exists(mcool = NULL, norm.factor = NULL,
-    binsize = NULL)
+  binsize = NULL)
 }
 \arguments{
 \item{mcool}{\strong{Required}.

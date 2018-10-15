@@ -265,12 +265,19 @@ Bintable.path <- system.file("extdata",
     package = "HiCLegos")
 
 Chromosomes <- "chr19"
-CreateLego(ChromNames = Chromosomes, 
+
+Output.Filename <- "test.hdf"
+
+
+
+Path_to_cached_file <- CreateLego(ChromNames = Chromosomes, 
     BinTable = Bintable.path, 
     bin.delim = " ", 
-    Output.Filename = "test.hdf", 
+    Output.Filename = Output.Filename, 
     exec = "cat", 
     remove.existing = TRUE)
+
+
 
 Test.mat <- matrix(NA,nrow = 800, ncol = 800)
 Row <- row(Test.mat)
@@ -285,7 +292,7 @@ write.table(x = Dist,
     row.names = FALSE, 
     col.names = FALSE)
 
-Lego.file <- "test.hdf"
+Lego.file <- Path_to_cached_file
 
 Lego_load_matrix(Lego = Lego.file, 
     chr1 = "chr19", 
@@ -685,7 +692,7 @@ users can fetch the required rangekeys.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_list_rangekeys(Lego = "test.hdf")
+Lego_list_rangekeys(Lego = Path_to_cached_file)
 #TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
 #    rangekey = Name)
 @

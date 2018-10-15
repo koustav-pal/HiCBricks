@@ -13,10 +13,6 @@ A string specifying the path to the Lego store created with CreateLego.}
 \item{chr}{\strong{Optional}.
 A chr string specifying the chromosome to select from the ranges.}
 }
-\value{
-Returns a GRanges object containing the binning table associated to the
-Lego store.
-}
 \description{
 \code{Lego_get_bintable} makes a call to \code{\link{Lego_get_ranges}} to
 retrieve the binning table of the associated Lego store. This is equivalent

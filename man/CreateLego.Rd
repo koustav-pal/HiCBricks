@@ -5,9 +5,9 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 CreateLego(ChromNames = NULL, BinTable = NULL, bin.delim = "\\t",
-    col.index = c(1, 2, 3), impose.discontinuity = TRUE,
-    ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
-    remove.existing = FALSE)
+  col.index = c(1, 2, 3), impose.discontinuity = TRUE,
+  ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
+  remove.existing = FALSE)
 }
 \arguments{
 \item{ChromNames}{\strong{Required}
@@ -55,7 +55,8 @@ set to matrix dimensions/100.}
 
 \item{Output.Filename}{\strong{Required}
 A string specifying the location and name of the HDF file to create. If path
-is not provided, it will be created in the current working directory.}
+is not provided, it will be created in the Bioc File cache. Otherwise, it
+will be created in the specified directory and tracked via Bioc File Cache.}
 
 \item{exec}{\strong{Optional}. Default cat.
 A string specifying the program or expression to use for reading the file.
@@ -66,8 +67,8 @@ If TRUE, will remove the HDF file with the same name and create a new one.
 By default, it will not replace existing files.}
 }
 \value{
-This function will generate the target Lego file. If completed, the
-function will return TRUE.
+This function will generate the target Lego file. Upon completion,
+the function will provide the path to the created/tracked HDF file.
 }
 \description{
 \code{CreateLego} creates the complete HDF5 on-disk data structure
@@ -136,17 +137,19 @@ specifying the chromosomes present in this particular Lego file.
 Bintable.path <- system.file("extdata", 
 "Bintable_40kb.txt", package = "HiCLegos")
 Chromosomes <- "chr19"
-CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
-bin.delim = " ", Output.Filename = "test.hdf", exec = "cat", 
+Path_to_cached_file <- CreateLego(ChromNames = Chromosomes, 
+BinTable = Bintable.path, bin.delim = " ", 
+Output.Filename = "test.hdf", exec = "cat", 
 remove.existing = TRUE)
 
 \dontrun{
 Bintable.path <- system.file("extdata", 
 "Bintable_40kb.txt", package = "HiCLegos")
 Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
-CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
-impose.discontinuity=TRUE, col.index = c(1,2,3),
-Output.Filename = "test.hdf", exec = "cat", remove.existing = TRUE)
+Path_to_cached_file <- CreateLego(ChromNames = Chromosomes, 
+BinTable = Bintable.path, impose.discontinuity=TRUE, 
+col.index = c(1,2,3), Output.Filename = "test.hdf", 
+exec = "cat", remove.existing = TRUE)
 
 This will cause an error as the file located at Bintable.path,
 contains coordinates for only chromosome 19. For this code to work, either

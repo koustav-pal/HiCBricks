@@ -5,7 +5,7 @@
 \title{Return a matrix subset.}
 \usage{
 Lego_get_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
-    x.vector = NULL, y.vector = NULL, force = FALSE, FUN = NULL)
+  x.vector = NULL, y.vector = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.

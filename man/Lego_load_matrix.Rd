@@ -5,9 +5,9 @@
 \title{Load a NxM dimensional matrix into the Lego store.}
 \usage{
 Lego_load_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
-    matrix.file = NULL, delim = " ", exec = NULL,
-    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-    sparsity.bins = 100)
+  matrix.file = NULL, delim = " ", exec = NULL,
+  remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
+  sparsity.bins = 100)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -49,9 +49,6 @@ matrices.}
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
 }
-\value{
-Returns TRUE if all went well.
-}
 \description{
 Load a NxM dimensional matrix into the Lego store.
 }
@@ -64,7 +61,9 @@ Dist <- Col - Row
 Matrix.file <- "Test_matrix.txt"
 write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
 row.names = FALSE, col.names = FALSE)
-Lego.file <- "test.hdf"
+All_Legos <- Lego_list_tracked_legos()
+Lego_file <- file.path(getwd(),"test.hdf")
+Lego.file <- All_Legos[Lego_file]
 Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
 matrix.file = Matrix.file, delim = " ", exec = "cat", 
 remove.prior = TRUE)

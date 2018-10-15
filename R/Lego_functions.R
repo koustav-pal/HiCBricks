@@ -12,6 +12,7 @@
 #' the same end and start to be in the overlap. Therefore, this criteria is 
 #' enforced as default behaviour.
 #' 
+#' 
 #' @param ChromNames \strong{Required} 
 #' A character vector containing the chromosomes to be considered for the 
 #' dataset. This string is used to verify the presence of all chromosomes in 
@@ -38,7 +39,8 @@
 #'
 #' @param Output.Filename \strong{Required}
 #' A string specifying the location and name of the HDF file to create. If path
-#' is not provided, it will be created in the current working directory.
+#' is not provided, it will be created in the Bioc File cache. Otherwise, it
+#' will be created in the specified directory and tracked via Bioc File Cache.
 #' 
 #' @param bin.delim \strong{Optional}. Defaults to tabs.
 #' A character vector of length 1 specifying the delimiter used in the file 
@@ -117,24 +119,26 @@
 #'        \item other metadata tables.
 #'    }
 #'}
-#' @return This function will generate the target Lego file. If completed, the
-#' function will return TRUE.
+#' @return This function will generate the target Lego file. Upon completion, 
+#' the function will provide the path to the created/tracked HDF file.
 #' 
 #' @examples 
 #' Bintable.path <- system.file("extdata", 
 #' "Bintable_40kb.txt", package = "HiCLegos")
 #' Chromosomes <- "chr19"
-#' CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
-#' bin.delim = " ", Output.Filename = "test.hdf", exec = "cat", 
+#' Path_to_cached_file <- CreateLego(ChromNames = Chromosomes, 
+#' BinTable = Bintable.path, bin.delim = " ", 
+#' Output.Filename = "test.hdf", exec = "cat", 
 #' remove.existing = TRUE)
 #' 
 #' \dontrun{
 #' Bintable.path <- system.file("extdata", 
 #' "Bintable_40kb.txt", package = "HiCLegos")
 #' Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
-#' CreateLego(ChromNames = Chromosomes, BinTable = Bintable.path, 
-#' impose.discontinuity=TRUE, col.index = c(1,2,3),
-#' Output.Filename = "test.hdf", exec = "cat", remove.existing = TRUE)
+#' Path_to_cached_file <- CreateLego(ChromNames = Chromosomes, 
+#' BinTable = Bintable.path, impose.discontinuity=TRUE, 
+#' col.index = c(1,2,3), Output.Filename = "test.hdf", 
+#' exec = "cat", remove.existing = TRUE)
 #' 
 #' This will cause an error as the file located at Bintable.path,
 #' contains coordinates for only chromosome 19. For this code to work, either
@@ -165,21 +169,43 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     Output.Filename=NULL, exec="cat", remove.existing=FALSE){
     H5close()
     Dir.path <- dirname(Output.Filename)
-    if(Dir.path == "."){
-        warning("HDF file will be created in",
-            "current working directory.\n")
-    }
     Filename <- basename(Output.Filename)
-    Working.File <- file.path(normalizePath(Dir.path),Filename)
+    Output.Filename <- file.path(normalizePath(Dir.path),Filename)
     Reference.object <- GenomicMatrix$new()
+    CreateCacheObject <- FALSE
+    CreateNewCacheObject <- FALSE
+    Cache.dir <- ._Get_cachedir()
+    if(Dir.path == "."){
+        warning("HDF file will be created and tracked by",
+            "BioC cache directory.\n")
+        if(Lego_is_tracked(Lego = Output.Filename)){
+            Working.File <- Lego_list_tracked_legos()[Output.Filename]
+            CreateNewCacheObject <- TRUE
+        }else{
+            Working.File <- bfcnew(x = Cache.dir, 
+            rname = Output.Filename, ext = Reference.object$lego.extension,
+            rtype = "local")
+            CreateNewCacheObject <- FALSE
+        }
+    }else{
+        Working.File <- Output.Filename
+        CreateCacheObject <- TRUE
+    }
     Root.folders <- Reference.object$GetRootFolders()
     if(is.null(ChromNames) | length(ChromNames) == 0){
         stop("Variable ChromNames cannot be empty")
     }
-    HDF.File <- file.path(Working.File)
+    HDF.File <- Working.File
     if(file.exists(HDF.File)){
         if(remove.existing){
             file.remove(HDF.File)
+            Lego_untrack_lego(Lego = Output.Filename)
+            if(CreateNewCacheObject){
+                HDF.File <- bfcnew(x = Cache.dir, 
+                rname = Output.Filename, 
+                ext = Reference.object$lego.extension,
+                rtype = "local")
+            }
         }else{
             stop("Provided HDF file already exists. Please provide ",
                 "remove.existing = TRUE to overwrite it\n")
@@ -197,6 +223,7 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
     Bintable <- Bintable.list[['main.tab']]
     # Create the 0 level directories in the HDF file
     h5createFile(HDF.File)
+
     for (Folder in Root.folders) {
         CreateGroups(Group.path = Create_Path(Folder), File = HDF.File)
     }
@@ -243,7 +270,11 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                 dims = Dims, maxdims = Dims)
         }
     }
-    return(TRUE)
+    if(CreateCacheObject){
+        Lego_track_legos(Lego = HDF.File)
+    }
+    names(HDF.File) <- Output.Filename
+    return(HDF.File)
 }
 
 #' Create the entire HDF5 structure and load the bintable from a mcool file
@@ -548,7 +579,9 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL,
 #' 
 #' @examples
 #' 
-#' Lego.file <- "test.hdf"
+#' All_Legos <- Lego_list_tracked_legos()
+#' Lego_file <- file.path(getwd(),"test.hdf")
+#' Lego.file <- All_Legos[Lego_file]
 #' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 #' Start <- c(10000,20000,40000,50000,60000)
 #' End <- c(10001,20001,40001,50001,60001)
@@ -1090,7 +1123,9 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
 #' Matrix.file <- "Test_matrix.txt"
 #' write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
 #' row.names = FALSE, col.names = FALSE)
-#' Lego.file <- "test.hdf"
+#' All_Legos <- Lego_list_tracked_legos()
+#' Lego_file <- file.path(getwd(),"test.hdf")
+#' Lego.file <- All_Legos[Lego_file]
 #' Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
 #' matrix.file = Matrix.file, delim = " ", exec = "cat", 
 #' remove.prior = TRUE)
@@ -1170,7 +1205,9 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL,
 #' Matrix.file <- "Test_matrix.txt"
 #' write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
 #' row.names = FALSE, col.names = FALSE)
-#' Lego.file <- "test.hdf"
+#' All_Legos <- Lego_list_tracked_legos()
+#' Lego_file <- file.path(getwd(),"test.hdf")
+#' Lego.file <- All_Legos[Lego_file]
 #' Lego_load_cis_matrix_till_distance(Lego = Lego.file, chr = "chr19", 
 #' matrix.file = Matrix.file, delim = " ", distance = 200, remove.prior = TRUE)
 #' 
@@ -2090,4 +2127,133 @@ Lego_list_matrix_mcols = function(Lego = NULL, chr1 = NULL, chr2 = NULL){
     Reference.object <- GenomicMatrix$new()
     Meta.cols <- Reference.object$hdf.matrix.meta.cols() 
     return(Meta.cols)
+}
+
+
+#' List all Legos that have been created with .
+#' 
+#' `Lego_list_tracked_legos` will list all Lego objects that are being tracked. 
+#' 
+#' @param detailed \strong{Optional}
+#' If FALSE, produces a named vector of file paths pointing to the 
+#' Lego objects. The names correspond to the original Filename provided during
+#' Lego creation. If TRUE, produces a tibble containing additional information
+#' such as the bioc cache tracking id, and the creation, last accession and 
+#' modification times. 
+#' 
+#' @param preserve.col.names \strong{Optional}
+#' If TRUE, will preserve the original colnames from the bioc cache tibble
+#' object. If FALSE, will attempt to humanize the colnames to improve
+#' readability.
+#'  
+#' @return Returns a vector or tibble containing the path to tracked 
+#' Lego objects. If tibble will contain additional information related to 
+#' the tracking. For details see parameter detailed. 
+#' 
+#' @examples 
+#' Lego_list_tracked_legos()
+Lego_list_tracked_legos = function(detailed = FALSE,
+    preserve.col.names = FALSE){
+    Reference.object <- GenomicMatrix$new()
+    Cache.dir <- ._Get_cachedir()
+    Info.tib <- bfcquery(x = Cache.dir, 
+        query = paste(".",Reference.object$lego.extension,sep = ""),
+        field = "rpath")
+    if(nrow(Info.tib) == 0){
+        return(NULL)
+    }
+    File.names <- Info.tib[["rname"]]
+    File.paths <- Info.tib[["rpath"]]
+    if(any(duplicated(File.names))){
+        File.names <- paste(File.names,Info.tib[["rid"]],sep = "_")
+    }
+    names(File.paths) <- File.names
+    if(!detailed){
+        names(File.paths) <- File.names
+        return(File.paths)
+    }else{
+        Info.tib$path_to_file <- File.paths
+        Info.tib <- Info.tib[,c(1,2,5,9,3,4,8)]
+        if(!preserve.col.names){
+            colnames(Info.tib) <- c("Unique_db_identifier",
+                "name_of_origin_file", "name_in_cache_dir", "path_to_file",
+                "create_time", "access_time", "last_modified_time")
+        }
+        return(Info.tib)
+    }
+}
+
+
+#' Check if a Lego is being tracked.
+#' 
+#' `Lego_is_tracked` checks if the provided Lego file is being tracked or not. 
+#' 
+#' @param Lego \strong{required}
+#' Path to the Lego file to check. 
+#'  
+#' @return Returns TRUE or FALSE indicating if the file path is being tracked
+#' or not.
+#' 
+#' @examples
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos") 
+#' Lego_is_tracked(Lego = Lego.file)
+Lego_is_tracked = function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Cache.dir <- ._Get_cachedir()
+    Info.tib <- bfcquery(x = Cache.dir, query = Lego, field = "rname")
+    nrow(Info.tib) > 0 
+}
+
+
+#' Check if a Lego is being tracked.
+#' 
+#' `Lego_track_legos` will start tracking the provided Lego file. 
+#' 
+#' @param Lego \strong{required}
+#' Path to the Lego file to track. 
+#'  
+#' @return Returns a named vector containing the path to the file along with 
+#' the bioc Cache id as its name.
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos") 
+#' Lego_track_legos(Lego = Lego.file)
+Lego_track_legos = function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Cache.dir <- ._Get_cachedir()
+    Dir.path <- dirname(Lego)
+    Filename <- basename(Lego)
+    Lego <- file.path(normalizePath(Dir.path),Filename)
+    if(Lego_is_tracked(Lego = Lego)){
+        stop("This Lego object is already being tracked!")
+    }
+    return(bfcadd(x = Cache.dir, rname = Lego, 
+            ext = Reference.object$lego.extension,
+        rtype = "local", action = "asis"))
+}
+
+
+#' Check if a Lego is being tracked.
+#' 
+#' `Lego_untrack_lego` will stop tracking the provided Lego file, if it exists. 
+#' 
+#' @param Lego \strong{required}
+#' Path to the Lego file to untrack. 
+#' 
+#' @examples 
+#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos") 
+#' Lego_untrack_lego(Lego = Lego.file)
+Lego_untrack_lego = function(Lego = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Cache.dir <- ._Get_cachedir()
+    Dir.path <- dirname(Lego)
+    Filename <- basename(Lego)
+    Lego <- file.path(normalizePath(Dir.path),Filename)
+    Info.tib <- bfcquery(x = Cache.dir, query = Lego, field = "rname")
+    if(Lego_is_tracked(Lego = Lego)){
+       DB_id <- Info.tib$rid
+       bfcremove(Cache.dir, DB_id)
+    }else{
+        warning("Lego is not being tracked!")
+    }
 }

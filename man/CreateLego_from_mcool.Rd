@@ -5,7 +5,7 @@
 \title{Create the entire HDF5 structure and load the bintable from a mcool file}
 \usage{
 CreateLego_from_mcool(Lego = NULL, mcool = NULL, binsize = NULL,
-    chrs = NULL, remove.existing = FALSE)
+  chrs = NULL, remove.existing = FALSE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -24,9 +24,6 @@ chromosomes (both cis & trans).}
 \item{remove.existing}{\strong{Optional}. Default FALSE.
 If TRUE, will remove the HDF file with the same name and create a new one.
 By default, it will not replace existing files.}
-}
-\value{
-    Returns TRUE if completed without errors.
 }
 \description{
 \code{CreateLego_from_mcool} is a wrapper on CreateLego which creates the Lego

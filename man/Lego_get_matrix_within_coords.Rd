@@ -5,7 +5,7 @@
 \title{Return a matrix subset between two regions.}
 \usage{
 Lego_get_matrix_within_coords(Lego = NULL, x.coords = NULL,
-    y.coords = NULL, force = FALSE, FUN = NULL)
+  y.coords = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -54,7 +54,7 @@ Lego_get_matrix_within_coords(Lego = Lego.file,
 x.coords = "chr19:40000:2000000", 
 y.coords = "chr19:40000:2000000", 
 FUN = median)
-
+ 
 }
 \seealso{
 \code{\link{Lego_get_matrix}} to get matrix by using matrix

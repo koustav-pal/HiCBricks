@@ -17,6 +17,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.chr.name = "chr.names",
         hdf.ranges.lengths.name = "lengths",
         mcool.resolutions.name = "resolutions",
+        cache.basename = "HiCLegos",
+        lego.extension = "lego",
         Max.vector.size=104857600,
         mcool.available.normalisations = function(){
             Names <- c("Knight-Ruitz","Vanilla-coverage",
@@ -576,4 +578,13 @@ humanize_size <- function(x){
     }else{
         return(Extents)
     }
+}
+
+._Get_cachedir <- function(){
+    Reference.object <- GenomicMatrix$new()
+    Cache.dir.basename <- Reference.object$cache.basename
+    Cachebasepath <- user_cache_dir()
+    Cache.dir <- BiocFileCache(cache = file.path(Cachebasepath,
+        Cache.dir.basename), ask = FALSE)
+    return(Cache.dir)
 }
