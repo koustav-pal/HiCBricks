@@ -160,6 +160,10 @@ Defines the legend key width.}
 \item{legend.key.height}{\strong{Optional}. Default unit(0.5,"cm")
 Defines the legend key height.}
 }
+\value{
+If return.object is set to TRUE, the constructed ggplot2 object will
+be returned. Else TRUE.
+}
 \description{
 \code{Lego_vizart_plot_heatmap} creates various heatmaps and plots TADs.
 }
@@ -174,29 +178,6 @@ Hi-C data.
 \item All of the above but filtered by distance.
 \item All of the above with TADs/TAD borders plotted on top.
 }
-}
-\section{Output and Input related parameters.}{
-NA
-}
-
-\section{Data filtering and transforming parameters.}{
-NA
-}
-
-\section{Axis parameters}{
-NA
-}
-
-\section{Annotation parameters}{
-NA
-}
-
-\section{Colours}{
-NA
-}
-
-\section{Size parameters}{
-NA
 }
 
 \examples{

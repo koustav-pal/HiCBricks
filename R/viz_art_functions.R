@@ -12,7 +12,6 @@
 #'  \item All of the above but filtered by distance.
 #'  \item All of the above with TADs/TAD borders plotted on top.
 #' }
-#' @section Output and Input related parameters.
 #' 
 #' @param File \strong{Required}
 #' A character vector containing the output filename to write.
@@ -21,8 +20,6 @@
 #' A character vector of length 1 (in case of one sample heatmaps) or 2 (in case
 #' of two sample heatmaps) specifying the names of the Lego stores from where
 #' to fetch the data.
-#' 
-#' @section Data filtering and transforming parameters.
 #' 
 #' @param x.coords \strong{Required}
 #' A character vector of length 1 specifying the coordinates from where to fetch
@@ -49,8 +46,6 @@
 #' 
 #' @param rotate \strong{Optional}. Default FALSE
 #' If TRUE, will rotate the heatmap by 90 degrees.
-#' 
-#' @section Axis parameters
 #' 
 #' @param x.axis \strong{Optional}. Default TRUE
 #' If FALSE, the x-axis will be removed (ticks, x-axis labels and title).
@@ -100,8 +95,6 @@
 #' @param title.size \strong{Optional}. Default 10
 #' text size of the title
 #' 
-#' @section Annotation parameters
-#' 
 #' @param tad.ranges \strong{Optional}. Default NULL
 #' A GenomicRanges object specifying the start and end coordinates of TADs to be
 #' plotted on the heatmap.
@@ -135,8 +128,6 @@
 #' tad.colour.col. If tad.colour.col is also absent, will revert to a placehold 
 #' column name.
 #' 
-#' @section Colours
-#' 
 #' @param palette \strong{Required}. Default NULL
 #' One of the RColorbrewer or viridis colour palettes
 #' 
@@ -146,8 +137,6 @@
 #' @param extrapolate.on \strong{Optional}. Default NULL
 #' If present, colours from the palette will be extrapolated between lightest
 #' and darkest to create the gradient. This value cannot be more than 100.
-#' 
-#' @section Size parameters
 #' 
 #' @param width \strong{Optional}. Default 10cm
 #' Width of the output file units. 

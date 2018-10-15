@@ -20,6 +20,9 @@ The name to use for the ranges within the Lego store.}
 \item{remove.existing}{\strong{Optional}. TRUE
 Will remove an existing Ranges by the same name and introduce the new one.}
 }
+\value{
+    Returns TRUE if completed successfully.
+}
 \description{
 \code{Lego_add_ranges} loads a GRanges object into the Lego store.
 }

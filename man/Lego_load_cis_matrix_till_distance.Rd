@@ -49,6 +49,9 @@ matrices.}
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
 }
+\value{
+Returns TRUE if all went well.
+}
 \description{
 Load a NxN dimensional sub-distance \emph{cis} matrix into
 the Lego store.

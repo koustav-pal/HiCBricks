@@ -13,6 +13,9 @@ Path to the Lego file to untrack.}
 \description{
 \code{Lego_untrack_lego} will stop tracking the provided Lego file, if it exists.
 }
+\value{
+Returns any value provided by bfcremove.
+}
 \examples{
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos") 
 Lego_untrack_lego(Lego = Lego.file)

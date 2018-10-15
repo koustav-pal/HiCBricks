@@ -46,6 +46,9 @@ override and replace the existing matrix.}
 \item{norm.factor}{\strong{Optional}. Default "Iterative-Correction".
 The normalization factor to use for normalization from an mcool file.}
 }
+\value{
+Returns TRUE if all went well.
+}
 \description{
 Read an mcool contact matrix coming out of 4D nucleome projects into a
 Lego store.

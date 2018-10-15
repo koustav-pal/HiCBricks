@@ -25,6 +25,10 @@ chromosomes (both cis & trans).}
 If TRUE, will remove the HDF file with the same name and create a new one.
 By default, it will not replace existing files.}
 }
+\value{
+This function will generate the target Lego file. Upon completion,
+the function will provide the path to the created/tracked HDF file.
+}
 \description{
 \code{CreateLego_from_mcool} is a wrapper on CreateLego which creates the Lego
 data structure from an mcool file.
