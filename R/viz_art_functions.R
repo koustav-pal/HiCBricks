@@ -153,6 +153,9 @@
 #' @param legend.key.height \strong{Optional}. Default unit(0.5,"cm")
 #' Defines the legend key height.
 #' 
+#' @return If return.object is set to TRUE, the constructed ggplot2 
+#' object will be returned. Else TRUE.
+#' 
 #' @examples
 #' FailSafe_log10 <- function(x){
 #'      x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0

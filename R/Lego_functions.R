@@ -296,6 +296,9 @@ CreateLego <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
 #' 
 #' @inheritParams CreateLego
 #' 
+#' @return This function will generate the target Lego file. Upon completion, 
+#' the function will provide the path to the created/tracked HDF file.
+#' 
 #' @examples
 #' 
 #' \dontrun{
@@ -576,6 +579,8 @@ Lego_make_ranges = function(Chrom=NULL, Start=NULL, End=NULL, Strand=NULL,
 #' Will remove an existing Ranges by the same name and introduce the new one.
 #' 
 #' @inheritParams Lego_get_chrominfo
+#' 
+#' @return Returns TRUE if completed successfully.
 #' 
 #' @examples
 #' 
@@ -905,6 +910,9 @@ Lego_get_ranges = function(Lego = NULL, chr = NULL, rangekey = NULL){
 #' @param chr \strong{Optional}.
 #' A chr string specifying the chromosome to select from the ranges.
 #' 
+#' @return Returns a GRanges object containing the binning 
+#' table associated to the Lego store.
+#' 
 #' @examples 
 #' 
 #' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
@@ -1114,6 +1122,8 @@ Lego_return_region_position = function(Lego = NULL, region=NULL){
 #' With regards to computing the sparsity.index, this parameter decides the 
 #' number of bins to scan from the diagonal. 
 #' 
+#' @return Returns TRUE if all went well.
+#' 
 #' @examples
 #' 
 #' Test.mat <- matrix(NA,nrow = 800, ncol = 800)
@@ -1195,6 +1205,8 @@ Lego_load_matrix = function(Lego = NULL, chr1 = NULL, chr2 = NULL,
 #' 
 #' @param num.rows \strong{Optional}. Default 2000
 #' Number of rows to insert per write operation in the HDF file.
+#' 
+#' @return Returns TRUE if all went well.
 #' 
 #' @examples
 #' 
@@ -1283,6 +1295,8 @@ Lego_load_cis_matrix_till_distance = function(Lego = NULL, chr = NULL,
 #' 
 #' @param matrix.chunk \strong{Optional}. Default 2000.
 #' The nxn matrix square to fill per iteration in a mcool file.
+#' 
+#' @return Returns TRUE if all went well.
 #' 
 #' @examples
 #' 
@@ -2239,6 +2253,8 @@ Lego_track_legos = function(Lego = NULL){
 #' 
 #' @param Lego \strong{required}
 #' Path to the Lego file to untrack. 
+#' 
+#' @return Returns any value provided by bfcremove.
 #' 
 #' @examples 
 #' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos") 
