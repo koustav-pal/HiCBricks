@@ -2242,7 +2242,7 @@ Lego_track_legos = function(Lego = NULL){
         stop("This Lego object is already being tracked!")
     }
     return(bfcadd(x = Cache.dir, rname = Lego, 
-            ext = Reference.object$lego.extension,
+        ext = Reference.object$lego.extension,
         rtype = "local", action = "asis"))
 }
 
@@ -2267,9 +2267,9 @@ Lego_untrack_lego = function(Lego = NULL){
     Lego <- file.path(normalizePath(Dir.path),Filename)
     Info.tib <- bfcquery(x = Cache.dir, query = Lego, field = "rname")
     if(Lego_is_tracked(Lego = Lego)){
-       DB_id <- Info.tib$rid
-       Done <- bfcremove(Cache.dir, DB_id)
-       return(Done)
+        DB_id <- Info.tib$rid
+        Done <- bfcremove(Cache.dir, DB_id)
+        return(Done)
     }else{
         warning("Lego is not being tracked!")
     }

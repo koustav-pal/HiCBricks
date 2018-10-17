@@ -25,7 +25,8 @@ Lego objects. If tibble will contain additional information related to
 the tracking. For details see parameter detailed.
 }
 \description{
-\code{Lego_list_tracked_legos} will list all Lego objects that are being tracked.
+\code{Lego_list_tracked_legos} will list all Lego objects that are
+ being tracked.
 }
 \examples{
 Lego_list_tracked_legos()

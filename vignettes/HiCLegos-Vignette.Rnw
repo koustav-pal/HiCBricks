@@ -190,8 +190,8 @@ well designed pre-existing formats, but rather to create a straightforward,
 memory efficient storage and retrieval library for already existing Hi-C 
 data formats in R.  
 
-\noindent Although it is possible to load all chromosomes in a single Lego object, 
-this is not recommended because,
+\noindent Although it is possible to load all chromosomes in a single 
+Lego object, this is not recommended because,
 \begin{enumerate}
     \item It is not possible for multiple processes to concurrently access 
     the same HDF file. Therefore, it hinders parallelization.
