@@ -143,11 +143,17 @@ GenomicMatrix <- R6Class("GenomicMatrix",
 }
 
 
-._GenerateRandomName_ <- function(){
-    Seed <- format(Sys.time(),"%Y-%m-%d_%H-%M-%S")
-    HashString <- digest(Seed,"crc32")
+._GenerateRandomName_ <- function(seed = NULL, 
+    algo = c("sha1", "crc32", "md5", "sha256", 
+        "xxhash32", "xxhash64", "murmur32")){
+    if(is.null(seed)){
+        seed <- format(Sys.time(),"%Y-%m-%d_%H-%M-%S")
+    }
+    algo <- match.arg(algo)
+    HashString <- digest(seed, algo)
     return(HashString)
 }
+
 ._Do_on_vector_PercentGTZero_ = function(x){
     x[is.na(x) | is.infinite(x)] <- 0
     LengthOfRow <- length(x)
