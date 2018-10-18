@@ -5,9 +5,9 @@
 \title{Load a NxN dimensional matrix into the Lego store from an mcool file.}
 \usage{
 Lego_load_data_from_mcool(Lego = NULL, mcool = NULL, chr1 = NULL,
-  chr2 = NULL, binsize = NULL, cooler.batch.size = 1e+06,
-  matrix.chunk = 2000, dont.look.for.chr2 = FALSE,
-  remove.prior = FALSE, norm.factor = "Iterative-Correction")
+    chr2 = NULL, binsize = NULL, cooler.batch.size = 1e+06,
+    matrix.chunk = 2000, dont.look.for.chr2 = FALSE,
+    remove.prior = FALSE, norm.factor = "Iterative-Correction")
 }
 \arguments{
 \item{Lego}{\strong{Required}.

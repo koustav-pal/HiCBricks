@@ -5,10 +5,10 @@
 \title{Do TAD Calls with Local Score Differentiator on a Hi-C matrix}
 \usage{
 Lego_local_score_differentiator(Lego = NULL, chrs = NULL,
-  min.sum = -1, di.window = 200L, lookup.window = 200L,
-  tukeys.constant = 1.5, strict = TRUE, fill.gaps = TRUE,
-  ignore.sparse = TRUE, sparsity.threshold = 0.8,
-  remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE)
+    min.sum = -1, di.window = 200L, lookup.window = 200L,
+    tukeys.constant = 1.5, strict = TRUE, fill.gaps = TRUE,
+    ignore.sparse = TRUE, sparsity.threshold = 0.8,
+    remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.

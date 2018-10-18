@@ -18,6 +18,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.lengths.name = "lengths",
         mcool.resolutions.name = "resolutions",
         cache.basename = "HiCLegos",
+        cache.metacol.cols = "HiCLegos_MetaInfo",
+        cache.metacol.dbid = "rid",
+        cache.metacol.hashname = "hashname",
+        cache.metacol.dirpath = "dirpath",
         lego.extension = "lego",
         Max.vector.size=104857600,
         mcool.available.normalisations = function(){
@@ -152,6 +156,14 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     algo <- match.arg(algo)
     HashString <- digest(seed, algo)
     return(HashString)
+}
+
+._Get_Lego_hashname <- function(Lego = NULL){
+    Filename <- basename(Lego)
+    Dir.path <- normalizePath(dirname(Lego))
+    Lego.path <- file.path(Dir.path,Filename)
+    Tracked_name <- ._GenerateRandomName_(Lego.path)
+    return(Tracked_name)
 }
 
 ._Do_on_vector_PercentGTZero_ = function(x){
@@ -593,4 +605,32 @@ humanize_size <- function(x){
     Cache.dir <- BiocFileCache(cache = file.path(Cachebasepath,
         Cache.dir.basename), ask = FALSE)
     return(Cache.dir)
+}
+
+._add_metadata_to_cache <- function(metadata.df = NULL, cache.dir = NULL){
+    Reference.object <- GenomicMatrix$new()
+    bfcmeta(cache.dir, 
+        name = Reference.object$cache.metacol.cols,
+        append = TRUE) <- metadata.df    
+}
+._Create_new_cached_file <- function(Cache.dir = NULL, Lego.path = NULL){
+    Reference.object <- GenomicMatrix$new()
+    Filename <- basename(Lego.path)
+    Dir.path <- normalizePath(dirname(Lego.path))
+    Tracked_name <- ._Get_Lego_hashname(Lego.path)
+    Working.File <- bfcnew(x = Cache.dir, 
+        rname = Filename, 
+        ext = Reference.object$lego.extension,
+        rtype = "local")
+    DB_id <- names(Working.File)
+    Metadata.df <- data.frame(dbid = DB_id,
+        hashname = Tracked_name,
+        dirpath = Dir.path)
+    colnames(Metadata.df) <- c(
+        Reference.object$cache.metacol.dbid,
+        Reference.object$cache.metacol.hashname,
+        Reference.object$cache.metacol.dirpath)
+    ._add_metadata_to_cache(metadata.df = Metadata.df, 
+        cache.dir = Cache.dir)
+    return(Working.File)
 }

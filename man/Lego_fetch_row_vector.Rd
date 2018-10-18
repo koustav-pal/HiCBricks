@@ -5,8 +5,8 @@
 \title{Return row or col vectors.}
 \usage{
 Lego_fetch_row_vector(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  by = NULL, vector = NULL, regions = NULL, force = FALSE,
-  flip = FALSE, FUN = NULL)
+    by = NULL, vector = NULL, regions = NULL, force = FALSE,
+    flip = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.

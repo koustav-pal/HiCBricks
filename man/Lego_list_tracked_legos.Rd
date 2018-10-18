@@ -8,9 +8,8 @@ Lego_list_tracked_legos(detailed = FALSE, preserve.col.names = FALSE)
 }
 \arguments{
 \item{detailed}{\strong{Optional}
-If FALSE, produces a named vector of file paths pointing to the
-Lego objects. The names correspond to the original Filename provided during
-Lego creation. If TRUE, produces a tibble containing additional information
+If FALSE, produces a data.frame of file paths pointing to the
+Lego objects. If TRUE, produces a tibble containing additional information
 such as the bioc cache tracking id, and the creation, last accession and
 modification times.}
 
@@ -20,13 +19,13 @@ object. If FALSE, will attempt to humanize the colnames to improve
 readability.}
 }
 \value{
-Returns a vector or tibble containing the path to tracked
+Returns a data.frame or tibble containing the path to tracked
 Lego objects. If tibble will contain additional information related to
 the tracking. For details see parameter detailed.
 }
 \description{
-\code{Lego_list_tracked_legos} will list all Lego objects that are
- being tracked.
+\code{Lego_list_tracked_legos} will list all Lego objects that are 
+being tracked.
 }
 \examples{
 Lego_list_tracked_legos()

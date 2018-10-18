@@ -5,7 +5,7 @@
 \title{Create the entire HDF5 structure and load the bintable from a mcool file}
 \usage{
 CreateLego_from_mcool(Lego = NULL, mcool = NULL, binsize = NULL,
-  chrs = NULL, remove.existing = FALSE)
+    chrs = NULL, remove.existing = FALSE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.

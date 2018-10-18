@@ -260,7 +260,8 @@ populate_matrix_with_values <- function(Lego = NULL, File = NULL,
                     Lego = File, Index = list(Index), Name = Matrix.Keys[3], 
                     return.what = "data")
                 Bin2_id <- Bin2_id + 1
-                message("Read",length(c(iter.start[m]:iter.end[m])),"records.\n")
+                message("Read",length(c(iter.start[m]:iter.end[m])),
+                    "records.\n")
                 Filter.1 <- Bin1_id >= starts.1[x] & Bin1_id <= ends.1[x]
                 Filter.2 <- Bin2_id >= starts.2.sub[y] & 
                 Bin2_id <= ends.2.sub[y]

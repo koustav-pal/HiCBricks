@@ -5,7 +5,7 @@
 \title{Store a ranges object in the Lego store.}
 \usage{
 Lego_add_ranges(Lego = NULL, ranges = NULL, rangekey = NULL,
-  remove.existing = TRUE)
+    remove.existing = TRUE)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -21,7 +21,7 @@ The name to use for the ranges within the Lego store.}
 Will remove an existing Ranges by the same name and introduce the new one.}
 }
 \value{
-    Returns TRUE if completed successfully.
+Returns TRUE if completed successfully.
 }
 \description{
 \code{Lego_add_ranges} loads a GRanges object into the Lego store.
@@ -38,9 +38,7 @@ Users can ignore these columns.
 }
 \examples{
 
-All_Legos <- Lego_list_tracked_legos()
-Lego_file <- file.path(getwd(),"test.hdf")
-Lego.file <- All_Legos[Lego_file]
+Lego.file <- Lego_path_to_file("test.hdf")
 Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)
 End <- c(10001,20001,40001,50001,60001)

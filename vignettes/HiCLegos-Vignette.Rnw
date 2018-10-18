@@ -676,9 +676,9 @@ Name <- paste("LSD",
     di_window,
     lookup_window,
     Chromosome,sep = "_")
-#Lego_add_ranges(Lego = "test.hdf", 
-#    ranges = TAD_ranges, 
-#    rangekey = Name)
+Lego_add_ranges(Lego = Path_to_cached_file, 
+    ranges = TAD_ranges, 
+    rangekey = Name)
 @
 
 \newpage
@@ -693,8 +693,8 @@ users can fetch the required rangekeys.
 <<eval=TRUE, echo=TRUE >>=
 
 Lego_list_rangekeys(Lego = Path_to_cached_file)
-#TAD_ranges <- Lego_get_ranges(Lego = "test.hdf", 
-#    rangekey = Name)
+TAD_ranges <- Lego_get_ranges(Lego = Path_to_cached_file, 
+    rangekey = Name)
 @
 
 

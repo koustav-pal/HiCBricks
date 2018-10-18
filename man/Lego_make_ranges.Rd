@@ -5,7 +5,7 @@
 \title{Creates a ranges object from provided vectors.}
 \usage{
 Lego_make_ranges(Chrom = NULL, Start = NULL, End = NULL,
-  Strand = NULL, Names = NULL)
+    Strand = NULL, Names = NULL)
 }
 \arguments{
 \item{Chrom}{\strong{Required}.

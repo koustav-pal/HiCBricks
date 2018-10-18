@@ -5,9 +5,9 @@
 \title{Load a NxM dimensional matrix into the Lego store.}
 \usage{
 Lego_load_matrix(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  matrix.file = NULL, delim = " ", exec = NULL,
-  remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-  sparsity.bins = 100)
+    matrix.file = NULL, delim = " ", exec = NULL,
+    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
+    sparsity.bins = 100)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -64,9 +64,7 @@ Dist <- Col - Row
 Matrix.file <- "Test_matrix.txt"
 write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
 row.names = FALSE, col.names = FALSE)
-All_Legos <- Lego_list_tracked_legos()
-Lego_file <- file.path(getwd(),"test.hdf")
-Lego.file <- All_Legos[Lego_file]
+Lego.file <- Lego_path_to_file(Lego = "test.hdf")
 Lego_load_matrix(Lego = Lego.file, chr1 = "chr19", chr2 = "chr19",
 matrix.file = Matrix.file, delim = " ", exec = "cat", 
 remove.prior = TRUE)

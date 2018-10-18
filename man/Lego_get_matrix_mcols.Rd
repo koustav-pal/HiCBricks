@@ -5,7 +5,7 @@
 \title{Get the matrix metadata columns in the Lego store.}
 \usage{
 Lego_get_matrix_mcols(Lego = NULL, chr1 = NULL, chr2 = NULL,
-  what = NULL)
+    what = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.

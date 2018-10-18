@@ -5,7 +5,7 @@
 \title{Return values separated by a certain distance.}
 \usage{
 Lego_get_values_by_distance(Lego = NULL, chr = NULL, distance = NULL,
-  constrain.region = NULL, batch.size = 500, FUN = NULL)
+    constrain.region = NULL, batch.size = 500, FUN = NULL)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -44,8 +44,8 @@ Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
 Lego_get_values_by_distance(Lego = Lego.file, chr = "chr19", distance = 0)
 
 Failsafe_median <- function(x){
-     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
-     return(median(x))
+    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
+    return(median(x))
 }
 
 Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")

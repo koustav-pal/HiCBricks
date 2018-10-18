@@ -5,9 +5,9 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 CreateLego(ChromNames = NULL, BinTable = NULL, bin.delim = "\\t",
-  col.index = c(1, 2, 3), impose.discontinuity = TRUE,
-  ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
-  remove.existing = FALSE)
+    col.index = c(1, 2, 3), impose.discontinuity = TRUE,
+    ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
+    remove.existing = FALSE)
 }
 \arguments{
 \item{ChromNames}{\strong{Required}

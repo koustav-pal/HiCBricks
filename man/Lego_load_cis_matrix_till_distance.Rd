@@ -6,9 +6,9 @@
 the Lego store.}
 \usage{
 Lego_load_cis_matrix_till_distance(Lego = NULL, chr = NULL,
-  matrix.file = NULL, delim = " ", distance = NULL,
-  remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-  sparsity.bins = 100)
+    matrix.file = NULL, delim = " ", distance = NULL,
+    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
+    sparsity.bins = 100)
 }
 \arguments{
 \item{Lego}{\strong{Required}.
@@ -65,9 +65,7 @@ Dist <- Col - Row
 Matrix.file <- "Test_matrix.txt"
 write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
 row.names = FALSE, col.names = FALSE)
-All_Legos <- Lego_list_tracked_legos()
-Lego_file <- file.path(getwd(),"test.hdf")
-Lego.file <- All_Legos[Lego_file]
+Lego.file <- Lego_path_to_file("test.hdf")
 Lego_load_cis_matrix_till_distance(Lego = Lego.file, chr = "chr19", 
 matrix.file = Matrix.file, delim = " ", distance = 200, remove.prior = TRUE)
 
