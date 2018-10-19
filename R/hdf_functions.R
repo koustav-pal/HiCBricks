@@ -58,7 +58,7 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL,
     if(is.null(Attributes) | is.null(data_types)){
         stop("Attributes and data_type cannot take NULL values")
     }
-    Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+    Block.handler <- ReturnH5Handler(Path = Path,File = File)
     for (i in seq_len(length(Attributes))) {
         An.attribute <- Attributes[i]
         data_type <- data_types[i]
@@ -72,37 +72,37 @@ CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL,
             ## linux filename limit.
             MaxLen <- 280
         }
-        h5createAttribute(obj = Lego.handler, attr = An.attribute, 
+        h5createAttribute(obj = Block.handler, attr = An.attribute, 
             storage.mode = data_type, dims = dim, maxdims = maxdim, 
             size = MaxLen)
     }
-    CloseH5Con(Handle = Lego.handler, type = on)
+    CloseH5Con(Handle = Block.handler, type = on)
 }
 WriteAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, 
     values = NULL, on = "group"){
     if(length(Attributes) != length(values)){
         stop("length of Attributes and value does not match")
     }
-    Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+    Block.handler <- ReturnH5Handler(Path = Path,File = File)
     for (i in seq_len(length(Attributes))) {
         value <- values[i]
         An.attribute <- Attributes[i]
-        h5writeAttribute(attr = value, h5obj = Lego.handler, 
+        h5writeAttribute(attr = value, h5obj = Block.handler, 
             name = An.attribute)
     }
-    CloseH5Con(Handle = Lego.handler, type = on)
+    CloseH5Con(Handle = Block.handler, type = on)
 }
 GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, 
     on = "group", ignore.fun.cast = FALSE){
     Reference.object <- GenomicMatrix$new()
     FUNCasts <- Reference.object$matrices.chrom.attributes.fun.cast
     if(is.null(Path)){
-        Lego.handler <- ReturnH5FileConnection(File = File)
+        Block.handler <- ReturnH5FileConnection(File = File)
     }else{
-        Lego.handler <- ReturnH5Handler(Path = Path,File = File)
+        Block.handler <- ReturnH5Handler(Path = Path,File = File)
     }
     Attribute.df <- do.call(cbind,lapply(Attributes, function(An.attribute){
-            Attr.val <- ReturnH5Attribute(Handle = Lego.handler, 
+            Attr.val <- ReturnH5Attribute(Handle = Block.handler, 
                 name = An.attribute, type = on)
             if(!ignore.fun.cast){
                 Val <- FUNCasts(type = An.attribute)(Attr.val)
@@ -113,14 +113,14 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL,
             colnames(temp.df) <- An.attribute 
             temp.df
         }))
-    CloseH5Con(Handle = Lego.handler, type = on)
+    CloseH5Con(Handle = Block.handler, type = on)
     return(Attribute.df)
 }
 
 # # InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL,
 #  Data=NULL, Index = NULL,
 # #     Start = NULL, Stride = NULL, Count = NULL){
-# #     DatasetHandler <- ._Lego_Get_Something_(Group.path = Path, Lego = File, 
+# #     DatasetHandler <- ._Block_Get_Something_(Group.path = Path, Block = File, 
 #  Name = Name, return.what = "group_handle")
 # #     if(!is.null(Index)){
 # #         h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, 

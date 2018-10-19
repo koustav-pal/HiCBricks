@@ -1,10 +1,10 @@
-._get_first_nonzero_bin <- function(Lego = NULL, chr = NULL){
-    RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
+._get_first_nonzero_bin <- function(Block = NULL, chr = NULL){
+    RowSums <- Block_get_matrix_mcols(Block = Block, chr1 = chr, chr2 = chr, 
         what = "row.sums")
     return(min(which(RowSums > 0)))
 }
-._get_sparsity_index <- function(Lego = NULL, chr = NULL){
-    Sparsity.index <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr,
+._get_sparsity_index <- function(Block = NULL, chr = NULL){
+    Sparsity.index <- Block_get_matrix_mcols(Block = Block, chr1 = chr, chr2 = chr,
         what = "sparsity")
     return(Sparsity.index)
 }
@@ -160,16 +160,16 @@ ComputeDirectionalityIndex <- function(Matrix = NULL, Window.size=NULL,
     DI.Data[Sequence %in% Bins.to.process] <- DI.list
     return(DI.Data)
 }
-get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL, 
+get_directionality_index_by_chunks <- function(Block = NULL, chr = NULL, 
     di.window = NULL, distance = NULL, chunk.size = 500, sparse = FALSE, 
     sparsity.threshold = 0.8, min.sum = -1, force = FALSE){
-    Ranges <- Lego_get_bintable(Lego = Lego, chr = chr)
-    First.non.zero.bin <- ._get_first_nonzero_bin(Lego = Lego, chr = chr)
+    Ranges <- Block_get_bintable(Block = Block, chr = chr)
+    First.non.zero.bin <- ._get_first_nonzero_bin(Block = Block, chr = chr)
     chr.length <- length(Ranges)
-    RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
+    RowSums <- Block_get_matrix_mcols(Block = Block, chr1 = chr, chr2 = chr, 
         what = "row.sums")
     if(sparse){
-        SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, 
+        SparsityIndex <- Block_get_matrix_mcols(Block = Block, chr1 = chr, 
             chr2 = chr, what = "sparsity")
     }
     if((chunk.size - (di.window*2))/di.window < 10){
@@ -216,7 +216,7 @@ get_directionality_index_by_chunks <- function(Lego = NULL, chr = NULL,
             True.length <- length(which(Filter))
             extend <- extend + 1
         }
-        Matrix <- Lego_get_vector_values(Lego = Lego, chr1 = chr, 
+        Matrix <- Block_get_vector_values(Block = Block, chr1 = chr, 
             chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
         # cat((Start - 1),"\n")
         message(Position.start,Position.end,"\n")
@@ -238,7 +238,7 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
     Starts <- start(Ranges)
     Starts <- Starts[seq_len(length(Starts))[-1]] - 1 
     Domain.boundaries <- unique(Starts,Ends)
-    Boundary.ranges <- Lego_make_ranges(
+    Boundary.ranges <- Block_make_ranges(
         Chrom=rep(chr,length(Domain.boundaries)),
         Start=(Domain.boundaries-(Binsize/2))+1,
         End=Domain.boundaries+(Binsize/2))
@@ -284,7 +284,7 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' This function provides the capability to call very accurante TAD definitions
 #' in a very fast way. 
 #' 
-#' @inheritParams Lego_get_chrominfo
+#' @inheritParams Block_get_chrominfo
 #' 
 #' @param chrs \strong{Optional}. Default NULL
 #' If present, only TAD calls for elements in \emph{chrs} will be done.
@@ -342,7 +342,7 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' 
 #' @param force.retrieve \strong{Optional}. Default TRUE
 #' If TRUE, this will force the retrieval of a matrix chunk even when the 
-#' retrieval includes interaction points which were not loaded into a Lego 
+#' retrieval includes interaction points which were not loaded into a Block 
 #' store (larger chunks). Please note, that this does not mean that DI can be 
 #' computed at distances larger than max distance. Rather, this is meant to aid
 #' faster computation.
@@ -352,23 +352,23 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' the bintable. 
 #' 
 #' @examples
-#' Lego.file <- system.file("extdata", "test.hdf", package = "HiCLegos")
-#' TAD_ranges <- Lego_local_score_differentiator(Lego = Lego.file, 
+#' Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
+#' TAD_ranges <- Block_local_score_differentiator(Block = Block.file, 
 #' chrs = "chr19", di.window = 10, lookup.window = 30, strict = TRUE, 
 #' fill.gaps = TRUE, chunk.size = 500)
-Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL, 
+Block_local_score_differentiator <- function(Block = NULL, chrs = NULL, 
     min.sum = -1, di.window = 200L, lookup.window = 200L, tukeys.constant=1.5, 
     strict = TRUE, fill.gaps=TRUE, ignore.sparse=TRUE, sparsity.threshold=0.8,
     remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE){
-    ChromInfo <- Lego_get_chrominfo(Lego = Lego)
+    ChromInfo <- Block_get_chrominfo(Block = Block)
     Chromosomes <- ChromInfo[,'chr']
     if(!is.null(chrs)){
         Chromosomes <- ChromInfo[ChromInfo[,'chr'] %in% chrs,'chr']
     }
     Chrom.domains.ranges.list <- lapply(Chromosomes, function(chr){
-        Ranges <- Lego_get_bintable(Lego = Lego, chr = chr)
-        sparse <- Lego_matrix_issparse(Lego = Lego, chr1 = chr, chr2 = chr)
-        max.distance <- Lego_matrix_maxdist(Lego = Lego, chr1 = chr, chr2 = chr)
+        Ranges <- Block_get_bintable(Block = Block, chr = chr)
+        sparse <- Block_matrix_issparse(Block = Block, chr1 = chr, chr2 = chr)
+        max.distance <- Block_matrix_maxdist(Block = Block, chr1 = chr, chr2 = chr)
         if(ignore.sparse){
             sparse=FALSE
         }
@@ -376,18 +376,18 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
             fill.gaps=FALSE
         }
         message("[1] Computing DI for",chr,"\n")
-        Ranges <- get_directionality_index_by_chunks(Lego = Lego, chr = chr, 
+        Ranges <- get_directionality_index_by_chunks(Block = Block, chr = chr, 
             di.window = di.window, 
             distance = max.distance, chunk.size = chunk.size, sparse=sparse, 
             sparsity.threshold=sparsity.threshold,
             min.sum = min.sum, force = force.retrieve)
 
-        RowSums <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, chr2 = chr, 
+        RowSums <- Block_get_matrix_mcols(Block = Block, chr1 = chr, chr2 = chr, 
             what = "row.sums")
         Ranges$row.sums <- RowSums
         message("[2] Computing DI Differences for",chr,"\n")
         if(sparse){
-            SparsityIndex <- Lego_get_matrix_mcols(Lego = Lego, chr1 = chr, 
+            SparsityIndex <- Block_get_matrix_mcols(Block = Block, chr1 = chr, 
                 chr2 = chr, what = "sparsity")
             Backwards.DI.Difference <- Backwards.Difference(
                 Vector = Ranges$DI.Data, sparse = sparse,
@@ -459,7 +459,7 @@ Lego_local_score_differentiator <- function(Lego = NULL, chrs = NULL,
         }
         Domain.list <- CreateDomainlist(start.vector=Domain.start.candidates,
             end.vector=Domain.end.candidates,fill.gaps=fill.gaps)
-        Domain.Ranges <- Lego_make_ranges(Chrom=rep(chr,nrow(Domain.list)),
+        Domain.Ranges <- Block_make_ranges(Chrom=rep(chr,nrow(Domain.list)),
             Start=start(Ranges[Domain.list$startbin]),
             End=end(Ranges[Domain.list$endbin]))
         message("[4] Done\n")

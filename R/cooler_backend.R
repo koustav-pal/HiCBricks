@@ -1,4 +1,4 @@
-._Process_mcool <- function(Lego = NULL, File = NULL, 
+._Process_mcool <- function(Block = NULL, File = NULL, 
     cooler.batch.size = 1000000, binsize = NULL, resolution = FALSE, 
     matrix.chunk = 2000, group = NULL, chr1 = NULL, 
     chr2 = NULL, dont.look.for.chr2 = FALSE, norm.factor = NULL){
@@ -48,14 +48,14 @@
     }
     bias.vector <- NULL
     if(!is.null(norm.factor)){
-        bias.vector <- ._Lego_Get_Something_(Group.path = Bintable.group.path, 
-            Lego = File, Name = norm.factor, return.what = "data")
+        bias.vector <- ._Block_Get_Something_(Group.path = Bintable.group.path, 
+            Block = File, Name = norm.factor, return.what = "data")
     }
-    Index.chrom.offset<-._Lego_Get_Something_(Group.path = Indexes.group.path, 
-        Lego = File, Name = Indexes.chrom.key, return.what = "data")
+    Index.chrom.offset<-._Block_Get_Something_(Group.path = Indexes.group.path, 
+        Block = File, Name = Indexes.chrom.key, return.what = "data")
     names(Index.chrom.offset) <- Chrom.names
-    Index.bin.offset <- ._Lego_Get_Something_(Group.path = Indexes.group.path, 
-        Lego = File, Name = Indexes.bin.key, return.what = "data")
+    Index.bin.offset <- ._Block_Get_Something_(Group.path = Indexes.group.path, 
+        Block = File, Name = Indexes.bin.key, return.what = "data")
     names(Index.bin.offset) <- Chrom.names
 
     chrom1.loc <- which(names(Index.chrom.offset) %in% chr1)
@@ -79,11 +79,11 @@
     Chrom2.starts <- Chrom2.iter.list[["start"]]
     Chrom2.ends <-  Chrom2.iter.list[["end"]]
 
-    ChromInfo <- Lego_get_chrominfo(Lego = Lego)
+    ChromInfo <- Block_get_chrominfo(Block = Block)
     Max.End.Offset <- (max(Ends) - Index.chrom.offset[chrom1.loc])
     if(!(Max.End.Offset %in% ChromInfo[ChromInfo[,"chr"]==chr1,"nrow"])){
         stop("Matrix dimensions do not ",
-            "match to the provided Lego dimensions!\n")
+            "match to the provided Block dimensions!\n")
     }
     Iterations <- make_mcool_iterations(Start.pos=Start.of.chrom1.reads, 
         End.pos = End.of.chrom1.reads, step=cooler.batch.size)
@@ -108,7 +108,7 @@
     metrics.list <- prepare_empty_metrics_list(starts.1 = Starts, 
         ends.1 = Ends, starts.2 = Chrom2.starts, ends.2 = Chrom2.ends, 
         chrom1 = chr1, chrom2 = chr2)
-    metrics.list <- populate_matrix_with_values(Lego = Lego, File = File, 
+    metrics.list <- populate_matrix_with_values(Block = Block, File = File, 
         group.path = group.path, starts.1 = Starts, ends.1 = Ends, 
         starts.2 = Chrom2.starts, ends.2 = Chrom2.ends, chrom1 = chr1,
         chrom1.offset = Index.chrom.offset[chrom1.loc], 
@@ -127,35 +127,35 @@
     if(is.list(metrics.list[["row.sums"]])){ 
         chr1.length <- length(metrics.list[["row.sums"]][[chr1]])
         chr2.length <- length(metrics.list[["row.sums"]][[chr2]])
-        ._Lego_WriteArray_(Lego = Lego, Path = group.path, 
+        ._Block_WriteArray_(Block = Block, Path = group.path, 
             name = Reference.object$hdf.matrix.rowSums, 
             object = metrics.list[["row.sums"]][[chr1]])
-        ._Lego_WriteArray_(Lego = Lego, Path = group.path, 
+        ._Block_WriteArray_(Block = Block, Path = group.path, 
             name = Reference.object$hdf.matrix.rowSums, 
             object = metrics.list[["bin.coverage"]][[chr1]]/chr1.length)
-        WriteAttributes(Path = group.path, File = Lego, 
+        WriteAttributes(Path = group.path, File = Block, 
             Attributes = Attributes, values = Attr.vals, on = "group")
         group.path <- Create_Path(
             c(Reference.object$hdf.matrices.root, 
                 chr2, 
                 chr1))
-        ._Lego_WriteArray_(Lego = Lego, Path = group.path, 
+        ._Block_WriteArray_(Block = Block, Path = group.path, 
             name = Reference.object$hdf.matrix.rowSums, 
             object = metrics.list[["row.sums"]][[chr2]])
-        ._Lego_WriteArray_(Lego = Lego, Path = group.path, 
+        ._Block_WriteArray_(Block = Block, Path = group.path, 
             name = Reference.object$hdf.matrix.coverage, 
             object = metrics.list[["bin.coverage"]][[chr2]]/chr2.length)
-        WriteAttributes(Path = group.path, File = Lego, 
+        WriteAttributes(Path = group.path, File = Block, 
             Attributes = Attributes, values = Attr.vals, on = "group")
     }else{
         chr1.length <- length(metrics.list[["row.sums"]])
-        ._Lego_WriteArray_(Lego = Lego, Path = group.path, 
+        ._Block_WriteArray_(Block = Block, Path = group.path, 
             name = Reference.object$hdf.matrix.rowSums, 
             object = metrics.list[["row.sums"]])
-        ._Lego_WriteArray_(Lego = Lego, Path = group.path, 
+        ._Block_WriteArray_(Block = Block, Path = group.path, 
             name = Reference.object$hdf.matrix.coverage, 
             object = metrics.list[["bin.coverage"]]/chr1.length)
-        WriteAttributes(Path = group.path, File = Lego, 
+        WriteAttributes(Path = group.path, File = Block, 
             Attributes = Attributes, values = Attr.vals, on = "group")
     }
     return(TRUE)
@@ -186,12 +186,12 @@ find_chr2_start_position <- function(File = NULL, iterations = NULL,
     iter.start <- iterations[["start"]]
     iter.end <- iterations[["end"]]
     while(is.null(Start)){
-        Bin2_id <- ._Lego_Get_Something_(Group.path = Matrix.group.path, 
-            Lego = File, Index = list(c(iter.start[k]:iter.end[k])), 
+        Bin2_id <- ._Block_Get_Something_(Group.path = Matrix.group.path, 
+            Block = File, Index = list(c(iter.start[k]:iter.end[k])), 
             Name = Matrix.Keys[3], return.what = "data")
         Bin2_id <- Bin2_id + 1
-        Bin1_id <- ._Lego_Get_Something_(Group.path = Matrix.group.path, 
-            Lego = File, Index = list(c(iter.start[k]:iter.end[k])), 
+        Bin1_id <- ._Block_Get_Something_(Group.path = Matrix.group.path, 
+            Block = File, Index = list(c(iter.start[k]:iter.end[k])), 
             Name = Matrix.Keys[2], return.what = "data")
         Bin1_id <- Bin1_id + 1
         if(any(Bin2_id > start.2)){
@@ -209,7 +209,7 @@ find_chr2_start_position <- function(File = NULL, iterations = NULL,
     return(Start)
 }
 
-populate_matrix_with_values <- function(Lego = NULL, File = NULL, 
+populate_matrix_with_values <- function(Block = NULL, File = NULL, 
     group.path = NULL, chrom1 = NULL, starts.1 = NULL, chrom1.offset = NULL, 
     ends.1 = NULL, starts.2 = NULL, ends.2 = NULL, chrom2 = NULL,
     chrom2.offset = NULL, iter.start = NULL, iter.end = NULL, 
@@ -250,14 +250,14 @@ populate_matrix_with_values <- function(Lego = NULL, File = NULL,
             Bin2_id.c <- NULL
             while(!next_segment & m <= length(iter.start)){
                 Index <- c(iter.start[m]:iter.end[m])
-                Bin1_id <- ._Lego_Get_Something_(
+                Bin1_id <- ._Block_Get_Something_(
                     Group.path = Matrix.group.path, 
-                    Lego = File, Index = list(Index), Name = Matrix.Keys[2], 
+                    Block = File, Index = list(Index), Name = Matrix.Keys[2], 
                     return.what = "data")
                 Bin1_id <- Bin1_id + 1
-                Bin2_id <- ._Lego_Get_Something_(
+                Bin2_id <- ._Block_Get_Something_(
                     Group.path = Matrix.group.path, 
-                    Lego = File, Index = list(Index), Name = Matrix.Keys[3], 
+                    Block = File, Index = list(Index), Name = Matrix.Keys[3], 
                     return.what = "data")
                 Bin2_id <- Bin2_id + 1
                 message("Read",length(c(iter.start[m]:iter.end[m])),
@@ -271,8 +271,8 @@ populate_matrix_with_values <- function(Lego = NULL, File = NULL,
                 Bin1_id <- Bin1_id[Filter] - chrom1.offset - row.offset
                 Bin2_id <- Bin2_id[Filter] - chrom2.offset - col.offset
                 if(any(length(Bin1_id) > 0)){
-                    Counts <- ._Lego_Get_Something_(
-                        Group.path = Matrix.group.path, Lego = File, 
+                    Counts <- ._Block_Get_Something_(
+                        Group.path = Matrix.group.path, Block = File, 
                     Index = list(Index[Filter]), Name = Matrix.Keys[4], 
                     return.what = "data")
                     if(!is.null(bias.vector)){
@@ -295,7 +295,7 @@ populate_matrix_with_values <- function(Lego = NULL, File = NULL,
             mat.Count <- dim(Matrix)
             if(m > 1){
                 metrics.list <- insert_data_and_computemetrics_both_matrices(
-                    Lego = Lego, Matrix = Matrix, group.path = group.path,
+                    Block = Block, Matrix = Matrix, group.path = group.path,
                     chrom1 = chrom1, chrom2 = chrom2, row.offset = row.offset, 
                     col.offset = col.offset, row.pos = Bin1_id.c, 
                     col.pos = Bin2_id.c, metrics.list = metrics.list)
@@ -313,7 +313,7 @@ add_to_data <- function(Vector = NULL, start = NULL, end = NULL,
     return(Vector)
 }
 
-insert_data_and_computemetrics_both_matrices <- function(Lego = NULL, 
+insert_data_and_computemetrics_both_matrices <- function(Block = NULL, 
     Matrix = NULL, group.path = NULL, chrom1 = NULL, chrom2 = NULL, 
     row.offset = NULL, col.offset = NULL, row.pos = NULL, col.pos = NULL, 
     metrics.list = NULL){
@@ -330,7 +330,7 @@ insert_data_and_computemetrics_both_matrices <- function(Lego = NULL,
             Start <- c(min(real.col.coords), min(real.row.coords))
             Stride <- c(1,1)
             Count <- dim(t(Matrix))
-            ._Lego_Put_Something_(Group.path = group.path, Lego = Lego, 
+            ._Block_Put_Something_(Group.path = group.path, Block = Block, 
                 Name = dataset.name, data = t(Matrix), Start = Start, 
                 Stride = Stride, Count = Count)
             Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0
@@ -348,7 +348,7 @@ insert_data_and_computemetrics_both_matrices <- function(Lego = NULL,
         Start <- c(min(real.row.coords), min(real.col.coords))
         Stride <- c(1,1)
         Count <- dim(Matrix)
-        ._Lego_Put_Something_(Group.path = group.path, Lego = Lego, 
+        ._Block_Put_Something_(Group.path = group.path, Block = Block, 
             Name = dataset.name, data = Matrix, Start = Start, 
             Stride = Stride, Count = Count)
         Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0
@@ -366,15 +366,15 @@ insert_data_and_computemetrics_both_matrices <- function(Lego = NULL,
         Start <- c(min(real.row.coords), min(real.col.coords))
         Stride <- c(1,1)
         Count <- dim(Matrix)
-        ._Lego_Put_Something_(Group.path = group.path, Lego = Lego, 
+        ._Block_Put_Something_(Group.path = group.path, Block = Block, 
             Name = dataset.name, data = Matrix, Start = Start, 
             Stride = Stride, Count = Count)
         Start <- rev(Start)
         Stride <- c(1,1)
         Count <- rev(Count)
-        ._Lego_Put_Something_(Group.path = Create_Path(
+        ._Block_Put_Something_(Group.path = Create_Path(
             c(Reference.object$hdf.matrices.root,chrom2,chrom1)), 
-            Lego = Lego, Name = dataset.name, data = t(Matrix), Start = Start, 
+            Block = Block, Name = dataset.name, data = t(Matrix), Start = Start, 
             Stride = Stride, Count = Count)
         Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0
         metrics.list[["row.sums"]][[chrom2]] <- add_to_data(
@@ -429,12 +429,12 @@ insert_data_and_computemetrics_both_matrices <- function(Lego = NULL,
         Bintable.group.path <- Create_Path(Bintable.group)
         Scaffold.group.path <-  Create_Path(Scaffold.group)
     }
-    Chrom.names <- ._Lego_Get_Something_(Group.path = Scaffold.group.path, 
-        Lego = File, Name = Scaffold.name, return.what = "data")
-    Chrom.lengths <- ._Lego_Get_Something_(Group.path = Scaffold.group.path, 
-        Lego = File, Name = Scaffold.keys[2], return.what = "data")
-    Chrom.bintable.ends <- ._Lego_Get_Something_(
-        Group.path = Bintable.group.path, Lego = File, 
+    Chrom.names <- ._Block_Get_Something_(Group.path = Scaffold.group.path, 
+        Block = File, Name = Scaffold.name, return.what = "data")
+    Chrom.lengths <- ._Block_Get_Something_(Group.path = Scaffold.group.path, 
+        Block = File, Name = Scaffold.keys[2], return.what = "data")
+    Chrom.bintable.ends <- ._Block_Get_Something_(
+        Group.path = Bintable.group.path, Block = File, 
         Name = Bintable.keys[4], return.what = "data")
     if(!all(Chrom.lengths %in% Chrom.bintable.ends)){
         stop("Unable to remap chromosomes! Please contact the developer!\n")
@@ -470,11 +470,11 @@ insert_data_and_computemetrics_both_matrices <- function(Lego = NULL,
             Offset <- mcool.remap.chrom[x,"offset"]
             rep(chr, Offset)
         }))
-    Start <- ._Lego_Get_Something_(Group.path = Bintable.group.path, 
-        Lego = mcool.file, 
+    Start <- ._Block_Get_Something_(Group.path = Bintable.group.path, 
+        Block = mcool.file, 
         Name = Bintable.start, return.what = "data")
-    End <- ._Lego_Get_Something_(Group.path = Bintable.group.path, 
-        Lego = mcool.file, 
+    End <- ._Block_Get_Something_(Group.path = Bintable.group.path, 
+        Block = mcool.file, 
         Name = Bintable.end, return.what = "data")        
     if(length(unique(length(Chrom),length(Start),length(End)))==1){
         message("All ok! Chrom, Start, End have matching lengths...\n")
@@ -520,9 +520,9 @@ mcool_list_resolutions <- function(mcool = NULL){
     GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)[,"name"]
     CloseH5Con(Handle = Handler, type = "file")
     if(Reference.object$mcool.resolutions.name %in% GroupList){
-        Handler <- ._Lego_Get_Something_(
+        Handler <- ._Block_Get_Something_(
             Group.path = Create_Path(Reference.object$mcool.resolutions.name), 
-            Lego = mcool, return.what = "group_handle")
+            Block = mcool, return.what = "group_handle")
         BinList <- h5ls(Handler, 
             datasetinfo = FALSE, recursive = FALSE)[,"name"]
         CloseH5Con(Handle = Handler, type = "group")
