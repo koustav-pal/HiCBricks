@@ -24,7 +24,8 @@ Block objects. If tibble will contain additional information related to
 the tracking. For details see parameter detailed.
 }
 \description{
-\code{Block_list_tracked_blocks} will list all Block objects that are being tracked.
+\code{Block_list_tracked_blocks} will list all Block objects that are being
+tracked.
 }
 \examples{
 Block_list_tracked_blocks()

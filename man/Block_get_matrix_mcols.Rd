@@ -5,7 +5,7 @@
 \title{Get the matrix metadata columns in the Block store.}
 \usage{
 Block_get_matrix_mcols(Block = NULL, chr1 = NULL, chr2 = NULL,
-  what = NULL)
+    what = NULL)
 }
 \arguments{
 \item{Block}{\strong{Required}.

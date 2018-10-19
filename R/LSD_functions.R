@@ -4,8 +4,8 @@
     return(min(which(RowSums > 0)))
 }
 ._get_sparsity_index <- function(Block = NULL, chr = NULL){
-    Sparsity.index <- Block_get_matrix_mcols(Block = Block, chr1 = chr, chr2 = chr,
-        what = "sparsity")
+    Sparsity.index <- Block_get_matrix_mcols(Block = Block, chr1 = chr, 
+        chr2 = chr, what = "sparsity")
     return(Sparsity.index)
 }
 Backwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,
@@ -368,7 +368,8 @@ Block_local_score_differentiator <- function(Block = NULL, chrs = NULL,
     Chrom.domains.ranges.list <- lapply(Chromosomes, function(chr){
         Ranges <- Block_get_bintable(Block = Block, chr = chr)
         sparse <- Block_matrix_issparse(Block = Block, chr1 = chr, chr2 = chr)
-        max.distance <- Block_matrix_maxdist(Block = Block, chr1 = chr, chr2 = chr)
+        max.distance <- Block_matrix_maxdist(Block = Block, chr1 = chr, 
+            chr2 = chr)
         if(ignore.sparse){
             sparse=FALSE
         }
@@ -382,8 +383,8 @@ Block_local_score_differentiator <- function(Block = NULL, chrs = NULL,
             sparsity.threshold=sparsity.threshold,
             min.sum = min.sum, force = force.retrieve)
 
-        RowSums <- Block_get_matrix_mcols(Block = Block, chr1 = chr, chr2 = chr, 
-            what = "row.sums")
+        RowSums <- Block_get_matrix_mcols(Block = Block, chr1 = chr, 
+            chr2 = chr, what = "row.sums")
         Ranges$row.sums <- RowSums
         message("[2] Computing DI Differences for",chr,"\n")
         if(sparse){

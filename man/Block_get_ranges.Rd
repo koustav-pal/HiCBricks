@@ -21,8 +21,8 @@ Returns a GRanges object with the associated metadata columns that
 may have been present in the Ranges object.
 }
 \description{
-\code{Block_get_ranges} will get a ranges object if present in the Block store and
-return a GRanges object.
+\code{Block_get_ranges} will get a ranges object if present in the Block store
+and return a GRanges object.
 }
 \details{
 If a rangekey is present, the ranges will be retrieve and a GRanges

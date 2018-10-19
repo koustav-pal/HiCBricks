@@ -14,9 +14,15 @@ Path to the Block file to untrack.}
 Returns any value provided by bfcremove.
 }
 \description{
-\code{Block_untrack_block} will stop tracking the provided Block file, if it exists.
+\code{Block_untrack_block} will stop tracking the provided Block file,
+if it exists.
 }
 \examples{
-Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks") 
-Block_untrack_block(Block = Block.file)
+Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
+if(Block_is_tracked(Block.file)){
+    Block_untrack_block(Block = Block.file)
+}else{
+    Block_track_blocks(Block = Block.file)
+    Block_untrack_block(Block = Block.file)
+}
 }

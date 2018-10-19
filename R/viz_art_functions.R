@@ -41,8 +41,8 @@
 #' 
 #' @param distance \strong{Optional}. Default NULL
 #' If present, values beyond this distance will be filtered out. Please note,
-#' that if a Block store matrix was loaded until a certain distance, this parame-
-#' -ter will result in an error if it is greater than the loaded distance.
+#' that if a Block store matrix was loaded until a certain distance, this 
+#' parameter will result in an error if it is greater than the loaded distance.
 #' 
 #' @param rotate \strong{Optional}. Default FALSE
 #' If TRUE, will rotate the heatmap by 90 degrees.
@@ -169,22 +169,22 @@
 #' value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
 #' legend.key.height = unit(0.3,"cm"))
 #' 
-Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL, x.coords = NULL, 
-    y.coords = NULL, FUN = NULL, value.cap = NULL, distance = NULL, 
-    rotate = FALSE, x.axis = TRUE, x.axis.title = NULL, y.axis = TRUE, 
-    y.axis.title = NULL, title = NULL, legend.title = NULL, return.object=FALSE,
-    x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL, 
-    col.direction = 1, extrapolate.on = NULL, x.axis.text.size = 10, 
-    y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8, 
-    legend.text.size = 8, title.size = 10, tad.ranges = NULL, group.col = NULL, 
-    tad.colour.col = NULL, colours = NULL, colours.names = NULL, 
-    cut.corners = FALSE, highlight.points = NULL, width = 10, height = 6, 
-    line.width = 0.5, units = "cm", legend.key.width = unit(3,"cm"), 
-    legend.key.height = unit(0.5,"cm")){
+Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL, 
+    x.coords = NULL, y.coords = NULL, FUN = NULL, value.cap = NULL, 
+    distance = NULL, rotate = FALSE, x.axis = TRUE, x.axis.title = NULL, 
+    y.axis = TRUE, y.axis.title = NULL, title = NULL, legend.title = NULL, 
+    return.object=FALSE, x.axis.num.breaks = 5, y.axis.num.breaks = 5, 
+    palette = NULL, col.direction = 1, extrapolate.on = NULL, 
+    x.axis.text.size = 10, y.axis.text.size = 10, text.size = 10,
+    legend.title.text.size = 8, legend.text.size = 8, title.size = 10,
+    tad.ranges = NULL, group.col = NULL, tad.colour.col = NULL, colours = NULL,
+    colours.names = NULL, cut.corners = FALSE, highlight.points = NULL, 
+    width = 10, height = 6, line.width = 0.5, units = "cm", 
+    legend.key.width = unit(3,"cm"), legend.key.height = unit(0.5,"cm")){
 
-    Matrix.df <- Get_one_or_two_block_regions(Blocks = Blocks, x.coords = x.coords,
-        y.coords = y.coords, distance = distance, value.cap = value.cap, 
-        FUN = FUN)
+    Matrix.df <- Get_one_or_two_block_regions(Blocks = Blocks, 
+        x.coords = x.coords, y.coords = y.coords, distance = distance,
+        value.cap = value.cap, FUN = FUN)
     if(nrow(Matrix.df)==0){
         stop("The matrix was empty!")
     }

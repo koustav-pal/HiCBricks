@@ -189,8 +189,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Rows <- x[Range]
     return(length(Rows[Rows!=0])/length(Rows))
 }
-._Block_Get_Something_ <- function(Group.path = NULL, Block = NULL, Name = NULL,
-    Index = NULL, Start = NULL, Stride = NULL, Count = NULL, 
+._Block_Get_Something_ <- function(Group.path = NULL, Block = NULL, 
+    Name = NULL, Index = NULL, Start = NULL, Stride = NULL, Count = NULL, 
     return.what = "group_handle"){
     Reference.object <- GenomicMatrix$new()
     Group.Handle <- ReturnH5Handler(Path = Group.path, File = Block)
@@ -391,8 +391,8 @@ humanize_size <- function(x){
 }
 ._Process_matrix_by_distance <- function(Block = NULL, Matrix.file = NULL, 
     delim = NULL, Group.path = NULL, chr1.len = NULL, chr2.len = NULL, 
-    num.rows = 2000, distance = NULL, is.sparse = NULL, compute.sparsity = NULL,
-    sparsity.bins = 100){
+    num.rows = 2000, distance = NULL, is.sparse = NULL, 
+    compute.sparsity = NULL, sparsity.bins = 100){
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
@@ -586,8 +586,8 @@ humanize_size <- function(x){
 
 ._GetDimensions <- function(group.path = NULL, dataset.path = NULL, 
     File = NULL, return.what = NULL){   
-    File.handler <- ._Block_Get_Something_(Group.path = group.path, Block = File, 
-        Name = dataset.path, return.what = "dataset_handle")
+    File.handler <- ._Block_Get_Something_(Group.path = group.path, 
+        Block = File, Name = dataset.path, return.what = "dataset_handle")
     Dataspace <- H5Dget_space(File.handler)
     Extents <- H5Sget_simple_extent_dims(Dataspace)
     CloseH5Con(Handle = File.handler, type = "dataset")

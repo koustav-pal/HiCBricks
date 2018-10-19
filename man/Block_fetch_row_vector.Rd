@@ -5,8 +5,8 @@
 \title{Return row or col vectors.}
 \usage{
 Block_fetch_row_vector(Block = NULL, chr1 = NULL, chr2 = NULL,
-  by = NULL, vector = NULL, regions = NULL, force = FALSE,
-  flip = FALSE, FUN = NULL)
+    by = NULL, vector = NULL, regions = NULL, force = FALSE,
+    flip = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -65,15 +65,16 @@ rows subsetted.
 
 Coordinate <- c("chr19:1:40000","chr19:40001:80000")
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Test_Run <- Block_fetch_row_vector(Block = Block.file, 
+Test_Run <- Block_fetch_row_vector(Block = Block.file,
 chr1 = "chr19", chr2 = "chr19", by = "ranges", vector = Coordinate,
 regions = c("chr19:1:1000000", "chr19:40001:2000000"))
 
 }
 \seealso{
-\code{\link{Block_get_matrix_within_coords}} to get matrix by using
-matrix genomic coordinates, \code{\link{Block_get_values_by_distance}} to get
-values separated at a certain distance, \code{\link{Block_fetch_row_vector}}
-to get values in a certain row/col and subset them,
-\code{\link{Block_get_matrix}} to get matrix by using matrix coordinates
+\code{\link{Block_get_matrix_within_coords}} to get matrix by
+using matrix genomic coordinates, \code{\link{Block_get_values_by_distance}}
+to get values separated at a certain distance,
+\code{\link{Block_fetch_row_vector}} to get values in a certain row/col and
+subset them, \code{\link{Block_get_matrix}} to get matrix by using
+matrix coordinates.
 }

@@ -120,7 +120,8 @@ GetAttributes <- function(Path = NULL, File = NULL, Attributes = NULL,
 # # InsertIntoDataset = function(Path = NULL, File = NULL, Name = NULL,
 #  Data=NULL, Index = NULL,
 # #     Start = NULL, Stride = NULL, Count = NULL){
-# #     DatasetHandler <- ._Block_Get_Something_(Group.path = Path, Block = File, 
+# #     DatasetHandler <- ._Block_Get_Something_(Group.path = Path, 
+#       Block = File, 
 #  Name = Name, return.what = "group_handle")
 # #     if(!is.null(Index)){
 # #         h5writeDataset(obj=Data, h5loc=DatasetHandler, name=Chrom, 

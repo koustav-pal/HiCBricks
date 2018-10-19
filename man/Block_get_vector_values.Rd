@@ -5,7 +5,7 @@
 \title{Return a N dimensional vector selection.}
 \usage{
 Block_get_vector_values(Block = NULL, chr1 = NULL, chr2 = NULL,
-  xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
+    xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -46,14 +46,14 @@ returns a matrix of dimension xaxis length by yaxis length.
 other matrix retrieval functions.
 }
 \section{Note}{
- Whatever the length of xaxis or yaxis may be, the coordinates
+Whatever the length of xaxis or yaxis may be, the coordinates
 under consideration will range from min(xaxis) to max(xaxis) on the rows or
 min(yaxis) to max(yaxis) on the columns.
 }
 
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_get_matrix(Block = Block.file, chr1 = "chr19", chr2 = "chr19", 
-x.vector = c(1:10), y.vector = c(1:10))
+Block_get_vector_values(Block = Block.file, chr1 = "chr19",
+chr2 = "chr19", xaxis = c(1:10), yaxis = c(1:10))
 
 }

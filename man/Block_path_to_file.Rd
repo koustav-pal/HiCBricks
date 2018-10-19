@@ -18,6 +18,15 @@ Returns the corresponding path to the file that is being tracked.
 path to the file that is being tracked.
 }
 \examples{
+
+Bintable.path <- system.file("extdata",
+"Bintable_40kb.txt", package = "HiCBlocks")
+Chromosomes <- "chr19"
+Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes,
+BinTable = Bintable.path, bin.delim = " ",
+Output.Filename = "test.hdf", exec = "cat",
+remove.existing = TRUE)
+
 Block.file <- "test.hdf"
 Block_path_to_file(Block = Block.file)
 }

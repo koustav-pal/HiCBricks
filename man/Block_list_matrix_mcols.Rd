@@ -22,7 +22,8 @@ the columns of the matrix}
 Returns a vector containing the names of all matrix metadata columns
 }
 \description{
-\code{Block_get_matrix_mcols} will list the names of all matrix metadata columns.
+\code{Block_get_matrix_mcols} will list the names of all matrix metadata
+columns.
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")

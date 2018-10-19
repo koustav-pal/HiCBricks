@@ -6,7 +6,7 @@
 associated to the Hi-C experiment.}
 \usage{
 Block_fetch_range_index(Block = NULL, chr = NULL, start = NULL,
-  end = NULL, names = NULL, type = "any")
+    end = NULL, names = NULL, type = "any")
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -54,7 +54,7 @@ Chrom <- c("chr19","chr19")
 Start <- c(1,40000)
 End <- c(1000000,2000000)
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Test_Run <- Block_fetch_range_index(Block = Block.file, chr = Chrom, 
+Test_Run <- Block_fetch_range_index(Block = Block.file, chr = Chrom,
 start = Start, end = End)
 Test_Run$Indexes[[1]]
 

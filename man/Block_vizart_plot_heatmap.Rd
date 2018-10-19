@@ -5,19 +5,19 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 Block_vizart_plot_heatmap(File = NULL, Blocks = NULL,
-  x.coords = NULL, y.coords = NULL, FUN = NULL, value.cap = NULL,
-  distance = NULL, rotate = FALSE, x.axis = TRUE,
-  x.axis.title = NULL, y.axis = TRUE, y.axis.title = NULL,
-  title = NULL, legend.title = NULL, return.object = FALSE,
-  x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL,
-  col.direction = 1, extrapolate.on = NULL, x.axis.text.size = 10,
-  y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8,
-  legend.text.size = 8, title.size = 10, tad.ranges = NULL,
-  group.col = NULL, tad.colour.col = NULL, colours = NULL,
-  colours.names = NULL, cut.corners = FALSE, highlight.points = NULL,
-  width = 10, height = 6, line.width = 0.5, units = "cm",
-  legend.key.width = unit(3, "cm"), legend.key.height = unit(0.5,
-  "cm"))
+    x.coords = NULL, y.coords = NULL, FUN = NULL, value.cap = NULL,
+    distance = NULL, rotate = FALSE, x.axis = TRUE,
+    x.axis.title = NULL, y.axis = TRUE, y.axis.title = NULL,
+    title = NULL, legend.title = NULL, return.object = FALSE,
+    x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette = NULL,
+    col.direction = 1, extrapolate.on = NULL, x.axis.text.size = 10,
+    y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8,
+    legend.text.size = 8, title.size = 10, tad.ranges = NULL,
+    group.col = NULL, tad.colour.col = NULL, colours = NULL,
+    colours.names = NULL, cut.corners = FALSE, highlight.points = NULL,
+    width = 10, height = 6, line.width = 0.5, units = "cm",
+    legend.key.width = unit(3, "cm"), legend.key.height = unit(0.5,
+    "cm"))
 }
 \arguments{
 \item{File}{\strong{Required}
@@ -48,8 +48,8 @@ parameter is present the greatest value will have a greater than sign append-
 
 \item{distance}{\strong{Optional}. Default NULL
 If present, values beyond this distance will be filtered out. Please note,
-that if a Block store matrix was loaded until a certain distance, this parame-
--ter will result in an error if it is greater than the loaded distance.}
+that if a Block store matrix was loaded until a certain distance, this
+parameter will result in an error if it is greater than the loaded distance.}
 
 \item{rotate}{\strong{Optional}. Default FALSE
 If TRUE, will rotate the heatmap by 90 degrees.}
@@ -181,8 +181,8 @@ Hi-C data.
 }
 \examples{
 FailSafe_log10 <- function(x){
-     x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
-     return(log10(x+1))
+    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+    return(log10(x+1))
 }
 
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")

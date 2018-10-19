@@ -19,8 +19,9 @@ specifying if a matrix has been loaded and sparsity specifies if a matrix
 is defined as a sparse matrix.
 }
 \description{
-\code{Block_list_matrices} will list all chromosomal pair matrices from the Block
-store, with their associated filename, value range, done status and sparse
+\code{Block_list_matrices} will list all chromosomal pair matrices from the
+Block store, with their associated filename, value range, done status
+and sparse
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")

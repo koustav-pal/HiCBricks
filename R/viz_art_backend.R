@@ -384,8 +384,8 @@ Format_boundaries_normal_heatmap <- function(Blocks = NULL, Ranges = NULL,
         chrs <- as.vector(seqnames(pos.ranges))
         start <- start(pos.ranges)
         end <- end(pos.ranges)
-        A.ranges <- Block_fetch_range_index(Block = Blocks[Block.x], chr = chrs, 
-            start = start, end = end)
+        A.ranges <- Block_fetch_range_index(Block = Blocks[Block.x], 
+            chr = chrs, start = start, end = end)
         Position.list <- A.ranges[seqnames(A.ranges) == region.chr]
         check_if_only_one_ranges <- function(x){
             all(!is.na(Position.list$Indexes[[x]]))

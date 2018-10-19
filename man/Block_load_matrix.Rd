@@ -5,9 +5,9 @@
 \title{Load a NxM dimensional matrix into the Block store.}
 \usage{
 Block_load_matrix(Block = NULL, chr1 = NULL, chr2 = NULL,
-  matrix.file = NULL, delim = " ", exec = NULL,
-  remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-  sparsity.bins = 100)
+    matrix.file = NULL, delim = " ", exec = NULL,
+    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
+    sparsity.bins = 100)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -57,16 +57,24 @@ Load a NxM dimensional matrix into the Block store.
 }
 \examples{
 
+Bintable.path <- system.file("extdata",
+"Bintable_40kb.txt", package = "HiCBlocks")
+Chromosomes <- "chr19"
+Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes,
+BinTable = Bintable.path, bin.delim = " ",
+Output.Filename = "test.hdf", exec = "cat",
+remove.existing = TRUE)
+
 Test.mat <- matrix(NA,nrow = 800, ncol = 800)
 Row <- row(Test.mat)
 Col <- col(Test.mat)
 Dist <- Col - Row
 Matrix.file <- "Test_matrix.txt"
-write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE, 
+write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 Block.file <- Block_path_to_file(Block = "test.hdf")
 Block_load_matrix(Block = Block.file, chr1 = "chr19", chr2 = "chr19",
-matrix.file = Matrix.file, delim = " ", exec = "cat", 
+matrix.file = Matrix.file, delim = " ", exec = "cat",
 remove.prior = TRUE)
 
 }

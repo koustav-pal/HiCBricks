@@ -31,7 +31,7 @@ in the file
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_matrix_exists(Block = Block.file, chr1 = "chr19", chr2 = "chr19") 
+Block_matrix_exists(Block = Block.file, chr1 = "chr19", chr2 = "chr19")
 
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
 Block_matrix_exists(Block = Block.file, chr1 = "chr19", chr2 = "chr20")

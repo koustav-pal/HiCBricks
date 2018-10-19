@@ -15,9 +15,10 @@ Returns TRUE or FALSE indicating if the file path is being tracked
 or not.
 }
 \description{
-\code{Block_is_tracked} checks if the provided Block file is being tracked or not.
+\code{Block_is_tracked} checks if the provided Block file is being
+tracked or not.
 }
 \examples{
-Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks") 
+Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
 Block_is_tracked(Block = Block.file)
 }

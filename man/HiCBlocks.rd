@@ -43,8 +43,8 @@ structure from an mcool file.
 \item \code{\link{Block_load_matrix}} - Load a complete nxm dimensional matrix.
 \item \code{\link{Block_load_cis_matrix_till_distance}} - Load a sam chromosome
 nxn dimensional matrix until a certain distance. 
-\item \code{\link{Block_load_data_from_mcool}} - Load parts of the data from the 
-4DN consortium generated mcool files. 
+\item \code{\link{Block_load_data_from_mcool}} - Load parts of the data from 
+the 4DN consortium generated mcool files. 
 }
 }
 \section{Matrix Accessors}{

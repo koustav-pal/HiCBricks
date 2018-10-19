@@ -5,7 +5,7 @@
 \title{Store a ranges object in the Block store.}
 \usage{
 Block_add_ranges(Block = NULL, ranges = NULL, rangekey = NULL,
-  remove.existing = TRUE)
+    remove.existing = TRUE)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -37,13 +37,20 @@ columns that are obtained when a ranges is converted into a data.frame.
 Users can ignore these columns.
 }
 \examples{
+Bintable.path <- system.file("extdata",
+"Bintable_40kb.txt", package = "HiCBlocks")
+Chromosomes <- "chr19"
+Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes,
+BinTable = Bintable.path, bin.delim = " ",
+Output.Filename = "test.hdf", exec = "cat",
+remove.existing = TRUE)
 
 Block.file <- Block_path_to_file("test.hdf")
 Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)
 End <- c(10001,20001,40001,50001,60001)
 Test_ranges <- Block_make_ranges(Chrom = Chrom, Start = Start, End = End)
-Block_add_ranges(Block = Block.file, ranges = Test_ranges, 
+Block_add_ranges(Block = Block.file, ranges = Test_ranges,
 rangekey = "test_ranges")
 
 \dontrun{
@@ -52,7 +59,7 @@ Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)
 End <- c(10001,20001,40001,50001,60001)
 Test_ranges <- Block_make_ranges(Chrom = Chrom, Start = Start, End = End)
-Block_add_ranges(Block = Block.file, ranges = Test_ranges, 
+Block_add_ranges(Block = Block.file, ranges = Test_ranges,
 rangekey = "test_ranges", remove.existing = TRUE)
 
 }

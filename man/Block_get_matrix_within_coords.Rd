@@ -5,7 +5,7 @@
 \title{Return a matrix subset between two regions.}
 \usage{
 Block_get_matrix_within_coords(Block = NULL, x.coords = NULL,
-  y.coords = NULL, force = FALSE, FUN = NULL)
+    y.coords = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -41,25 +41,26 @@ This function calls \code{\link{Block_get_matrix}}.
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_get_matrix_within_coords(Block = Block.file, 
-x.coords = "chr19:40000:2000000", 
+Block_get_matrix_within_coords(Block = Block.file,
+x.coords = "chr19:40000:2000000",
 y.coords = "chr19:40000:2000000")
 
-Block_get_matrix_within_coords(Block = Block.file, 
-x.coords = "chr19:40000:2000000", 
-y.coords = "chr19:40000:2000000", 
+Block_get_matrix_within_coords(Block = Block.file,
+x.coords = "chr19:40000:2000000",
+y.coords = "chr19:40000:2000000",
 FUN = mean)
 
-Block_get_matrix_within_coords(Block = Block.file, 
-x.coords = "chr19:40000:2000000", 
-y.coords = "chr19:40000:2000000", 
+Block_get_matrix_within_coords(Block = Block.file,
+x.coords = "chr19:40000:2000000",
+y.coords = "chr19:40000:2000000",
 FUN = median)
- 
+
 }
 \seealso{
 \code{\link{Block_get_matrix}} to get matrix by using matrix
 coordinates, \code{\link{Block_get_values_by_distance}} to get values
-separated at a certain distance, \code{\link{Block_fetch_row_vector}} to get
-values in a certain row/col and subset them,
-\code{\link{Block_get_vector_values}} to get values using matrix coordinates.
+separated at a certain distance, \code{\link{Block_fetch_row_vector}}
+to get values in a certain row/col and subset them,
+\code{\link{Block_get_vector_values}} to get values using matrix
+coordinates.
 }

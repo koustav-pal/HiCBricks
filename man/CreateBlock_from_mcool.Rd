@@ -5,7 +5,7 @@
 \title{Create the entire HDF5 structure and load the bintable from a mcool file}
 \usage{
 CreateBlock_from_mcool(Block = NULL, mcool = NULL, binsize = NULL,
-  chrs = NULL, remove.existing = FALSE)
+    chrs = NULL, remove.existing = FALSE)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -30,8 +30,8 @@ This function will generate the target Block file. Upon completion,
 the function will provide the path to the created/tracked HDF file.
 }
 \description{
-\code{CreateBlock_from_mcool} is a wrapper on CreateBlock which creates the Block
-data structure from an mcool file.
+\code{CreateBlock_from_mcool} is a wrapper on CreateBlock which creates the
+Block data structure from an mcool file.
 }
 \details{
 mcool are a standard 4D nucleome data structure for Hi-C data. Read more
@@ -50,9 +50,9 @@ Output.block <- paste("./H1-hESC-HiC-4DNFI7JNCNFB-10000",
 "ICE-normalised-chr1.block",sep = "-")
 mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
 
-CreateBlock_from_mcool(Block = Output.block, 
-mcool = mcool, 
-binsize = 10000, 
+CreateBlock_from_mcool(Block = Output.block,
+mcool = mcool,
+binsize = 10000,
 chrs = "chr1")
 
 }

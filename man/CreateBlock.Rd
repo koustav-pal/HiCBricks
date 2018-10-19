@@ -5,9 +5,9 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 CreateBlock(ChromNames = NULL, BinTable = NULL, bin.delim = "\\t",
-  col.index = c(1, 2, 3), impose.discontinuity = TRUE,
-  ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
-  remove.existing = FALSE)
+    col.index = c(1, 2, 3), impose.discontinuity = TRUE,
+    ChunkSize = NULL, Output.Filename = NULL, exec = "cat",
+    remove.existing = FALSE)
 }
 \arguments{
 \item{ChromNames}{\strong{Required}
@@ -134,21 +134,21 @@ specifying the chromosomes present in this particular Block file.
 }
 }
 \examples{
-Bintable.path <- system.file("extdata", 
+Bintable.path <- system.file("extdata",
 "Bintable_40kb.txt", package = "HiCBlocks")
 Chromosomes <- "chr19"
-Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes, 
-BinTable = Bintable.path, bin.delim = " ", 
-Output.Filename = "test.hdf", exec = "cat", 
+Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes,
+BinTable = Bintable.path, bin.delim = " ",
+Output.Filename = "test.hdf", exec = "cat",
 remove.existing = TRUE)
 
 \dontrun{
-Bintable.path <- system.file("extdata", 
+Bintable.path <- system.file("extdata",
 "Bintable_40kb.txt", package = "HiCBlocks")
 Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
-Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes, 
-BinTable = Bintable.path, impose.discontinuity=TRUE, 
-col.index = c(1,2,3), Output.Filename = "test.hdf", 
+Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes,
+BinTable = Bintable.path, impose.discontinuity=TRUE,
+col.index = c(1,2,3), Output.Filename = "test.hdf",
 exec = "cat", remove.existing = TRUE)
 
 This will cause an error as the file located at Bintable.path,
@@ -157,20 +157,20 @@ all other chromosomes need to be removed from the Chromosomes variable or
 coordinate information for the other chromosomes need to be provided.
 
 Similarly vice-versa is also true. If the Bintable contains data for other
-chromosomes, but they were not listed in ChromNames, this will cause an 
+chromosomes, but they were not listed in ChromNames, this will cause an
 error.
 
 Keep in mind that if the end coordinates and start coordinates of adjacent
-ranges are not separated by at least a value of 1, then 
-impose.discontinuity = TRUE will likely cause an error to occur. 
-This may seem obnoxious, but GenomicRanges by default will consider an 
-overlap of 1 bp as an overlap. Therefore, to be certain that ranges which 
-should not be, are not being targeted during retrieval operations, a check 
-is initiated to make sure that adjacent ends and starts are not 
-overlapping. 
+ranges are not separated by at least a value of 1, then
+impose.discontinuity = TRUE will likely cause an error to occur.
+This may seem obnoxious, but GenomicRanges by default will consider an
+overlap of 1 bp as an overlap. Therefore, to be certain that ranges which
+should not be, are not being targeted during retrieval operations, a check
+is initiated to make sure that adjacent ends and starts are not
+overlapping.
 To load continuous ranges, use impose.discontinuity = FALSE.
 
-Also note, that col.index determines which columns to use for chr, start 
+Also note, that col.index determines which columns to use for chr, start
 and end. Therefore, the original binning table may have 10 or 20 columns,
 but it only requires the first three in order of chr, start and end.
 }

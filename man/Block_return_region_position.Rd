@@ -40,18 +40,18 @@ deal with.
 
 Coordinate <- "chr19:1:1000000"
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Test_Run <- Block_return_region_position(Block = Block.file, 
+Test_Run <- Block_return_region_position(Block = Block.file,
 region = Coordinate)
 
 \dontrun{
 
 Coordinate <- c("chr19:1:1000000","chr19:40000:2000000")
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Test_Run <- Block_return_region_position(Block = Block.file, 
+Test_Run <- Block_return_region_position(Block = Block.file,
 region = Coordinate)
 
 This will generate an error because the module itself expects as input a
-vector of length 1. 
+vector of length 1.
 
 }
 }

@@ -5,7 +5,7 @@
 \title{Return a matrix subset.}
 \usage{
 Block_get_matrix(Block = NULL, chr1 = NULL, chr2 = NULL,
-  x.vector = NULL, y.vector = NULL, force = FALSE, FUN = NULL)
+    x.vector = NULL, y.vector = NULL, force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -44,14 +44,15 @@ min(x.vector) to max(x.vector)
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_get_matrix(Block = Block.file, chr1 = "chr19", chr2 = "chr19", 
+Block_get_matrix(Block = Block.file, chr1 = "chr19", chr2 = "chr19",
 x.vector = c(1:10), y.vector = c(1:10))
 
 }
 \seealso{
 \code{\link{Block_get_matrix_within_coords}} to get matrix by using
-matrix genomic coordinates, \code{\link{Block_get_values_by_distance}} to get
-values separated at a certain distance, \code{\link{Block_fetch_row_vector}}
-to getvalues in a certain row/col and subset them,
-\code{\link{Block_get_vector_values}} to get values using matrix coordinates.
+matrix genomic coordinates, \code{\link{Block_get_values_by_distance}} to
+get values separated at a certain distance,
+\code{\link{Block_fetch_row_vector}} to getvalues in a certain row/col and
+subset them, \code{\link{Block_get_vector_values}} to get values using
+matrix coordinates.
 }

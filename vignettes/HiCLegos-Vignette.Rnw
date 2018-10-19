@@ -8,7 +8,7 @@
 
 %\usepackage[latin1]{inputenc}
 
-%\VignetteIndexEntry{HiCLegos}
+%\VignetteIndexEntry{HiCBlocks}
 
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage[T1]{fontenc} % Output font encoding for international characters
@@ -67,7 +67,7 @@ frame=single}%, label=Output}
 
             Store,\\
             retrieve and plot\\
-            Hi-C data with HiCLegos\\
+            Hi-C data with HiCBlocks\\
 
         \vspace{0.7cm} % Space between the end of the title and the bottom of 
         %the grey box
@@ -96,28 +96,28 @@ frame=single}%, label=Output}
 \newpage
 
 \section{Introduction}
-HiCLegos is a storage and retrieval library for high-resolution Hi-C data. 
+HiCBlocks is a storage and retrieval library for high-resolution Hi-C data. 
 This library attempts to encapsulate the entire HDF data structure and present 
 accessor functions allowing users to access and manipulate Hi-C data without 
 having to deal with the structural complexity associated to dealing with HDF 
-files. Please note, HiCLegos is not meant to compete with other data formats. 
+files. Please note, HiCBlocks is not meant to compete with other data formats. 
 Instead it is a library to better facilitate access to Hi-C data stored in 
 various formats. Therefore, it is not possible at this time to create a direct 
 mirror of for example, mcool files. mcool files, for the uninitiated are a 
 standard data format for the 4D nucleome project and better facilitates the 
-storage of very large experiments within a single data file. HiCLegos, on 
+storage of very large experiments within a single data file. HiCBlocks, on 
 the other hand stores the complete matrix, as opposed to the upper triangle 
 in mcools files. As you will see in this vignette, it is a very simple task 
 to import entire resolutions/normalizations from a standard 4DN mcool file 
-to a Lego object.  
-With HiCLegos, in this vignette you will;
+to a Block object.  
+With HiCBlocks, in this vignette you will;
 \begin{enumerate}
-    \item Create a lego for a single chromosomes
-    \item do TAD calls on this lego files
-    \item keep the tad calls (or any ranges object) associated to the Lego 
+    \item Create a block for a single chromosomes
+    \item do TAD calls on this block files
+    \item keep the tad calls (or any ranges object) associated to the Block 
     file for future reference
     \item and later on retrieve them for quick plotting and viewing with 
-    HiCLego functions
+    HiCBlock functions
 \end{enumerate} 
 
 \newpage
@@ -129,7 +129,7 @@ options(width=80)
 \newpage
 
 
-\section{Loading 4DN mcool files as Lego objects}
+\section{Loading 4DN mcool files as Block objects}
 
 In this exercise we will download a file from the 4DN data portal at 
 \url{https://data.4dnucleome.org/}. For the purposes of this vignette we will 
@@ -149,9 +149,9 @@ curl_download(url = "https://data.4dnucleome.org/files-
 \noindent Note that there are a few normalisation weights available within 
 the sample. We can check what normalisation weights are available using 
 
-Lego\_list\_mcool\_normalisations() function. Please note, that this function 
+Block\_list\_mcool\_normalisations() function. Please note, that this function 
 does not list the normalisation weights available within the mcool file, 
-but rather lists normalisation factors that HiCLegos accepts from the mcool 
+but rather lists normalisation factors that HiCBlocks accepts from the mcool 
 files. Notice, the human readable names and the actual dataset names, 
 what you are interested in are the human readable names, which makes the type 
 of normalisation apparent. Such as for example, KR is an abbreviation for 
@@ -160,7 +160,7 @@ the Knight Ruitz matrix balancing algorithm introduced by Rao et al.,
 
 <<eval=FALSE, echo=TRUE >>=
 
-Lego_list_mcool_normalisations(names.only = TRUE)
+Block_list_mcool_normalisations(names.only = TRUE)
 @
 
 \noindent This lists only the human-readable names. To see both the 
@@ -169,7 +169,7 @@ linked columns in the HDF file.
 
 <<eval=FALSE, echo=TRUE >>=
 
-Lego_list_mcool_normalisations(names.only = FALSE)
+Block_list_mcool_normalisations(names.only = FALSE)
 @
 
 \noindent The 4D nucleome project bins their data into several different 
@@ -178,20 +178,20 @@ resolutions, to check out the available resolutions, it is as simple as:
 <<eval=FALSE, echo=TRUE >>=
 
 mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
-Lego_list_mcool_resolutions(mcool = filename)
+Block_list_mcool_resolutions(mcool = filename)
 @
 
 
 \noindent Once, you have viewed all of the listed resolutions, we can go 
-ahead and create Lego blocks from these files. Please note, that users cannot 
-load multiple resolutions in a single Lego file, this is because the aim of 
-HiCLegos is not to create an alternative storage format to already very 
+ahead and create Block blocks from these files. Please note, that users cannot 
+load multiple resolutions in a single Block file, this is because the aim of 
+HiCBlocks is not to create an alternative storage format to already very 
 well designed pre-existing formats, but rather to create a straightforward, 
 memory efficient storage and retrieval library for already existing Hi-C 
 data formats in R.  
 
 \noindent Although it is possible to load all chromosomes in a single 
-Lego object, this is not recommended because,
+Block object, this is not recommended because,
 \begin{enumerate}
     \item It is not possible for multiple processes to concurrently access 
     the same HDF file. Therefore, it hinders parallelization.
@@ -200,25 +200,25 @@ Lego object, this is not recommended because,
 \end{enumerate}
 
 \noindent Instead when using very large matrices, users are encouraged 
-to separate the matrices chromosome by chromosome into different lego 
+to separate the matrices chromosome by chromosome into different block 
 objects. For the purposes of this vignette, we want to do TAD calls 
 with the local score differentiator (LSD) module and finally plot these TAD 
-calls. We can now go ahead and create a Lego corresponding for a single 
+calls. We can now go ahead and create a Block corresponding for a single 
 chromosome from the downloaded mcool file and import data relevant to the 
 cis-interaction maps for that chromosome.  
 
 <<eval=FALSE, echo=TRUE >>=
 
-Output.lego <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-
-    normalised-chr1.lego"
+Output.block <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-
+    normalised-chr1.block"
 mcool <- mcoolName
 
-CreateLego_from_mcool(Lego = Output.lego, 
+CreateBlock_from_mcool(Block = Output.block, 
     mcool = mcool, 
     binsize = 10000, 
     chrs = "chr1")
 
-Lego_load_data_from_mcool(Lego = Output.lego, 
+Block_load_data_from_mcool(Block = Output.block, 
     mcool = mcool, 
     chr1 = "chr1", 
     chr2 = "chr1", 
@@ -230,7 +230,7 @@ Lego_load_data_from_mcool(Lego = Output.lego,
     norm.factor = "Iterative-Correction")
 @
 
-\noindent The first function creates the basic Lego structure, whereas the 
+\noindent The first function creates the basic Block structure, whereas the 
 second function loads data into the structure. Using the param 'chrs', users 
 can limit the structure created to the relevant chromosomes or if left NULL, 
 will create the structure for all chromosome pairs. Please note, that if the 
@@ -250,19 +250,19 @@ defaults to FALSE and prevents users from loading datasets twice.
 
 \newpage
 
-\section{ Loading other datasets as Lego objects}
+\section{ Loading other datasets as Block objects}
 
-Currently, HiCLegos only supports data import from 2D matrices 
+Currently, HiCBlocks only supports data import from 2D matrices 
 and mcool files with more to come. If you have a 2D matrix, you can 
 load it like:
 
 <<eval=TRUE, echo=TRUE >>=
 
-library("HiCLegos")
+library("HiCBlocks")
 
 Bintable.path <- system.file("extdata", 
     "Bintable_40kb.txt", 
-    package = "HiCLegos")
+    package = "HiCBlocks")
 
 Chromosomes <- "chr19"
 
@@ -270,7 +270,7 @@ Output.Filename <- "test.hdf"
 
 
 
-Path_to_cached_file <- CreateLego(ChromNames = Chromosomes, 
+Path_to_cached_file <- CreateBlock(ChromNames = Chromosomes, 
     BinTable = Bintable.path, 
     bin.delim = " ", 
     Output.Filename = Output.Filename, 
@@ -292,9 +292,9 @@ write.table(x = Dist,
     row.names = FALSE, 
     col.names = FALSE)
 
-Lego.file <- Path_to_cached_file
+Block.file <- Path_to_cached_file
 
-Lego_load_matrix(Lego = Lego.file, 
+Block_load_matrix(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19",
     matrix.file = Matrix.file, 
@@ -308,7 +308,7 @@ till a certain distance:
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_load_cis_matrix_till_distance(Lego = Lego.file, 
+Block_load_cis_matrix_till_distance(Block = Block.file, 
     chr = "chr19", 
     matrix.file = Matrix.file, 
     delim = " ", 
@@ -318,36 +318,36 @@ Lego_load_cis_matrix_till_distance(Lego = Lego.file,
 
 \newpage
 
-\section{Accessing ranges objects in a lego store}
+\section{Accessing ranges objects in a block store}
 
-HiCLegos implementes different fetch/get methods. Users can list 
-attributes of a Lego object and they can fetch the same objects. 
+HiCBlocks implementes different fetch/get methods. Users can list 
+attributes of a Block object and they can fetch the same objects. 
 Users have access to Ranges objects and matrix subset operations.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego.file <- system.file("extdata", 
+Block.file <- system.file("extdata", 
     "test.hdf", 
-    package = "HiCLegos")
+    package = "HiCBlocks")
 
-Lego_list_rangekeys(Lego.file)
+Block_list_rangekeys(Block.file)
 @
 
-\noindent This lists the available rangekeys in the Lego file. Alternatively, 
+\noindent This lists the available rangekeys in the Block file. Alternatively, 
 tf you are interested in only the bintable associated to the Hi-C experiment, 
 you can: 
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_get_bintable(Lego.file)
+Block_get_bintable(Block.file)
 @
 
-\noindent Otherwise, you can retrieve the object using Lego\_get\_ranges the 
-method called by Lego\_get\_bintable.
+\noindent Otherwise, you can retrieve the object using Block\_get\_ranges the 
+method called by Block\_get\_bintable.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_get_ranges(Lego = Lego.file, 
+Block_get_ranges(Block = Block.file, 
     rangekey = "Bintable")
 @
 
@@ -356,7 +356,7 @@ of interest.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_get_ranges(Lego = Lego.file, 
+Block_get_ranges(Block = Block.file, 
     rangekey = "Bintable", 
     chr = "chr19")
 @
@@ -368,7 +368,7 @@ matrix row/col for a particular coordinate. Then it it as simple as:
 
 <<eval=TRUE, echo=TRUE >>=
 
-testRun=Lego_return_region_position(Lego = Lego.file, 
+testRun=Block_return_region_position(Block = Block.file, 
     region = "chr19:5000000:10000000")
 head(testRun)
 @
@@ -378,11 +378,11 @@ coordinates. Therefore, sometimes when the region of interest is smaller
 than the ranges corresponding to the particular matrix region of interest, 
 this function may fail.
 To have more fine-grain control, users may choose to use 
-Lego\_fetch\_range\_index which is called by Lego\_return\_region\_position. 
+Block\_fetch\_range\_index which is called by Block\_return\_region\_position. 
 
 <<eval=TRUE, echo=TRUE >>=
 
-testRun=Lego_fetch_range_index(Lego = Lego.file, 
+testRun=Block_fetch_range_index(Block = Block.file, 
     chr = "chr19", 
     start = 5000000, 
     end = 10000000)
@@ -395,7 +395,7 @@ coordinate of that matrix.
 
 \newpage
 
-\section{ Accessing matrices in a lego store}
+\section{ Accessing matrices in a block store}
 
 There are three ways to subset matrices.
 \begin{itemize}
@@ -411,7 +411,7 @@ separated by a certain distance.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Values <- Lego_get_values_by_distance(Lego = Lego.file, 
+Values <- Block_get_values_by_distance(Block = Block.file, 
     chr = "chr19", 
     distance = 4)
 @
@@ -425,7 +425,7 @@ Failsafe_median_log10 <- function(x){
     return(median(log10(x+1)))
 }
 
-Lego_get_values_by_distance(Lego = Lego.file, 
+Block_get_values_by_distance(Block = Block.file, 
     chr = "chr19", 
     distance = 4, 
     FUN = Failsafe_median_log10)
@@ -442,7 +442,7 @@ Failsafe_median_log10 <- function(x){
     return(median(log10(x+1)))
 }
 
-Lego_get_values_by_distance(Lego = Lego.file, 
+Block_get_values_by_distance(Block = Block.file, 
     chr = "chr19", 
     distance = 4, 
     constrain.region = "chr19:1:5000000", 
@@ -451,12 +451,12 @@ Lego_get_values_by_distance(Lego = Lego.file,
 
 \subsection{ Retrieving subsets of a matrix}
 
-HiCLegos, implements word-alike retrieval of sub-matrices. That means, you 
+HiCBlocks, implements word-alike retrieval of sub-matrices. That means, you 
 can retrieve data using coordinate in coordinate like fashion.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Sub.matrix <- Lego_get_matrix_within_coords(Lego = Lego.file, 
+Sub.matrix <- Block_get_matrix_within_coords(Block = Block.file, 
     x.coords="chr19:5000001:10000000", 
     force = TRUE,
     y.coords = "chr19:5000001:10000000")
@@ -469,7 +469,7 @@ Sub.matrix <- Lego_get_matrix_within_coords(Lego = Lego.file,
 x.axis <- 5000000/40000
 y.axis <- 10000000/40000
 
-Sub.matrix <- Lego_get_matrix(Lego = Lego.file, 
+Sub.matrix <- Block_get_matrix(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19", 
     x.vector = c(x.axis:y.axis), 
@@ -489,10 +489,10 @@ rows/cols from the bintable. If these are names, it is required to specify
 <<eval=TRUE, echo=TRUE >>=
 
 Coordinate <- c("chr19:1:40000","chr19:40001:80000")
-Lego.file <- system.file("extdata", 
+Block.file <- system.file("extdata", 
     "test.hdf", 
-    package = "HiCLegos")
-Test_Run <- Lego_fetch_row_vector(Lego = Lego.file, 
+    package = "HiCBlocks")
+Test_Run <- Block_fetch_row_vector(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19", 
     by = "ranges", 
@@ -505,10 +505,10 @@ Test_Run <- Lego_fetch_row_vector(Lego = Lego.file,
 <<eval=TRUE, echo=TRUE >>=
 
 Coordinate <- c(1,2)
-Lego.file <- system.file("extdata", 
+Block.file <- system.file("extdata", 
     "test.hdf", 
-    package = "HiCLegos")
-Test_Run <- Lego_fetch_row_vector(Lego = Lego.file, 
+    package = "HiCBlocks")
+Test_Run <- Block_fetch_row_vector(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19", 
     by = "position", 
@@ -538,17 +538,17 @@ Users can check the names of the various matrix metadata columns.
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_list_matrix_mcols()
+Block_list_matrix_mcols()
 @
 
 \noindent And then fetch one such metadata column
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego.file <- system.file("extdata", 
+Block.file <- system.file("extdata", 
     "test.hdf", 
-    package = "HiCLegos")
-testRun <- Lego_get_matrix_mcols(Lego = Lego.file, 
+    package = "HiCBlocks")
+testRun <- Block_get_matrix_mcols(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19", 
     what = "row.sums")
@@ -560,11 +560,11 @@ testRun <- Lego_get_matrix_mcols(Lego = Lego.file,
 There are several utility functions that a user may take advantage 
 of to do various checks. 
 
-\subsection{ Check if a matrix has been loaded into the Lego store}
+\subsection{ Check if a matrix has been loaded into the Block store}
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_isdone(Lego = Lego.file, 
+Block_matrix_isdone(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -573,7 +573,7 @@ Lego_matrix_isdone(Lego = Lego.file,
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_issparse(Lego = Lego.file, 
+Block_matrix_issparse(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -582,7 +582,7 @@ Lego_matrix_issparse(Lego = Lego.file,
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_maxdist(Lego = Lego.file, 
+Block_matrix_maxdist(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -591,7 +591,7 @@ Lego_matrix_maxdist(Lego = Lego.file,
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_minmax(Lego = Lego.file, 
+Block_matrix_minmax(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -600,7 +600,7 @@ Lego_matrix_minmax(Lego = Lego.file,
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_minmax(Lego = Lego.file, 
+Block_matrix_minmax(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -609,7 +609,7 @@ Lego_matrix_minmax(Lego = Lego.file,
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_dimensions(Lego = Lego.file, 
+Block_matrix_dimensions(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -618,7 +618,7 @@ Lego_matrix_dimensions(Lego = Lego.file,
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_matrix_filename(Lego = Lego.file, 
+Block_matrix_filename(Block = Block.file, 
     chr1 = "chr19", 
     chr2 = "chr19")
 @
@@ -633,20 +633,20 @@ directionality index introduced by Dixon et al., 2012 \cite{Dixon2012}.
 It partitions the genome into segments based on the local directionality 
 index distribution. We first introduced this procedure with our study 
 Pal et al., 2018 \cite{Pal2018}. This has been adapted to work with 
-HiCLegos to show how different analysis procedures can take advantage 
-of the HiCLegos accessor functions.   
+HiCBlocks to show how different analysis procedures can take advantage 
+of the HiCBlocks accessor functions.   
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego.file <- system.file("extdata", 
+Block.file <- system.file("extdata", 
     "test.hdf", 
-    package = "HiCLegos")
+    package = "HiCBlocks")
 
 
 Chromosome <- "chr19"
 di_window <- 10
 lookup_window <- 30
-TAD_ranges <- Lego_local_score_differentiator(Lego = Lego.file, 
+TAD_ranges <- Block_local_score_differentiator(Block = Block.file, 
     chrs = Chromosome, 
     di.window = di_window, 
     lookup.window = lookup_window, 
@@ -668,7 +668,7 @@ Any domains identified by 'fill.gaps' are annotated under the
 'chunk.size' corresponds to the size of the square to retrieve and process per 
 iteration.  
 
-\noindent These TAD calls can also be stored along with the Lego file.
+\noindent These TAD calls can also be stored along with the Block file.
 
 <<eval=TRUE, echo=TRUE >>=
 
@@ -676,33 +676,33 @@ Name <- paste("LSD",
     di_window,
     lookup_window,
     Chromosome,sep = "_")
-Lego_add_ranges(Lego = Path_to_cached_file, 
+Block_add_ranges(Block = Path_to_cached_file, 
     ranges = TAD_ranges, 
     rangekey = Name)
 @
 
 \newpage
 
-\section{ Fetching associated ranges from a Lego file}
+\section{ Fetching associated ranges from a Block file}
 
-Since a lego store is an on-disk database, it is possible to fetch ranges 
-objects associated to the lego store. Users can first list the available 
+Since a block store is an on-disk database, it is possible to fetch ranges 
+objects associated to the block store. Users can first list the available 
 ranges objects. Once, they have identified the available rangekeys, 
 users can fetch the required rangekeys. 
 
 <<eval=TRUE, echo=TRUE >>=
 
-Lego_list_rangekeys(Lego = Path_to_cached_file)
-TAD_ranges <- Lego_get_ranges(Lego = Path_to_cached_file, 
+Block_list_rangekeys(Block = Path_to_cached_file)
+TAD_ranges <- Block_get_ranges(Block = Path_to_cached_file, 
     rangekey = Name)
 @
 
 
 \newpage
 
-\section{ Creating pretty heatmaps using HiCLegos}
+\section{ Creating pretty heatmaps using HiCBlocks}
 
-Using HiCLegos functions, users can plot pretty Hi-C heatmaps. In 
+Using HiCBlocks functions, users can plot pretty Hi-C heatmaps. In 
 the following we list the 
 most basic commands required to generate a heatmap. 
 
@@ -710,8 +710,8 @@ most basic commands required to generate a heatmap.
 \begin{figure}[htbp]
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal, fig=TRUE, echo=TRUE>>=
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
+    Blocks = Block.file, 
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
     palette = "Reds", 
@@ -719,7 +719,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
     height = 11, 
     return.object=TRUE)
 @
-\caption{Simple heatmap generated with HiCLegos.}
+\caption{Simple heatmap generated with HiCBlocks.}
 \label{fig:Fig1}
 \end{figure}
 
@@ -742,8 +742,8 @@ Failsafe_log10 <- function(x){
     return(log10(x+1))
 }
 
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf", 
+    Blocks = Block.file, 
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
@@ -778,8 +778,8 @@ the 'value.cap' argument.
 \begin{figure}[htbp]
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal3, fig=TRUE, echo=TRUE>>=
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf", 
+    Blocks = Block.file, 
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
@@ -809,8 +809,8 @@ of this argument triggers presence of the greater than or less than sign
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal4, fig=TRUE, echo=TRUE>>=
 
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf", 
+    Blocks = Block.file, 
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
@@ -822,7 +822,7 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
     rotate = TRUE,
     return.object=TRUE)
 @
-\caption{Rotated heatmap created by HiCLegos.}
+\caption{Rotated heatmap created by HiCBlocks.}
 \label{fig:Fig4}
 \end{figure}
 
@@ -837,8 +837,8 @@ need to modify the 'width' and
 \begin{figure}[htbp]
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal5, fig=TRUE, echo=TRUE>>=
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf", 
+    Blocks = Block.file, 
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
     FUN = Failsafe_log10, 
@@ -862,8 +862,8 @@ color palette.}
 \begin{figure}[htbp]
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal6, fig=TRUE, echo=TRUE>>=
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf", 
+    Blocks = Block.file, 
     tad.ranges = TAD_ranges, 
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 
@@ -885,8 +885,8 @@ Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal6.pdf",
 \begin{figure}[htbp]
 \centering
 <<eval=TRUE,label=chr19-5MB-10MB-normal7, fig=TRUE, echo=TRUE>>=
-Lego_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
-    Legos = Lego.file, 
+Block_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf", 
+    Blocks = Block.file, 
     tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000", 
     y.coords = "chr19:5000000:10000000", 

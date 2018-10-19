@@ -5,9 +5,9 @@
 \title{Load a NxN dimensional matrix into the Block store from an mcool file.}
 \usage{
 Block_load_data_from_mcool(Block = NULL, mcool = NULL, chr1 = NULL,
-  chr2 = NULL, binsize = NULL, cooler.batch.size = 1e+06,
-  matrix.chunk = 2000, dont.look.for.chr2 = FALSE,
-  remove.prior = FALSE, norm.factor = "Iterative-Correction")
+    chr2 = NULL, binsize = NULL, cooler.batch.size = 1e+06,
+    matrix.chunk = 2000, dont.look.for.chr2 = FALSE,
+    remove.prior = FALSE, norm.factor = "Iterative-Correction")
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -67,15 +67,15 @@ Output.block <- paste("./H1-hESC-HiC-4DNFI7JNCNFB-10000",
 "ICE-normalised-chr1.hicblock",sep = "-")
 mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
 
-CreateBlock_from_mcool(Block = Output.block, 
-mcool = mcool, 
-binsize = 10000, 
+CreateBlock_from_mcool(Block = Output.block,
+mcool = mcool,
+binsize = 10000,
 chrs = "chr1")
 
-Block_load_data_from_mcool(Block = Output.block, mcool = mcool, 
-chr1 = "chr1", chr2 = "chr1", binsize = 10000, 
-cooler.batch.size = 1000000, matrix.chunk = 2000, 
-dont.look.for.chr2 = TRUE, remove.prior = TRUE, 
+Block_load_data_from_mcool(Block = Output.block, mcool = mcool,
+chr1 = "chr1", chr2 = "chr1", binsize = 10000,
+cooler.batch.size = 1000000, matrix.chunk = 2000,
+dont.look.for.chr2 = TRUE, remove.prior = TRUE,
 norm.factor = "Iterative-Correction")
 
 }

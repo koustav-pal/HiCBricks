@@ -26,11 +26,12 @@ distance loaded for that matrix
 If values beyond a certain distance were not loaded in the matrix, this
 distance parameter is useful. This package by default will check this param
 to make sure that it is not returning non-existent data.
-
+}
+\details{
 \code{Block_matrix_maxdist} will return this parameter.
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_matrix_maxdist(Block = Block.file, chr1 = "chr19", chr2 = "chr19") 
+Block_matrix_maxdist(Block = Block.file, chr1 = "chr19", chr2 = "chr19")
 
 }

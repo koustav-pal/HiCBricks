@@ -5,8 +5,8 @@
 \title{Return values separated by a certain distance.}
 \usage{
 Block_get_values_by_distance(Block = NULL, chr = NULL,
-  distance = NULL, constrain.region = NULL, batch.size = 500,
-  FUN = NULL)
+    distance = NULL, constrain.region = NULL, batch.size = 500,
+    FUN = NULL)
 }
 \arguments{
 \item{Block}{\strong{Required}.
@@ -42,22 +42,23 @@ this module is not an iterable module.
 }
 \examples{
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_get_values_by_distance(Block = Block.file, chr = "chr19", distance = 0)
+Block_get_values_by_distance(Block = Block.file, chr = "chr19",
+distance = 0)
 
 Failsafe_median <- function(x){
-     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
-     return(median(x))
+    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
+    return(median(x))
 }
 
 Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-Block_get_values_by_distance(Block = Block.file, chr = "chr19", distance = 4,
-FUN = Failsafe_median)
+Block_get_values_by_distance(Block = Block.file, chr = "chr19",
+distance = 4, FUN = Failsafe_median)
 
 }
 \seealso{
-\code{\link{Block_get_matrix_within_coords}} to get matrix by using
-matrix coordinates, \code{\link{Block_fetch_row_vector}} to get values in a
-certain row/col and subset them, \code{\link{Block_get_vector_values}} to get
-values using matrix coordinates, \code{\link{Block_get_matrix}} to get matrix
-by using matrix coordinates.
+\code{\link{Block_get_matrix_within_coords}} to get matrix by
+using matrix coordinates, \code{\link{Block_fetch_row_vector}} to get values
+in a certain row/col and subset them, \code{\link{Block_get_vector_values}}
+to get values using matrix coordinates, \code{\link{Block_get_matrix}} to
+get matrix by using matrix coordinates.
 }

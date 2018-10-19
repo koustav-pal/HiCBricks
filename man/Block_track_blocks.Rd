@@ -18,6 +18,11 @@ the bioc Cache id as its name.
 \code{Block_track_blocks} will start tracking the provided Block file.
 }
 \examples{
-Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks") 
-Block_track_blocks(Block = Block.file)
+Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
+if(Block_is_tracked(Block.file)) {
+    Block_untrack_block(Block = Block.file)
+    Block_track_blocks(Block = Block.file)
+}else{
+    Block_track_blocks(Block = Block.file)
+}
 }

@@ -5,7 +5,7 @@
 \title{Check if a normalisation exists in an mcool file.}
 \usage{
 Block_mcool_normalisation_exists(mcool = NULL, norm.factor = NULL,
-  binsize = NULL)
+    binsize = NULL)
 }
 \arguments{
 \item{mcool}{\strong{Required}.
@@ -35,7 +35,7 @@ curl_download(url = paste("https://data.4dnucleome.org/"
 destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
-Block_mcool_normalisation_exists(mcool = mcool, 
+Block_mcool_normalisation_exists(mcool = mcool,
 norm.factor = "Iterative-Correction",
 binsize = 10000)
 
