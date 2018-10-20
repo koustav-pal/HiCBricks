@@ -17,12 +17,12 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.ranges.chr.name = "chr.names",
         hdf.ranges.lengths.name = "lengths",
         mcool.resolutions.name = "resolutions",
-        cache.basename = "HiCBlocks",
-        cache.metacol.cols = "HiCBlocks_MetaInfo",
+        cache.basename = "HiCBricks",
+        cache.metacol.cols = "HiCBricks_MetaInfo",
         cache.metacol.dbid = "rid",
         cache.metacol.hashname = "hashname",
         cache.metacol.dirpath = "dirpath",
-        block.extension = "hicblock",
+        brick.extension = "brick",
         Max.vector.size=104857600,
         mcool.available.normalisations = function(){
             Names <- c("Knight-Ruitz","Vanilla-coverage",
@@ -158,11 +158,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     return(HashString)
 }
 
-._Get_Block_hashname <- function(Block = NULL){
-    Filename <- basename(Block)
-    Dir.path <- normalizePath(dirname(Block))
-    Block.path <- file.path(Dir.path,Filename)
-    Tracked_name <- ._GenerateRandomName_(Block.path)
+._Get_Brick_hashname <- function(Brick = NULL){
+    Filename <- basename(Brick)
+    Dir.path <- normalizePath(dirname(Brick))
+    Brick.path <- file.path(Dir.path,Filename)
+    Tracked_name <- ._GenerateRandomName_(Brick.path)
     return(Tracked_name)
 }
 
@@ -189,11 +189,11 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Rows <- x[Range]
     return(length(Rows[Rows!=0])/length(Rows))
 }
-._Block_Get_Something_ <- function(Group.path = NULL, Block = NULL, 
+._Brick_Get_Something_ <- function(Group.path = NULL, Brick = NULL, 
     Name = NULL, Index = NULL, Start = NULL, Stride = NULL, Count = NULL, 
     return.what = "group_handle"){
     Reference.object <- GenomicMatrix$new()
-    Group.Handle <- ReturnH5Handler(Path = Group.path, File = Block)
+    Group.Handle <- ReturnH5Handler(Path = Group.path, File = Brick)
     if(return.what == "group_handle"){
         return(Group.Handle)
     }
@@ -213,56 +213,56 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         return(Dataset)
     }
 }
-._Block_Put_Something_ <- function(Group.path = NULL, Block = NULL,
+._Brick_Put_Something_ <- function(Group.path = NULL, Brick = NULL,
     Name = NULL, data = NULL, Index = NULL, Start = NULL, Stride = NULL, 
     Count = NULL){
     Reference.object <- GenomicMatrix$new()
-    Group.handler <- ._Block_Get_Something_(Group.path = Group.path, 
-        Block = Block, Name = Name, return.what = "group_handle")
+    Group.handler <- ._Brick_Get_Something_(Group.path = Group.path, 
+        Brick = Brick, Name = Name, return.what = "group_handle")
     h5writeDataset(obj=data, h5loc=Group.handler, name=Name, 
         index=Index, start = Start, stride = Stride, count = Count)
     H5Gclose(Group.handler)
 }
-._Block_do_on_ComplexSelection_ <- function(Group.path = NULL, Block = NULL, 
+._Brick_do_on_ComplexSelection_ <- function(Group.path = NULL, Brick = NULL, 
     Name = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
-    Data = NULL, Block.list = NULL, do.what = "fetch"){
-    ListOfArgs <- list(Start.list,Stride.list,Count.list,Block.list)
+    Data = NULL, Brick.list = NULL, do.what = "fetch"){
+    ListOfArgs <- list(Start.list,Stride.list,Count.list,Brick.list)
     if(any(vapply(ListOfArgs,!is.list,TRUE))){
-        stop("Start, Stride, Count, Block must be of type list.\n")
+        stop("Start, Stride, Count, Brick must be of type list.\n")
     }
     if(unique(vapply(ListOfArgs,length,1))!=1){
-        stop("Start, Stride, Count, Block must have same length.\n")
+        stop("Start, Stride, Count, Brick must have same length.\n")
     }
     if(!is.vector(Data)){
         stop("Data should be a vector, when working with ",
-            "Start, Stride, Count, Block.\n")
+            "Start, Stride, Count, Brick.\n")
     }
 }
-._Block_WriteDataFrame_ <- function(Block = NULL, Path = NULL, name = NULL, 
+._Brick_WriteDataFrame_ <- function(Brick = NULL, Path = NULL, name = NULL, 
     object = NULL){
-    if(!(length(c(Block,Path,name,object))>=4)){
+    if(!(length(c(Brick,Path,name,object))>=4)){
         stop("All arguments are required!")
     }
-    Block.handler <- ._Block_Get_Something_(Group.path = Path, Block = Block, 
+    Brick.handler <- ._Brick_Get_Something_(Group.path = Path, Brick = Brick, 
         Name = name, return.what = "group_handle")
-    h5writeDataset.data.frame(h5loc = Block.handler, 
+    h5writeDataset.data.frame(h5loc = Brick.handler, 
         obj = object,
         name = name)
-    H5Gclose(Block.handler)
+    H5Gclose(Brick.handler)
 }
-._Block_WriteArray_ <- function(Block = NULL, Path = NULL, name = NULL, 
+._Brick_WriteArray_ <- function(Brick = NULL, Path = NULL, name = NULL, 
     object = NULL){
-    if(!(length(c(Block,Path,name,object))>=4)){
+    if(!(length(c(Brick,Path,name,object))>=4)){
         stop("All arguments are required!")
     }
-    Block.handler <- ._Block_Get_Something_(Group.path = Path, Block = Block, 
+    Brick.handler <- ._Brick_Get_Something_(Group.path = Path, Brick = Brick, 
         Name = name, return.what = "group_handle")
-    h5writeDataset.array(h5loc = Block.handler, 
+    h5writeDataset.array(h5loc = Brick.handler, 
             obj = object, 
             name = name)
-    H5Gclose(Block.handler)
+    H5Gclose(Brick.handler)
 }
-._Block_Add_Ranges_ = function(Group.path = NULL, Block = NULL, name = NULL, 
+._Brick_Add_Ranges_ = function(Group.path = NULL, Brick = NULL, name = NULL, 
     ranges.df = NULL, mcol.list = NULL){
     Reference.object <- GenomicMatrix$new()
     ChrOffsetCols <- Reference.object$hdf.ranges.protected.names()
@@ -288,8 +288,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             Reference.object$hdf.ranges.chr.name)
         mcol.list <- c(mcol.list,Temp.list)
     }
-    CreateGroups(Group.path = Group.path, File = Block)
-    ._Block_WriteDataFrame_(Block = Block, Path = Group.path, 
+    CreateGroups(Group.path = Group.path, File = Brick)
+    ._Brick_WriteDataFrame_(Brick = Brick, Path = Group.path, 
         name = Reference.object$hdf.ranges.dataset.name, 
         object = ranges.df)
     if(is.null(names(mcol.list))){
@@ -298,7 +298,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     for (i in seq_along(mcol.list)) {
         m.name <- names(mcol.list[i])
         MCol <- mcol.list[[i]]
-        ._Block_WriteArray_(Block = Block, Path = Group.path, 
+        ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = m.name, object = MCol)
     }
 }
@@ -389,7 +389,7 @@ humanize_size <- function(x){
     }
     return(paste(round(x/1024/1024/1024,2),"GB"))
 }
-._Process_matrix_by_distance <- function(Block = NULL, Matrix.file = NULL, 
+._Process_matrix_by_distance <- function(Brick = NULL, Matrix.file = NULL, 
     delim = NULL, Group.path = NULL, chr1.len = NULL, chr2.len = NULL, 
     num.rows = 2000, distance = NULL, is.sparse = NULL, 
     compute.sparsity = NULL, sparsity.bins = 100){
@@ -402,7 +402,7 @@ humanize_size <- function(x){
     Start.col <- 1
     Row.Offset <- 0
     Col.Offset <- 0
-    Path.to.file <- Block
+    Path.to.file <- Brick
     Matrix.range <- c(NA,NA)
     if(chr1.len <= num.rows){
         num.rows <- chr1.len
@@ -444,7 +444,7 @@ humanize_size <- function(x){
 
             message("Inserting Data at location:",Start[1],Start[2],"\n")
             message("Data length:",Count[1],"\n")
-            ._Block_Put_Something_(Group.path=Group.path, Block = Block, 
+            ._Brick_Put_Something_(Group.path=Group.path, Brick = Brick, 
                 Name = Reference.object$hdf.matrix.name,
                 data = Matrix, Start = Start, Stride = Stride, Count = Count)
             Start.row <- Start.row + Count[1]
@@ -458,12 +458,12 @@ humanize_size <- function(x){
         i<-i+1
     }
     close(Handler)
-    ._Block_WriteArray_(Block = Block, Path = Group.path, 
+    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
         name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-    ._Block_WriteArray_(Block = Block, Path = Group.path, 
+    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
         name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
     if(compute.sparsity){
-        ._Block_WriteArray_(Block = Block, Path = Group.path, 
+        ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 
             object = Sparsity.Index)
     }
@@ -473,16 +473,16 @@ humanize_size <- function(x){
         as.integer(distance), 
         as.integer(TRUE))
     WriteAttributes(Path = Group.path, 
-        File = Block, 
+        File = Brick, 
         Attributes = Attributes, 
         values = Attr.vals, on = "group")
     return(TRUE)
 }
-._ProcessMatrix_ <- function(Block = NULL, Matrix.file = NULL, delim = NULL, 
+._ProcessMatrix_ <- function(Brick = NULL, Matrix.file = NULL, delim = NULL, 
     exec = NULL, Group.path = NULL, chr1.len = NULL, chr2.len = NULL, 
     num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
     distance = NULL, sparsity.bins = 100){
-
+    options(datatable.fread.input.cmd.message=FALSE)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
@@ -491,7 +491,7 @@ humanize_size <- function(x){
     Start.row <- 1
     Start.col <- 1
     Set.col <- TRUE
-    Path.to.file <- Block
+    Path.to.file <- Brick
     Cumulative.data <- NULL
     Cumulative.indices <- NULL
     Matrix.range <- c(NA,NA)
@@ -527,10 +527,10 @@ humanize_size <- function(x){
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
-        Matrix <- as.matrix(fread(input=Command, sep=delim, nrows=Iter, 
+        Matrix <- as.matrix(fread(cmd=Command, sep=delim, nrows=Iter, 
             na.strings="NA", stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, 
             dec=".", showProgress=TRUE))
-        message("Read",Iter,"lines after Skipping",Skip,"lines\n")
+        message("Read ",Iter," lines after Skipping ",Skip," lines")
 
         Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, 
             compute.sparsity = compute.sparsity, sparsity.bins = sparsity.bins, 
@@ -548,26 +548,27 @@ humanize_size <- function(x){
             Start <- c(Start.row,1)
             Stride <- c(1,1)
             Count <- c(nrow(Cumulative.data),ncol(Cumulative.data))
-            message("Inserting Data at location:",Start[1],"\n")
-            message("Data length:",Count[1],"\n")
-            ._Block_Put_Something_(Group.path=Group.path, Block = Block, 
+            message("Inserting Data at location: ",Start[1])
+            message("Data length: ",Count[1])
+            ._Brick_Put_Something_(Group.path=Group.path, Brick = Brick, 
                 Name = Reference.object$hdf.matrix.name,
                 data = Cumulative.data, Start = Start, Stride = Stride, 
                 Count = Count)
             Start.row <- Start.row + Count[1]
             Set.col <- TRUE
             Cumulative.data <- NULL
-            message("Loaded ",Obj.size," bytes of data...\n")
+            message("Loaded ",Obj.size," bytes of data...")
         }
-        message("Read ",(Skip+Iter),"records...\n")
+        message("Read ",(Skip+Iter)," records...")
         i<-i+1
     }
-    ._Block_WriteArray_(Block = Block, Path = Group.path, 
+    options(datatable.fread.input.cmd.message=FALSE)
+    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
         name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-    ._Block_WriteArray_(Block = Block, Path = Group.path, 
+    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
         name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
     if(compute.sparsity){
-        ._Block_WriteArray_(Block = Block, Path = Group.path, 
+        ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 
             object = Sparsity.Index)
     }
@@ -577,7 +578,7 @@ humanize_size <- function(x){
         as.integer(is.sparse),
         as.integer(distance),
         as.integer(TRUE))
-    WriteAttributes(Path = Group.path, File = Block, 
+    WriteAttributes(Path = Group.path, File = Brick, 
         Attributes = Attributes, 
         values = Attr.vals, 
         on = "group")
@@ -586,8 +587,8 @@ humanize_size <- function(x){
 
 ._GetDimensions <- function(group.path = NULL, dataset.path = NULL, 
     File = NULL, return.what = NULL){   
-    File.handler <- ._Block_Get_Something_(Group.path = group.path, 
-        Block = File, Name = dataset.path, return.what = "dataset_handle")
+    File.handler <- ._Brick_Get_Something_(Group.path = group.path, 
+        Brick = File, Name = dataset.path, return.what = "dataset_handle")
     Dataspace <- H5Dget_space(File.handler)
     Extents <- H5Sget_simple_extent_dims(Dataspace)
     CloseH5Con(Handle = File.handler, type = "dataset")
@@ -613,14 +614,14 @@ humanize_size <- function(x){
         name = Reference.object$cache.metacol.cols,
         append = TRUE) <- metadata.df    
 }
-._Create_new_cached_file <- function(Cache.dir = NULL, Block.path = NULL){
+._Create_new_cached_file <- function(Cache.dir = NULL, Brick.path = NULL){
     Reference.object <- GenomicMatrix$new()
-    Filename <- basename(Block.path)
-    Dir.path <- normalizePath(dirname(Block.path))
-    Tracked_name <- ._Get_Block_hashname(Block.path)
+    Filename <- basename(Brick.path)
+    Dir.path <- normalizePath(dirname(Brick.path))
+    Tracked_name <- ._Get_Brick_hashname(Brick.path)
     Working.File <- bfcnew(x = Cache.dir, 
         rname = Filename, 
-        ext = Reference.object$block.extension,
+        ext = Reference.object$brick.extension,
         rtype = "local")
     DB_id <- names(Working.File)
     Metadata.df <- data.frame(dbid = DB_id,

@@ -24,11 +24,11 @@
     return(parsed.string.list)
 }
 
-Get_one_or_two_block_regions <- function(Blocks = NULL, x.coords = NULL, 
+Get_one_or_two_brick_regions <- function(Bricks = NULL, x.coords = NULL, 
     y.coords = NULL, distance = NULL, 
     value.cap = NULL, FUN = NULL){
     Reference.object <- GenomicMatrix$new()
-    if(length(Blocks) > 2){
+    if(length(Bricks) > 2){
         stop("Polygonal layouts have not been implemented yet! 
             So for now we can only do two matrices at a time.\n")
     }
@@ -40,13 +40,13 @@ Get_one_or_two_block_regions <- function(Blocks = NULL, x.coords = NULL,
     }
     # require(reshape2)
     Matrix.df.list <- list()
-    for(i in seq_along(Blocks)){
-        Block <- Blocks[i]
-        Matrix <- Block_get_matrix_within_coords(Block = Block, 
+    for(i in seq_along(Bricks)){
+        Brick <- Bricks[i]
+        Matrix <- Brick_get_matrix_within_coords(Brick = Brick, 
             x.coords = x.coords, y.coords = y.coords, force = TRUE, FUN = FUN)
-        Region.position.x <- Block_return_region_position(Block = Block, 
+        Region.position.x <- Brick_return_region_position(Brick = Brick, 
             region = x.coords)
-        Region.position.y <- Block_return_region_position(Block = Block, 
+        Region.position.y <- Brick_return_region_position(Brick = Brick, 
             region = y.coords)
         if(dim(Matrix)[1] != length(Region.position.x) | 
             dim(Matrix)[2] != length(Region.position.y)){
@@ -75,7 +75,7 @@ Get_one_or_two_block_regions <- function(Blocks = NULL, x.coords = NULL,
     }
 
     Matrix.df <- do.call(rbind,Matrix.df.list)
-    if(length(Blocks)==2){
+    if(length(Bricks)==2){
         Matrix.df <- Matrix.df[Matrix.df$keep,]
         Matrix.df$val[Matrix.df$dist == 0] <- 0
     }
@@ -86,8 +86,8 @@ Get_one_or_two_block_regions <- function(Blocks = NULL, x.coords = NULL,
     return(Matrix.df)
 }
 
-Make_axis_labels = function(Block = NULL, chr = NULL, positions = NULL){
-    Bintable <- Block_get_bintable(Block = Block, chr = chr)
+Make_axis_labels = function(Brick = NULL, chr = NULL, positions = NULL){
+    Bintable <- Brick_get_bintable(Brick = Brick, chr = chr)
     breaks <- end(Bintable[positions])
     breaks[1] <- start(Bintable[positions[1]])
     coord.labs <- ._Figure_out_genomic_scale(breaks)
@@ -197,9 +197,9 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
     message(region.start,region.end,"\n")
 
     Unique.groups <- unique(Object[,"groups"])
-    Group.list <- lapply(Unique.groups,function(Block.x){
-        message(Block.x,"\n")
-        Domain <- Object[Object[,"groups"] == Block.x,]
+    Group.list <- lapply(Unique.groups,function(Brick.x){
+        message(Brick.x,"\n")
+        Domain <- Object[Object[,"groups"] == Brick.x,]
         Domain.names <- unique(Domain[,"dom.names"])
         Dolly.the.sheep.list <- lapply(Domain.names, function(domain.name){
             current.domain <- Domain[Domain[,"dom.names"]==domain.name,]
@@ -216,12 +216,12 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 }
                 Coord.list <- list(x1 = c(Start,End),
                     y1 = c(End,End))
-                Groups <- rep(paste(domain.name,Block.x,c(1,2),sep = "."), 
+                Groups <- rep(paste(domain.name,Brick.x,c(1,2),sep = "."), 
                     each = 2)
             }else if(Start >= region.start & End <= region.end){
                 Coord.list <- list(x1 = c(Start - 1,Start - 1,End), 
                     y1 = c(Start - 1,End,End))
-                Groups <- rep(paste(domain.name,Block.x,sep = "."), 
+                Groups <- rep(paste(domain.name,Brick.x,sep = "."), 
                     each = 3)
                 My.end <- End
                 My.Start <- Start
@@ -232,7 +232,7 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 Coord.list <- list(x1 = c(Start - 1,Start - 1,
                     My.Start - 1,End), 
                     y1 = c(Start - 1,My.end,End,End))
-                Groups <- rep(paste(domain.name,Block.x,
+                Groups <- rep(paste(domain.name,Brick.x,
                     c(1,2),
                     sep = "."), each = 2)
             }else if(Start < region.end & End > region.end){
@@ -242,19 +242,19 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 }
                 Coord.list <- list(x1 = c(Start - 1,Start - 1),
                 y1 = c(Start - 1,End))
-                Groups <- rep(paste(domain.name,Block.x,sep = "."),2)
+                Groups <- rep(paste(domain.name,Brick.x,sep = "."),2)
             }
-            if(Block.x == 2){
+            if(Brick.x == 2){
                 Coord.list <- rev(Coord.list)
             }
             Line <- data.frame(x = Coord.list[[1]], 
                 y = Coord.list[[2]], colours = colours,
-                line.group = Groups, group = paste("Group",Block.x,sep = "."))
+                line.group = Groups, group = paste("Group",Brick.x,sep = "."))
             if(length(Unique.groups)==1){
                 Coord.list <- rev(Coord.list)
                 Line.2 <- data.frame(x = Coord.list[[1]],
                 y = Coord.list[[2]], colours = colours,
-                line.group = Groups, group = paste("Group",Block.x+1,sep = "."))
+                line.group = Groups, group = paste("Group",Brick.x+1,sep = "."))
                 Line <- rbind(Line,Line.2)
             }
             Line
@@ -274,8 +274,8 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
     Shift.seed <- 0.5
     Span <- region.end - region.start
     Unique.groups <- unique(Object[,"groups"])
-    Group.list <- lapply(Unique.groups,function(Block.x){
-        Domain <- Object[Object[,"groups"] == Block.x,]
+    Group.list <- lapply(Unique.groups,function(Brick.x){
+        Domain <- Object[Object[,"groups"] == Brick.x,]
         Domain.names <- unique(Domain[,"dom.names"])
         Domain.df.list <- lapply(Domain.names,function(x){
             current.domain <- Domain[Domain[,"dom.names"]==x,]
@@ -308,7 +308,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
             End.line <- data.frame(x=c(x1.start,x2.start),
             y=c(y1.start,y2.start), colours = colours,
             line.group = paste(x, "end", sep = "."), 
-            group = paste("Group",Block.x,sep = "."),
+            group = paste("Group",Brick.x,sep = "."),
             row.names = NULL)
 
             Dist.down <- Max.dist
@@ -322,7 +322,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
             Start.line <- data.frame(x=c(x1.end,x2.end),
                     y=c(y1.end,y2.end), colours=colours,
                     line.group = paste(x, "start", sep = "."),
-                    group=paste("Group",Block.x,sep = "."),row.names = NULL)
+                    group=paste("Group",Brick.x,sep = "."),row.names = NULL)
             Lines <- rbind(End.line,Start.line)
         })
         Domain.df <- do.call(rbind,Domain.df.list)
@@ -331,7 +331,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
     return(Group.df)
 }
 
-Format_boundaries_normal_heatmap <- function(Blocks = NULL, Ranges = NULL, 
+Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL, 
     group.col = NULL, cut.corners = FALSE, colour.col = NULL, 
     colours = NULL, colours.names = NULL, region.chr = NULL, 
     region.start = NULL, region.end = NULL, distance = NULL, 
@@ -341,7 +341,7 @@ Format_boundaries_normal_heatmap <- function(Blocks = NULL, Ranges = NULL,
         Col.values <- unique(elementMetadata(Ranges)[[group.col]])
         if(!(length(Col.values) > 2 | !is.numeric(Col.values))){
             stop("group.col values must be numeric ",
-                "values of for the two Block objects.\n")
+                "values of for the two Brick objects.\n")
         }
     }else{
         group.col <- "pseudogroups"
@@ -376,15 +376,15 @@ Format_boundaries_normal_heatmap <- function(Blocks = NULL, Ranges = NULL,
     start(chr.ranges) <= region.end]
     region <- paste(region.chr, region.start, region.end, 
         sep = Reference.object$Ranges.separator)
-    Region.positions <- Block_return_region_position(Block = Blocks[1], 
+    Region.positions <- Brick_return_region_position(Brick = Bricks[1], 
         region = region)
-    Range.to.df.list <- lapply(seq_along(Blocks),function(Block.x){
+    Range.to.df.list <- lapply(seq_along(Bricks),function(Brick.x){
         pos.ranges <- chr.ranges[
-        elementMetadata(chr.ranges)[[group.col]] == Block.x]
+        elementMetadata(chr.ranges)[[group.col]] == Brick.x]
         chrs <- as.vector(seqnames(pos.ranges))
         start <- start(pos.ranges)
         end <- end(pos.ranges)
-        A.ranges <- Block_fetch_range_index(Block = Blocks[Block.x], 
+        A.ranges <- Brick_fetch_range_index(Brick = Bricks[Brick.x], 
             chr = chrs, start = start, end = end)
         Position.list <- A.ranges[seqnames(A.ranges) == region.chr]
         check_if_only_one_ranges <- function(x){
@@ -402,11 +402,11 @@ Format_boundaries_normal_heatmap <- function(Blocks = NULL, Ranges = NULL,
             function(x){names(Position.list[x])},"")
         Start.df <- data.frame(dom.names = Range.positions.names, 
             position = Range.positions.start, 
-            groups = Block.x, type = "start", 
+            groups = Brick.x, type = "start", 
             colours = elementMetadata(pos.ranges)[[colour.col]])
         End.df <- data.frame(dom.names = Range.positions.names, 
             position = Range.positions.end, 
-            groups = Block.x, type = "end", 
+            groups = Brick.x, type = "end", 
             colours = elementMetadata(pos.ranges)[[colour.col]])
         All.df <- rbind(Start.df,End.df)
         All.df$dom.names <- as.character(All.df$dom.names)
@@ -445,7 +445,7 @@ Get_heatmap_theme <- function(x.axis=TRUE, y.axis=TRUE,
         y.axis.ticks <-element_line(colour = "#000000")
         y.axis.text <- element_text(colour = "#000000", size = y.axis.text.size)
     }
-    Block_theme <- theme_bw() + theme(text = element_text(size=text.size),
+    Brick_theme <- theme_bw() + theme(text = element_text(size=text.size),
                 plot.background=element_blank(),
                 panel.grid.minor=element_blank(),
                 panel.grid.major=element_blank(),
@@ -462,7 +462,7 @@ Get_heatmap_theme <- function(x.axis=TRUE, y.axis=TRUE,
                 legend.title=element_text(size=legend.title.text.size),
                 legend.text=element_text(size=legend.text.size),
                 plot.title=element_text(size=title.size))
-    return(Block_theme)
+    return(Brick_theme)
 }
 
 Get_heatmap_titles <- function(title = NULL, x.axis.title = NULL, 

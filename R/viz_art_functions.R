@@ -1,6 +1,6 @@
 #' Create the entire HDF5 structure and load the bintable
 #' 
-#' `Block_vizart_plot_heatmap` creates various heatmaps and plots TADs. 
+#' `Brick_vizart_plot_heatmap` creates various heatmaps and plots TADs. 
 #' 
 #' This function provides the capability to plot various types of heatmaps from
 #' Hi-C data. 
@@ -16,9 +16,9 @@
 #' @param File \strong{Required}
 #' A character vector containing the output filename to write.
 #' 
-#' @param Blocks \strong{Required}
+#' @param Bricks \strong{Required}
 #' A character vector of length 1 (in case of one sample heatmaps) or 2 (in case
-#' of two sample heatmaps) specifying the names of the Block stores from where
+#' of two sample heatmaps) specifying the names of the Brick stores from where
 #' to fetch the data.
 #' 
 #' @param x.coords \strong{Required}
@@ -41,7 +41,7 @@
 #' 
 #' @param distance \strong{Optional}. Default NULL
 #' If present, values beyond this distance will be filtered out. Please note,
-#' that if a Block store matrix was loaded until a certain distance, this 
+#' that if a Brick store matrix was loaded until a certain distance, this 
 #' parameter will result in an error if it is greater than the loaded distance.
 #' 
 #' @param rotate \strong{Optional}. Default FALSE
@@ -101,7 +101,7 @@
 #' 
 #' @param group.col \strong{Optional}. Default NULL
 #' Name of the column which will be used to categorize TADs as belonging to 
-#' either the first or the second Block stores. This must be a numeric value
+#' either the first or the second Brick stores. This must be a numeric value
 #' ranging from 1 to 2. If NULL, TADs will be plotted on both Hi-C maps.
 #' 
 #' @param tad.colour.col \strong{Optional}. Default NULL
@@ -162,14 +162,14 @@
 #'      return(log10(x+1))
 #' }
 #' 
-#' Block.file <- system.file("extdata", "test.hdf", package = "HiCBlocks")
-#' Block_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
-#' Blocks = Block.file, x.coords = "chr19:5000000:10000000", palette = "Reds",
+#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
+#' Brick_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
+#' Bricks = Brick.file, x.coords = "chr19:5000000:10000000", palette = "Reds",
 #' y.coords = "chr19:5000000:10000000", FUN = FailSafe_log10, 
 #' value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
 #' legend.key.height = unit(0.3,"cm"))
 #' 
-Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL, 
+Brick_vizart_plot_heatmap = function(File = NULL, Bricks = NULL, 
     x.coords = NULL, y.coords = NULL, FUN = NULL, value.cap = NULL, 
     distance = NULL, rotate = FALSE, x.axis = TRUE, x.axis.title = NULL, 
     y.axis = TRUE, y.axis.title = NULL, title = NULL, legend.title = NULL, 
@@ -182,7 +182,7 @@ Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL,
     width = 10, height = 6, line.width = 0.5, units = "cm", 
     legend.key.width = unit(3,"cm"), legend.key.height = unit(0.5,"cm")){
 
-    Matrix.df <- Get_one_or_two_block_regions(Blocks = Blocks, 
+    Matrix.df <- Get_one_or_two_brick_regions(Bricks = Bricks, 
         x.coords = x.coords, y.coords = y.coords, distance = distance,
         value.cap = value.cap, FUN = FUN)
     if(nrow(Matrix.df)==0){
@@ -196,20 +196,20 @@ Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL,
     x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
         to = max(Matrix.df$row), how.many = x.axis.num.breaks, 
         two.sample = FALSE)
-    x.axis.coord.labs <- Make_axis_labels(Block = Blocks[1], 
+    x.axis.coord.labs <- Make_axis_labels(Brick = Bricks[1], 
         chr = x.coord.parsed['chr'], positions = x.coord.breaks)
 
-    two.sample <- (rotate & length(Blocks)==2)
+    two.sample <- (rotate & length(Bricks)==2)
     y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
         to = max(Matrix.df$row), how.many = x.axis.num.breaks, 
         two.sample = two.sample)
-    y.axis.coord.labs <- Make_axis_labels(Block = Blocks[1], 
+    y.axis.coord.labs <- Make_axis_labels(Brick = Bricks[1], 
         chr = y.coord.parsed['chr'], positions = abs(y.coord.breaks))
 
     Colours <- Make_colours(palette = palette, 
         extrapolate.on = extrapolate.on, direction = col.direction)
     # go from min val to mid to max val
-    two.sample <- (length(Blocks)==2)
+    two.sample <- (length(Bricks)==2)
     Matrix.df$rescale <- rescale_values_for_colours(
         Object = Matrix.df, two.sample = two.sample)
     Value.dist <- make_colour_breaks(Object = Matrix.df, 
@@ -224,7 +224,7 @@ Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL,
     if(rotate){
         y.coord.breaks <- y.coord.breaks - min(y.coord.breaks)
         x.coord.breaks <- x.coord.breaks - min(x.coord.breaks)
-        if(length(Blocks)==2){
+        if(length(Bricks)==2){
             Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0,]
             Lower.tri.map <- Matrix.df[Matrix.df$dist <= 0,]
             Lower.tri.map$dist <- abs(Lower.tri.map$dist)
@@ -245,7 +245,7 @@ Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL,
     }
 
     # require(ggplot2)
-    Block_theme <- Get_heatmap_theme(x.axis=x.axis, y.axis=y.axis, 
+    Brick_theme <- Get_heatmap_theme(x.axis=x.axis, y.axis=y.axis, 
         text.size = text.size, x.axis.text.size = x.axis.text.size, 
         y.axis.text.size = y.axis.text.size, 
         legend.title.text.size = legend.title.text.size, 
@@ -257,7 +257,7 @@ Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL,
         x.coords = x.coords, y.coords = y.coords, rotate = rotate)
     Boundaries.obj <- NULL
     if(!is.null(tad.ranges)){
-        Boundaries.obj <- Format_boundaries_normal_heatmap(Blocks = Blocks, 
+        Boundaries.obj <- Format_boundaries_normal_heatmap(Bricks = Bricks, 
             Ranges = tad.ranges, group.col = group.col, 
         cut.corners = cut.corners, colour.col = tad.colour.col, 
         colours = colours, colours.names = colours.names, 
@@ -299,7 +299,7 @@ Block_vizart_plot_heatmap = function(File = NULL, Blocks = NULL,
         breaks = y.coord.breaks, labels = y.axis.coord.labs)
     ThePlot <- ThePlot + scale_fill_gradientn(legend.title,values = Value.dist, 
         breaks = Colour.breaks, labels = Colour.labs, colors = Colours)
-    ThePlot<-ThePlot+ Block_theme
+    ThePlot<-ThePlot+ Brick_theme
     # return(Entire.rotated.map)
     ThePlot<-ThePlot+labs(title = Labels['title'], x = Labels['x.axis'], 
         y = Labels['y.axis'])
