@@ -194,11 +194,11 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
     if(is.null(distance)){
         distance <- region.end - region.start
     }
-    message(region.start,region.end,"\n")
+    # message(region.start,region.end,"\n")
 
     Unique.groups <- unique(Object[,"groups"])
     Group.list <- lapply(Unique.groups,function(Brick.x){
-        message(Brick.x,"\n")
+        # message(Brick.x,"\n")
         Domain <- Object[Object[,"groups"] == Brick.x,]
         Domain.names <- unique(Domain[,"dom.names"])
         Dolly.the.sheep.list <- lapply(Domain.names, function(domain.name){
@@ -555,7 +555,7 @@ get_legend_breaks <- function(Object = NULL, mid.val = 0.5,
             Colour.labs[length(Colour.labs)] <- paste(">",
                 Colour.labs[length(Colour.labs)],sep = "")
         }
-        message(Colour.labs,"\n")
+        # message(Colour.labs,"\n")
     }else{
         Colour.breaks <- seq(min(values),max(values),length.out = 5)
         Colour.labs <- round(seq(min(original.values),

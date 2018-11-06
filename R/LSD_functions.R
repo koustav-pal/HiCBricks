@@ -219,8 +219,8 @@ get_directionality_index_by_chunks <- function(Brick = NULL, chr = NULL,
         Matrix <- Brick_get_vector_values(Brick = Brick, chr1 = chr, 
             chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
         # cat((Start - 1),"\n")
-        message(Position.start,Position.end,"\n")
-        message(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
+        # message(Position.start," ",Position.end,"\n")
+        # message(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
         DI.data <- ComputeDirectionalityIndex(Matrix = Matrix, 
             Window.size = di.window, filter = Filter, 
             start = Position.start - (Start - 1), 
@@ -376,7 +376,7 @@ Brick_local_score_differentiator <- function(Brick = NULL, chrs = NULL,
         if(sparse & fill.gaps){
             fill.gaps=FALSE
         }
-        message("[1] Computing DI for",chr,"\n")
+        message("[1] Computing DI for ",chr,"\n")
         Ranges <- get_directionality_index_by_chunks(Brick = Brick, chr = chr, 
             di.window = di.window, 
             distance = max.distance, chunk.size = chunk.size, sparse=sparse, 
@@ -386,7 +386,7 @@ Brick_local_score_differentiator <- function(Brick = NULL, chrs = NULL,
         RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
             chr2 = chr, what = "row.sums")
         Ranges$row.sums <- RowSums
-        message("[2] Computing DI Differences for",chr,"\n")
+        message("[2] Computing DI Differences for ",chr,"\n")
         if(sparse){
             SparsityIndex <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
                 chr2 = chr, what = "sparsity")
@@ -450,7 +450,7 @@ Brick_local_score_differentiator <- function(Brick = NULL, chrs = NULL,
         Domain.end.candidates <- Domain.end.candidates[
         Domain.end.candidates != 1]
         message("[3] Done\n")
-        message("[4] Creating Domain list for",chr,"\n")
+        message("[4] Creating Domain list for ",chr,"\n")
 
         if(!(1 %in% Domain.start.candidates)){
             Domain.start.candidates <- c(1,Domain.start.candidates)
