@@ -202,7 +202,9 @@ CreateBrick <- function(ChromNames=NULL, BinTable=NULL, bin.delim="\t",
                 "remove.existing = TRUE to overwrite it\n")
         }
         file.remove(HDF.File)
-        Brick_untrack_brick(Brick = Output.Filename)
+        if(Brick_is_tracked(Brick = Output.Filename)){
+            Brick_untrack_brick(Brick = Output.Filename)
+        }
         if(CreateNewCacheObject){
             HDF.File <- ._Create_new_cached_file(Cache.dir = Cache.dir,
                 Brick.path = Output.Filename)
