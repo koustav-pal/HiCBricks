@@ -442,7 +442,8 @@ humanize_size <- function(x){
             Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
             Sparsity.Index <- c(Sparsity.Index,Metrics.list[["sparsity"]])
 
-            message("Inserting Data at location: ",Start[1]," ",Start[2],"\n")
+            message(paste("Inserting Data at location:",
+                paste(Start[1],", ",Start[2],sep = "")))
             message("Data length: ",Count[1],"\n")
             ._Brick_Put_Something_(Group.path=Group.path, Brick = Brick, 
                 Name = Reference.object$hdf.matrix.name,
@@ -453,7 +454,7 @@ humanize_size <- function(x){
             Matrix <- NULL
             num.rows <- ifelse((i + num.rows) >= chr1.len, 
                 chr1.len - i, num.rows)
-            message("Loaded ",humanize_size(Object.size)," of data...\n")
+            message(paste("Loaded",humanize_size(Object.size),"of data..."))
         }
         i<-i+1
     }
