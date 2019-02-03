@@ -4,7 +4,7 @@
 \alias{Brick_untrack_brick}
 \title{Check if a Brick is being tracked.}
 \usage{
-Brick_untrack_brick(Brick = NULL)
+Brick_untrack_brick(Brick)
 }
 \arguments{
 \item{Brick}{\strong{required}

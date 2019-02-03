@@ -4,8 +4,7 @@
 \alias{Brick_add_ranges}
 \title{Store a ranges object in the Brick store.}
 \usage{
-Brick_add_ranges(Brick = NULL, ranges = NULL, rangekey = NULL,
-    remove.existing = TRUE)
+Brick_add_ranges(Brick, ranges, rangekey, remove.existing = TRUE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

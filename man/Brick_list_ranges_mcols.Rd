@@ -5,7 +5,7 @@
 \title{Find out what metadata columns are associated to a ranges with a certain
 name}
 \usage{
-Brick_list_ranges_mcols(Brick = NULL, rangekey = NULL)
+Brick_list_ranges_mcols(Brick, rangekey = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

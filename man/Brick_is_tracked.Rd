@@ -4,7 +4,7 @@
 \alias{Brick_is_tracked}
 \title{Check if a Brick is being tracked.}
 \usage{
-Brick_is_tracked(Brick = NULL)
+Brick_is_tracked(Brick)
 }
 \arguments{
 \item{Brick}{\strong{required}

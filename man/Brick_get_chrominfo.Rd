@@ -4,7 +4,7 @@
 \alias{Brick_get_chrominfo}
 \title{Get the chrominfo for the Hi-C experiment.}
 \usage{
-Brick_get_chrominfo(Brick = NULL)
+Brick_get_chrominfo(Brick)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

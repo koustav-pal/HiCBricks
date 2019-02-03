@@ -4,8 +4,8 @@
 \alias{Brick_get_vector_values}
 \title{Return a N dimensional vector selection.}
 \usage{
-Brick_get_vector_values(Brick = NULL, chr1 = NULL, chr2 = NULL,
-    xaxis = NULL, yaxis = NULL, FUN = NULL, force = FALSE)
+Brick_get_vector_values(Brick, chr1, chr2, xaxis, yaxis, FUN = NULL,
+    force = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

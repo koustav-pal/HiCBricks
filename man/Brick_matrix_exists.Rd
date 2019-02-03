@@ -4,7 +4,7 @@
 \alias{Brick_matrix_exists}
 \title{Check if a chromosome pair exists.}
 \usage{
-Brick_matrix_exists(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_exists(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

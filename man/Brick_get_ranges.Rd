@@ -4,7 +4,7 @@
 \alias{Brick_get_ranges}
 \title{Fetch the ranges associated to a rangekey or chromosome.}
 \usage{
-Brick_get_ranges(Brick = NULL, chr = NULL, rangekey = NULL)
+Brick_get_ranges(Brick, chr = NULL, rangekey)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

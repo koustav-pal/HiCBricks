@@ -1,5 +1,8 @@
 ReturnH5FileConnection <- function(File = NULL){
         HDF.File <- File
+        if(Sys.getenv("HDF5_USE_FILE_LOCKING") == ""){
+            Sys.setenv(HDF5_USE_FILE_LOCKING="FALSE")
+        }
         HDF.Connection = H5Fopen(name=HDF.File)
         return(HDF.Connection)
 }

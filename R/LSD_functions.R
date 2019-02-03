@@ -356,7 +356,7 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' TAD_ranges <- Brick_local_score_differentiator(Brick = Brick.file, 
 #' chrs = "chr19", di.window = 10, lookup.window = 30, strict = TRUE, 
 #' fill.gaps = TRUE, chunk.size = 500)
-Brick_local_score_differentiator <- function(Brick = NULL, chrs = NULL, 
+Brick_local_score_differentiator <- function(Brick, chrs = NULL, 
     min.sum = -1, di.window = 200L, lookup.window = 200L, tukeys.constant=1.5, 
     strict = TRUE, fill.gaps=TRUE, ignore.sparse=TRUE, sparsity.threshold=0.8,
     remove.empty = NULL, chunk.size = 500, force.retrieve = TRUE){

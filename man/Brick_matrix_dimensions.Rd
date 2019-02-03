@@ -4,7 +4,7 @@
 \alias{Brick_matrix_dimensions}
 \title{Return the dimensions of a matrix}
 \usage{
-Brick_matrix_dimensions(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_dimensions(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

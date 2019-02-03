@@ -4,8 +4,7 @@
 \alias{Brick_load_matrix}
 \title{Load a NxM dimensional matrix into the Brick store.}
 \usage{
-Brick_load_matrix(Brick = NULL, chr1 = NULL, chr2 = NULL,
-    matrix.file = NULL, delim = " ", exec = NULL,
+Brick_load_matrix(Brick, chr1, chr2, matrix.file, delim = " ", exec,
     remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
     sparsity.bins = 100)
 }
@@ -74,7 +73,7 @@ write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 Brick.file <- Brick_path_to_file(Brick = "test.hdf")
 Brick_load_matrix(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-matrix.file = Matrix.file, delim = " ", exec = "cat",
+matrix.file = Matrix.file, delim = " ",
 remove.prior = TRUE)
 
 }

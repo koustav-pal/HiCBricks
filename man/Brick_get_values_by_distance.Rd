@@ -4,9 +4,8 @@
 \alias{Brick_get_values_by_distance}
 \title{Return values separated by a certain distance.}
 \usage{
-Brick_get_values_by_distance(Brick = NULL, chr = NULL,
-    distance = NULL, constrain.region = NULL, batch.size = 500,
-    FUN = NULL)
+Brick_get_values_by_distance(Brick, chr, distance, constrain.region = NULL,
+    batch.size = 500, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

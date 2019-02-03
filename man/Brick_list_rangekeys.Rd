@@ -4,7 +4,7 @@
 \alias{Brick_list_rangekeys}
 \title{List the ranges tables stored within the Brick.}
 \usage{
-Brick_list_rangekeys(Brick = NULL)
+Brick_list_rangekeys(Brick)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

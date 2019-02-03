@@ -169,12 +169,12 @@
 #' value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
 #' legend.key.height = unit(0.3,"cm"))
 #' 
-Brick_vizart_plot_heatmap = function(File = NULL, Bricks = NULL, 
-    x.coords = NULL, y.coords = NULL, FUN = NULL, value.cap = NULL, 
+Brick_vizart_plot_heatmap = function(File, Bricks, 
+    x.coords, y.coords, FUN = NULL, value.cap = NULL, 
     distance = NULL, rotate = FALSE, x.axis = TRUE, x.axis.title = NULL, 
     y.axis = TRUE, y.axis.title = NULL, title = NULL, legend.title = NULL, 
     return.object=FALSE, x.axis.num.breaks = 5, y.axis.num.breaks = 5, 
-    palette = NULL, col.direction = 1, extrapolate.on = NULL, 
+    palette, col.direction = 1, extrapolate.on = NULL, 
     x.axis.text.size = 10, y.axis.text.size = 10, text.size = 10,
     legend.title.text.size = 8, legend.text.size = 8, title.size = 10,
     tad.ranges = NULL, group.col = NULL, tad.colour.col = NULL, colours = NULL,

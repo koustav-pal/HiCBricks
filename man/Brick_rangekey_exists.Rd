@@ -4,7 +4,7 @@
 \alias{Brick_rangekey_exists}
 \title{Check to see if the Brick contains a ranges with a certain name.}
 \usage{
-Brick_rangekey_exists(Brick = NULL, rangekey = NULL)
+Brick_rangekey_exists(Brick, rangekey)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

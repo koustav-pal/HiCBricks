@@ -480,15 +480,15 @@ humanize_size <- function(x){
     return(TRUE)
 }
 ._ProcessMatrix_ <- function(Brick = NULL, Matrix.file = NULL, delim = NULL, 
-    exec = NULL, Group.path = NULL, chr1.len = NULL, chr2.len = NULL, 
+    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, exec = NULL,
     num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
     distance = NULL, sparsity.bins = 100){
-    options(datatable.fread.input.cmd.message=FALSE)
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
-    Command <- paste(exec,Matrix.file,sep=" ")
+    options(datatable.fread.input.cmd.message=FALSE)
+    Command <- paste(exec, Matrix.file)
     Start.row <- 1
     Start.col <- 1
     Set.col <- TRUE
@@ -563,7 +563,6 @@ humanize_size <- function(x){
         message("Read ",(Skip+Iter)," records...")
         i<-i+1
     }
-    options(datatable.fread.input.cmd.message=FALSE)
     ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
         name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
     ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
@@ -574,6 +573,7 @@ humanize_size <- function(x){
             object = Sparsity.Index)
     }
     Attributes <- Reference.object$matrices.chrom.attributes
+    options(datatable.fread.input.cmd.message=FALSE)
     Attr.vals <- c(basename(Matrix.file),
         as.double(Matrix.range),
         as.integer(is.sparse),

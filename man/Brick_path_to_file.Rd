@@ -4,7 +4,7 @@
 \alias{Brick_path_to_file}
 \title{Check if a Brick is being tracked.}
 \usage{
-Brick_path_to_file(Brick = NULL)
+Brick_path_to_file(Brick)
 }
 \arguments{
 \item{Brick}{\strong{required}

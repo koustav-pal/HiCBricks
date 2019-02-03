@@ -4,7 +4,7 @@
 \alias{Brick_matrix_filename}
 \title{Return the filename of the loaded matrix}
 \usage{
-Brick_matrix_filename(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_filename(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

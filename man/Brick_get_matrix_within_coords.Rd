@@ -4,8 +4,8 @@
 \alias{Brick_get_matrix_within_coords}
 \title{Return a matrix subset between two regions.}
 \usage{
-Brick_get_matrix_within_coords(Brick = NULL, x.coords = NULL,
-    y.coords = NULL, force = FALSE, FUN = NULL)
+Brick_get_matrix_within_coords(Brick, x.coords, y.coords, force = FALSE,
+    FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

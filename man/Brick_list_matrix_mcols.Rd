@@ -4,7 +4,7 @@
 \alias{Brick_list_matrix_mcols}
 \title{List the matrix metadata columns in the Brick store.}
 \usage{
-Brick_list_matrix_mcols(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_list_matrix_mcols(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

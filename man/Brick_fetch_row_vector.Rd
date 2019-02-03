@@ -4,9 +4,8 @@
 \alias{Brick_fetch_row_vector}
 \title{Return row or col vectors.}
 \usage{
-Brick_fetch_row_vector(Brick = NULL, chr1 = NULL, chr2 = NULL,
-    by = NULL, vector = NULL, regions = NULL, force = FALSE,
-    flip = FALSE, FUN = NULL)
+Brick_fetch_row_vector(Brick, chr1, chr2, by = c("position", "ranges"),
+    vector, regions = NULL, force = FALSE, flip = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

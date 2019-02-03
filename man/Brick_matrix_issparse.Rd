@@ -4,7 +4,7 @@
 \alias{Brick_matrix_issparse}
 \title{Check if a matrix for a chromosome pair is sparse.}
 \usage{
-Brick_matrix_issparse(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_issparse(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

@@ -4,7 +4,7 @@
 \alias{Brick_matrix_minmax}
 \title{Return the value range of the matrix}
 \usage{
-Brick_matrix_minmax(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_minmax(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

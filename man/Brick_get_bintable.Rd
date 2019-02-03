@@ -4,7 +4,7 @@
 \alias{Brick_get_bintable}
 \title{Returns the binning table associated to the Hi-C experiment.}
 \usage{
-Brick_get_bintable(Brick = NULL, chr = NULL)
+Brick_get_bintable(Brick, chr = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

@@ -4,8 +4,8 @@
 \alias{CreateBrick_from_mcool}
 \title{Create the entire HDF5 structure and load the bintable from a mcool file}
 \usage{
-CreateBrick_from_mcool(Brick = NULL, mcool = NULL, binsize = NULL,
-    chrs = NULL, remove.existing = FALSE)
+CreateBrick_from_mcool(Brick, mcool, binsize = NULL, chrs = NULL,
+    remove.existing = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

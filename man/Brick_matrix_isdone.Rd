@@ -4,7 +4,7 @@
 \alias{Brick_matrix_isdone}
 \title{Check if a matrix has been loaded for a chromosome pair.}
 \usage{
-Brick_matrix_isdone(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_isdone(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

@@ -4,8 +4,8 @@
 \alias{Brick_get_matrix}
 \title{Return a matrix subset.}
 \usage{
-Brick_get_matrix(Brick = NULL, chr1 = NULL, chr2 = NULL,
-    x.vector = NULL, y.vector = NULL, force = FALSE, FUN = NULL)
+Brick_get_matrix(Brick, chr1, chr2, x.vector, y.vector, force = FALSE,
+    FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

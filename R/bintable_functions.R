@@ -61,10 +61,10 @@ Validate_table = function(Table = NULL, colnames = NULL, colClasses = NULL,
     }
     UniqueChromNames<-unique(Table[,'chr'])
     if(any( !(UniqueChromNames %in% chrom) )){
-        stop("Some chromosome names are not defined in the chromosome table")
+        stop("All chromosomes from BinTable are expected in ChromNames")
     }
     if(any( !(chrom %in% UniqueChromNames) )){
-        stop("Some chromosome names are not defined in the chromosome table")
+        stop("All chromosomes from ChromNames are expected in BinTable")
     }
     if(any(!(Table[,'start'] %% 1 == 0)) | any(!(Table[,'end'] %% 1 == 0))) {
         stop("Genomic coordinates at col",col.index[2],"and",col.index[3],

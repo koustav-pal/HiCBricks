@@ -5,8 +5,8 @@
 \title{Returns the position of the supplied ranges in the binning table
 associated to the Hi-C experiment.}
 \usage{
-Brick_fetch_range_index(Brick = NULL, chr = NULL, start = NULL,
-    end = NULL, names = NULL, type = "any")
+Brick_fetch_range_index(Brick, chr, start, end, names = NULL,
+    type = "any")
 }
 \arguments{
 \item{Brick}{\strong{Required}.

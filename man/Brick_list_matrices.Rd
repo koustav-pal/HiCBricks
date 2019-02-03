@@ -4,7 +4,7 @@
 \alias{Brick_list_matrices}
 \title{List the matrix pairs present in the Brick store.}
 \usage{
-Brick_list_matrices(Brick = NULL)
+Brick_list_matrices(Brick)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

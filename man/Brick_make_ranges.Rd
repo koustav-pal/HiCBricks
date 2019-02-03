@@ -4,8 +4,7 @@
 \alias{Brick_make_ranges}
 \title{Creates a ranges object from provided vectors.}
 \usage{
-Brick_make_ranges(Chrom = NULL, Start = NULL, End = NULL,
-    Strand = NULL, Names = NULL)
+Brick_make_ranges(Chrom, Start, End, Strand = NULL, Names = NULL)
 }
 \arguments{
 \item{Chrom}{\strong{Required}.

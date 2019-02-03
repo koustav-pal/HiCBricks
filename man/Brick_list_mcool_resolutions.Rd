@@ -4,7 +4,7 @@
 \alias{Brick_list_mcool_resolutions}
 \title{Get all available normalisations in an mcool file.}
 \usage{
-Brick_list_mcool_resolutions(mcool = NULL)
+Brick_list_mcool_resolutions(mcool)
 }
 \arguments{
 \item{mcool}{\strong{Required}.

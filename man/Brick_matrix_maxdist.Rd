@@ -4,7 +4,7 @@
 \alias{Brick_matrix_maxdist}
 \title{Get the maximum loaded distance from the diagonal of any matrix.}
 \usage{
-Brick_matrix_maxdist(Brick = NULL, chr1 = NULL, chr2 = NULL)
+Brick_matrix_maxdist(Brick, chr1, chr2)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

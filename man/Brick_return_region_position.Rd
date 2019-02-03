@@ -4,7 +4,7 @@
 \alias{Brick_return_region_position}
 \title{Provides the overlapping position (within) from the bintable.}
 \usage{
-Brick_return_region_position(Brick = NULL, region = NULL)
+Brick_return_region_position(Brick, region)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

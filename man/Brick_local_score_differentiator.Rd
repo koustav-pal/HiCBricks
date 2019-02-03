@@ -4,7 +4,7 @@
 \alias{Brick_local_score_differentiator}
 \title{Do TAD Calls with Local Score Differentiator on a Hi-C matrix}
 \usage{
-Brick_local_score_differentiator(Brick = NULL, chrs = NULL,
+Brick_local_score_differentiator(Brick, chrs = NULL,
     min.sum = -1, di.window = 200L, lookup.window = 200L,
     tukeys.constant = 1.5, strict = TRUE, fill.gaps = TRUE,
     ignore.sparse = TRUE, sparsity.threshold = 0.8,

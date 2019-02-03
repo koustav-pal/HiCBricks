@@ -5,9 +5,8 @@
 \title{Load a NxN dimensional sub-distance \emph{cis} matrix into
 the Brick store.}
 \usage{
-Brick_load_cis_matrix_till_distance(Brick = NULL, chr = NULL,
-    matrix.file = NULL, delim = " ", distance = NULL,
-    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
+Brick_load_cis_matrix_till_distance(Brick, chr, matrix.file, delim = " ",
+    distance, remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
     sparsity.bins = 100)
 }
 \arguments{
