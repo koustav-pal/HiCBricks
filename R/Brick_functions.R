@@ -1150,7 +1150,7 @@ Brick_return_region_position = function(Brick, region){
 #' row.names = FALSE, col.names = FALSE)
 #' Brick.file <- Brick_path_to_file(Brick = "test.hdf")
 #' Brick_load_matrix(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-#' matrix.file = Matrix.file, delim = " ",
+#' matrix.file = Matrix.file, delim = " ", exec = "cat",
 #' remove.prior = TRUE)
 #'
 Brick_load_matrix = function(Brick, chr1, chr2,
