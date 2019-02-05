@@ -339,9 +339,11 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
     Reference.object <- GenomicMatrix$new()
     if(!is.null(group.col)){
         Col.values <- unique(elementMetadata(Ranges)[[group.col]])
-        if(!(length(Col.values) > 2 | !is.numeric(Col.values))){
+        if(length(Col.values) > 2 | !is.numeric(Col.values)){
             stop("group.col values must be numeric ",
-                "values of for the two Brick objects.\n")
+                "values corresponding to ",
+                "the number of Brick objects ",
+                "(max. 2) specified.\n")
         }
     }else{
         group.col <- "pseudogroups"
