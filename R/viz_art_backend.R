@@ -353,23 +353,27 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
         Ranges <- c(Ranges,Ranges.too)
     }
     
-    Colour.check <- as.logical(as.numeric(is.null(colour.col)) * 
-        as.numeric(is.null(colours)))
-    Colour.check.2 <- length(colour.col)/length(colours)
-    if(Colour.check){
-        stop("colours expects a vector of length 1 with the colour value")
-    }else if(is.nan(Colour.check.2)){
-        stop("colours is missing\n")
-    }else if(!(Colour.check.2 %in% c(0,1))){
-        stop("colours and colour.col have different lengths\n")
-    }else {
+    if(is.null(colours)){
+        stop("colours expects a vector of colours of at least length 1")
+    }
+    if(is.null(colour.col)){
         colour.col <- "pseudo.colour.col"
         elementMetadata(Ranges)[[colour.col]] <- "My_Group"
     }
+    Unique.colour.cols <- unique(elementMetadata(Ranges)[[colour.col]])
+    if(length(Unique.colour.cols) != length(colours)){
+        stop("colours length must be equal to ",
+            "number of unique values present in ",
+            "colour.col")
+    }
     if(is.null(colours.names)){
-        colours.names <- unique(elementMetadata(Ranges)[[colour.col]])
+        colours.names <- Unique.colour.cols
         names(colours) <- colours.names
     }else{
+        if(any(!(Unique.colour.cols %in% colours.names))){
+            stop("Provided colours.names had differing values ",
+                "from unique values present in colour.cols")
+        }
         names(colours) <- colours.names
     }
 
