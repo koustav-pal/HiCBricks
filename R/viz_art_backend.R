@@ -302,12 +302,12 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
                 Dist.up <- abs(0 - Normalised.end.bin)/2
             }
             x1.start <- Normalised.end.bin - Dist.up
-            y1.start <- Dist.up
+            y1.start <- ifelse(Brick.x == 1, Dist.up, Dist.up*-1)
             x2.start <- Normalised.end.bin
             y2.start <- 0
             End.line <- data.frame(x=c(x1.start,x2.start),
             y=c(y1.start,y2.start), colours = colours,
-            line.group = paste(x, "end", sep = "."), 
+            line.group = paste(Brick.x, x, "end", sep = "."), 
             group = paste("Group",Brick.x,sep = "."),
             row.names = NULL)
 
@@ -318,10 +318,10 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
             x1.end <- Normalised.start.bin
             y1.end <- 0
             x2.end <- Normalised.start.bin + Dist.down
-            y2.end <- Dist.down
+            y2.end <- ifelse(Brick.x == 1, Dist.down, Dist.down*-1)
             Start.line <- data.frame(x=c(x1.end,x2.end),
                     y=c(y1.end,y2.end), colours=colours,
-                    line.group = paste(x, "start", sep = "."),
+                    line.group = paste(Brick.x, x, "start", sep = "."),
                     group=paste("Group",Brick.x,sep = "."),row.names = NULL)
             Lines <- rbind(End.line,Start.line)
         })
