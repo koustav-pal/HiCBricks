@@ -640,7 +640,6 @@ Brick_add_ranges = function(Brick, ranges, rangekey,
     names(Metadata.list) <- Metadata.Cols
     Ranges.df.coords <- Ranges.df[,c(1,2,3)]
     colnames(Ranges.df.coords) <- Reference.object$NonStrandedColNames
-    warning(Brick,"\n")
     ._Brick_Add_Ranges_(
         Group.path = Create_Path(c(Reference.object$hdf.ranges.root,rangekey)),
         Brick = Brick, ranges.df = Ranges.df.coords, name = rangekey,

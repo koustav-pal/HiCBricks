@@ -209,7 +209,12 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
             current.domain[,"type"] == "start", "position"]
             End <- current.domain[
             current.domain[,"type"] == "end", "position"]
+            # message(Start)
+            # message("Region start: ",region.start)
+            # message(End)
+            # message("Region end: ",region.end)
             if(Start < region.start & End >= region.start){
+                # message("Here")
                 Start <- region.start
                 if((End - Start) > distance){
                     Start <- Start + distance
@@ -219,6 +224,7 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 Groups <- rep(paste(domain.name,Brick.x,c(1,2),sep = "."), 
                     each = 2)
             }else if(Start >= region.start & End <= region.end){
+                # message("2nd Here")
                 Coord.list <- list(x1 = c(Start - 1,Start - 1,End), 
                     y1 = c(Start - 1,End,End))
                 Groups <- rep(paste(domain.name,Brick.x,sep = "."), 
@@ -235,7 +241,8 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
                 Groups <- rep(paste(domain.name,Brick.x,
                     c(1,2),
                     sep = "."), each = 2)
-            }else if(Start < region.end & End > region.end){
+            }else if(Start <= region.end & End > region.end){
+                # message("3rd Here")
                 End <- region.end
                 if((End - Start) > distance){
                     End <- Start + distance
@@ -364,7 +371,10 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
     if(length(Unique.colour.cols) != length(colours)){
         stop("colours length must be equal to ",
             "number of unique values present in ",
-            "colour.col")
+            colour.col,"\n",
+            "Length of colours: ",length(colours),"\n",
+            "Length of colour names: ",length(Unique.colour.cols),"\n",
+            "Names: ",paste(Unique.colour.cols,collapse=","))
     }
     if(is.null(colours.names)){
         colours.names <- Unique.colour.cols

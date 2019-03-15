@@ -592,11 +592,15 @@ Local score differentiator (LSD) is a TAD calling procedure based on the
 directionality index introduced by Dixon et al., 2012^[Topological domains in 
 mammalian genomes identified by analysis of chromatin interactions.
 Dixon JR, Selvaraj S, Yue F, Kim A, Li Y, Shen Y, Hu M, Liu JS and Ren B.
-Nature 2012]. It partitions the genome into segments based on the local 
-directionality index distribution. We first introduced this procedure with 
-our study Pal et al., 2019. This has been adapted to work with HiCBricks to 
-show how different analysis procedures can take advantage of the HiCBricks 
-accessor functions.  
+Nature 2012]. LSD is based on the computation of the directionality index 
+(DI), as described in the original article, but the genome is partitioned 
+into TADs based on the local directionality index distribution. Briefly, 
+transition points between negative and positive values marking TAD boundaries 
+are identified as the local extreme values in the first derivative of DI 
+computed within a local window of user defined size. We first introduced 
+this procedure with our study (Pal et al., in revision). This has been 
+adapted to work with HiCBricks to show how different analysis procedures 
+can take advantage of the HiCBricks accessor functions.
 
 ```{r}
 Brick.file <- system.file("extdata",
@@ -658,8 +662,11 @@ TAD_ranges <- Brick_get_ranges(Brick = Path_to_cached_file,
 
 ## Creating pretty heatmaps using HiCBricks
 
-Using HiCBricks functions, users can plot pretty Hi-C heatmaps. This lists the
-most basic commands required to generate a heatmap.
+Using HiCBricks functions, users can plot pretty Hi-C heatmaps. HiCBricks 
+allows users to plot one sample or two sample heatmaps. This lists the most 
+basic commands required to generate a heatmap.
+
+### Plotting one sample heatmaps
 
 ```{r plot, fig.cap = "Figure 1. A normal heatmap without any transformations", fig.small = TRUE}
 
@@ -736,7 +743,7 @@ argument triggers presence of the greater than or less than sign.
 Sometimes, it is desirable to plot the heatmap as a rotated heatmap.
 
 
-```{r plot4, fig.cap = "Figure 4. Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 90 degree rotation", fig.small = TRUE}
+```{r plot4, fig.cap = "Figure 4. Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 45 degree rotation", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf",
     Bricks = Brick.file,
@@ -793,6 +800,8 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
     height = 11,
     return.object=TRUE)
 ```
+Notice, that using the distance parameter we can control the diagonal until
+which we plot the heatmap.
 
 ```{r plot7, fig.cap = "Figure 7. Normal rotated heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.wide = TRUE}
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
@@ -813,3 +822,321 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
     rotate = TRUE,
     return.object=TRUE)
 ```
+
+### Plotting bipartite (two-sample) heatmaps
+
+HiCBricks makes it possible to plot bipartite or two sample heatmaps. 
+Bipartite heatmaps can be plotted as square maps or as rotated maps with or 
+without TADs. Due to space limitations placed on example datasets, we will 
+use the same dataset as before to showcase how two-sample heatmaps can be 
+made using the HiCBricks package. 
+
+To plot a two sample heatmap, we need only include an additional Brick file in
+the `Brick` parameter. 
+
+*NOTE:* The main diagonal will be set to the minimum value in both plots.
+
+```{r plot8, fig.cap = "Figure 8. A normal two sample heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000000:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.99,
+    legend.title = "Log10 Hi-C signal",
+    palette = "YlGnBu",
+    width = 10,
+    height = 11,
+    return.object=TRUE)
+
+```
+
+Since this Hi-C map is sparse, we can go ahead and remove distant interactions.
+This is achieved using the `distance` parameter. Remember, that we can use any
+of the `RColorBrewer` or `viridis` colour palettes. For example, we can use
+the Red to Gray (name RdGy) palette from `RColorBrewer`
+
+
+```{r plot9, fig.cap = "Figure 9. A normal two sample heatmap with colours computed in log10 scale on values until the 30th diagonal and capping these values to the 99th percentile.", fig.small = TRUE}
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000000:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.99,
+    legend.title = "Log10 Hi-C signal",
+    palette = "RdGy",
+    distance = 30,
+    width = 10,
+    height = 11,
+    return.object=TRUE)
+
+```
+
+Finally, we can once again rotate the two sample heatmaps.
+
+```{r plot10, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000000:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.99,
+    legend.title = "Log10 Hi-C signal",
+    palette = "YlGnBu",
+    distance = 30,
+    width = 15,
+    height = 4,
+    rotate = TRUE,
+    return.object=TRUE)
+
+```
+
+### Plotting TADs on Bipartite heatmaps
+
+HiCBricks also allows the possibility to plot TADs on the Bipartite heatmaps
+with categorical colours for each of the TAD calls. Although users may provide
+more than one category per sample, they should be aware that when TADs overlap,
+the TAD which is plotted at the end will always be the one that appears at the
+top, while other overlapping TADs will be hidden at the bottom.
+
+As an example we will prepare a set of TAD calls and store them in the Brick
+object to compare them.
+
+```{r}
+
+Brick.file <- system.file("extdata",
+    "test.hdf", package = "HiCBricks")
+
+Chromosome <- "chr19"
+di_windows <- c(5,10)
+lookup_windows <- c(10, 20)
+for (i in seq_along(di_windows)) {
+
+    di_window <- di_windows[i]
+    lookup_window <- lookup_windows[i]
+    
+    TAD_ranges <- Brick_local_score_differentiator(Brick = Brick.file,
+        chrs = Chromosome,
+        di.window = di_window,
+        lookup.window = lookup_window,
+        strict = TRUE,
+        fill.gaps=TRUE,
+        chunk.size = 500)
+    
+    Name <- paste("LSD",
+        di_window,
+        lookup_window,
+        Chromosome,sep = "_")
+    
+    Brick_add_ranges(Brick = Path_to_cached_file, ranges = TAD_ranges,
+        rangekey = Name)
+}
+
+```
+
+To plot these TAD calls, they need to be formatted correctly before plotting.
+This involves assigning categorical values to each of the TAD calls we want to
+plot. We will assign two categorical variables, one will map the TADs to their
+respective Hi-C map, whereas the other will map the TADs to their respective
+category.
+
+```{r}
+
+Chromosome <- "chr19"
+di_windows <- c(5,10)
+lookup_windows <- c(10, 20)
+TADs_list <- list()
+
+for (i in seq_along(di_windows)) {
+
+    di_window <- di_windows[i]
+    lookup_window <- lookup_windows[i]
+    
+    Name <- paste("LSD",
+        di_window,
+        lookup_window,
+        Chromosome,sep = "_")
+    
+    TAD_ranges <- Brick_get_ranges(Brick = Path_to_cached_file, 
+        rangekey = Name)
+    # Map TADs to their Hi-C maps
+    TAD_ranges$group <- i
+    # Map TADs to a specific categorical value for the colours
+    TAD_ranges$colour.group <- paste("LSD", di_window, lookup_window, 
+        sep = "_")
+    TADs_list[[Name]] <- TAD_ranges
+}
+
+TADs_ranges <- do.call(c, unlist(TADs_list, use.names = FALSE))
+
+```
+
+As described in the manual, the two parameters, `group.col` and 
+`tad.colour.col` are relevant towards assigning any TAD to its respective Hi-C
+map or category, respectively. These two parameters take as input, the column
+names corresponding to their respective columns in the `TADs_ranges` object. 
+Meanwhile, `colours` and `colours.names` is the relevant parameter for the 
+colours of the TAD boundaries. `colours` is a required parameter in case TAD 
+boundaries are provided, whereas `colours.names` can be left empty in case the
+user intends to provide `unique(TAD_ranges$colour.group)` as 
+the `colour.names`.
+
+```{r plot11, fig.cap = "Figure 10. A normal two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with TAD borders", fig.small = TRUE}
+
+Brick.file <- system.file("extdata",
+    "test.hdf", package = "HiCBricks")
+
+Colours <- c("#B4436C", "#F78154")
+Colour.names <- unique(TADs_ranges$colour.group)
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000001:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.97,
+    legend.title = "Log10 Hi-C signal",
+    palette = "YlGnBu",
+    tad.ranges = TADs_ranges,
+    group.col = "group",
+    tad.colour.col = "colour.group",
+    colours = Colours,
+    colours.names = Colour.names,
+    distance = 30,
+    width = 9,
+    height = 11,
+    return.object=TRUE)
+
+```
+
+```{r plot12, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with non-truncated TAD borders", fig.wide = TRUE}
+
+Brick.file <- system.file("extdata",
+    "test.hdf", package = "HiCBricks")
+
+Colours <- c("#B4436C", "#F78154")
+Colour.names <- unique(TADs_ranges$colour.group)
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000000:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.97,
+    legend.title = "Log10 Hi-C signal",
+    palette = "YlGnBu",
+    tad.ranges = TADs_ranges,
+    group.col = "group",
+    tad.colour.col = "colour.group",
+    colours = Colours,
+    colours.names = Colour.names,
+    distance = 30,
+    width = 15,
+    height = 4,
+    rotate = TRUE,
+    return.object=TRUE)
+
+```
+
+Notice, that while creating rotated plots with TADs, if the parameter 
+`cut.corners` is not set to TRUE, then the default behaviour is to plot
+continuous lines. To truncate lines at the corners of TADs, users should
+set this parameter as TRUE.
+
+
+```{r plot13, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with truncated TAD borders", fig.wide = TRUE}
+
+Brick.file <- system.file("extdata",
+    "test.hdf", package = "HiCBricks")
+
+Colours <- c("#B4436C", "#F78154")
+Colour.names <- unique(TADs_ranges$colour.group)
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000000:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.97,
+    legend.title = "Log10 Hi-C signal",
+    palette = "YlGnBu",
+    tad.ranges = TADs_ranges,
+    group.col = "group",
+    tad.colour.col = "colour.group",
+    colours = Colours,
+    colours.names = Colour.names,
+    distance = 30,
+    width = 15,
+    height = 4,
+    cut.corners = TRUE,
+    rotate = TRUE,
+    return.object=TRUE)
+
+```
+
+### Making edits to additional plot elements
+
+There are several problems in the above plots which are quickly noticeable.
+
+- The TAD border lines are too thin and are not clearly. This problem can be
+addressed by playing around with the `line.width` parameter.
+- The legends are outside the bounds of the plotting area. We can make 
+changes to the legend with a few parameter changes to the 
+`legend.key.width` and `legend.key.height` parameters.
+
+```{r plot14, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
+
+Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+    Bricks = c(Brick.file, Brick.file),
+    x.coords = "chr19:5000000:10000000",
+    y.coords = "chr19:5000001:10000000",
+    FUN = Failsafe_log10,
+    value.cap = 0.99,
+    legend.title = "Log10 Hi-C signal",
+    palette = "YlGnBu",
+    tad.ranges = TADs_ranges,
+    group.col = "group",
+    tad.colour.col = "colour.group",
+    colours = Colours,
+    colours.names = Colour.names,
+    distance = 30,
+    width = 15,
+    height = 4,
+    legend.key.width = unit(10, "mm"), 
+    legend.key.height = unit(5, "mm"),
+    line.width = 1.2,
+    cut.corners = TRUE,
+    rotate = TRUE,
+    return.object=TRUE)
+
+```
+
+### Modifying text elements in plots
+
+There are several parameters which can be used to modify textual elements in 
+plots. 
+
+- It is possible to completely remove the x and y axis by setting the 
+parameters `x.axis` and `y.axis` to FALSE. 
+- The default x and y axis titles can be modified using the `x.axis.title` and 
+`y.axis.title` parameter. 
+- The plot title can be adjusted using the `title` parameter.
+- The legend title can be adjusted using the `legend.title` parameter.
+- Furthermore, users can also adjust the number of ticks that appear on the
+x and y axis when these axis labels are present. The number of ticks can be
+identified using the `x.axis.num.breaks` and `y.axis.num.breaks` parameters.
+
+The parameters to modify text size in these individual elements are as follows
+- `text.size` controls the font size across all plot elements, but is 
+superseded by individual parameters.
+- `x.axis.text.size` and `y.axis.text.size` control the text size on the x and
+y axis.
+- `legend.title.text.size` controls the font size of the legend title.
+- `legend.text.size` controls the font size of individual legend elements.
+- `title.size` controls the size of the plot title.
+        
+
