@@ -81,134 +81,7 @@ Brick file for future reference.
 - and later on retrieve them for quick plotting and viewing with
 HiCBrick functions.
 
-## Loading 4DN mcool files as Brick objects
-
-In this exercise we will download a file from the 4DN data portal at
-https://data.4dnucleome.org/. For the purposes of this vignette we will use
-a randomly chosen H1-hESC Hi-C data. 
-
-Please note, that these are very large files, require a lot of time to
-download, and as such this chunk of code was not executed during the
-preparation of this vignette.
-
-You can download it using curl.
-
-```{r eval = FALSE}
-
-Consortium.home = "https://data.4dnucleome.org/files-processed"
-File = file.path(Consortium.home,"4DNFI7JNCNFB",
-    "@@download","4DNFI7JNCNFB.mcool")
-curl_download(url = File,
-    destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-
-```
-
-This contains normalised Hi-C data on H1-hESC cells using the DpnII enzyme.
-Note that there are a few normalisation weights available within the sample.
-We can check what normalisation weights are available using
-`Brick_list_mcool_normalisations`. Please note, that this function does not
-list the normalisation weights available within the mcool file, but rather
-lists normalisation factors that HiCBricks accepts from the mcool files.
-Notice, the human readable names and the actual dataset names, what you are
-interested in are the human readable names, which makes the type of
-normalisation apparent. Such as for example, KR is an abbreviation for
-the Knight Ruitz matrix balancing algorithm introduced by Rao et al., 2014^[
-A 3D map of the human genome at kilobase resolution reveals principles 
-of chromatin looping.
-Rao SS, Huntley MH, Durand NC, Stamenova EK, Bochkov ID, Robinson JT, 
-Sanborn AL, Machol I, Omer AD, Lander ES and Aiden EL.
-Cell, 2014].
-
-
-```{r eval = FALSE}
-
-Brick_list_mcool_normalisations(names.only = TRUE)
-
-```
-
-This lists only the human-readable names. To see both the abbreviation and the
-base column name, 
-
-```{r eval = FALSE}
-
-Brick_list_mcool_normalisations(names.only = FALSE)
-
-```
-will list all names including their linked columns in the HDF file. 
-
-The 4D nucleome project bins their data into several different resolutions, to
-check out the available resolutions, it is as simple as.
-
-```{r eval = FALSE}
-mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
-Brick_list_mcool_resolutions(mcool = mcoolName)
-
-```
-
-Once, you have viewed all of the listed resolutions, we can go ahead and
-create Brick objects from these files. Please note, that users cannot load
-multiple resolutions in a single Brick file, this is because the aim of
-HiCBricks is not to create an alternative storage format to already very
-well designed pre-existing formats, but rather to create a **straightforward**,
-**memory efficient** storage and retrieval library for Hi-C data formats in R.
-
-Although it is possible to load all chromosomes in a single Brick object,
-this is not recommended because,
-- It is not possible for multiple processes to concurrently access the
-same HDF file. Therefore, it hinders parallelization.
-- The presence of multiple matrices in the same file, results in an increase in
-read and write speeds.
-
-Instead when using very large matrices, users are encouraged to separate the
-matrices chromosome by chromosome into different brick objects.
-
-For the purposes of this vignette, we want to do TAD calls with the local
-score differentiator (LSD) module and finally plot these TAD calls. We can
-now go ahead and create a Brick corresponding for a single chromosome from
-the downloaded mcool file and import data relevant to the cis-interaction
-maps for that chromosome. 
-
-```{r eval = FALSE}
-
-Output.brick <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick"
-mcool <- mcoolName
-
-CreateBrick_from_mcool(Brick = Output.brick, mcool = mcool,
-    binsize = 10000, chrs = "chr1")
-
-Brick_load_data_from_mcool(Brick = Output.brick,
-    mcool = mcool,
-    chr1 = "chr1",
-    chr2 = "chr1",
-    binsize = 10000,
-    cooler.batch.size = 1000000,
-    matrix.chunk = 2000,
-    dont.look.for.chr2 = TRUE,
-    remove.prior = TRUE,
-    norm.factor = "Iterative-Correction")
-
-```
-The first function creates the basic Brick structure, whereas the second
-function loads data into the structure. Using the param `chrs`, users
-can limit the structure created to the relevant chromosomes or if left
-NULL, will create the structure for all chromosome pairs. Please note,
-that if the length of chrs is 2, 4 interaction maps will be created.
-Two for the `cis` (intra-chromosomal) interaction maps and two for the
-`trans` (inter-chromosomal) interaction maps. 
-
-Notice, that there are a few options allowing users to manipulate data read
-and write speeds. `cooler.batch.size` determines the number of records read
-per iteration through an mcool file. `matrix.chunk` determines the size of
-the matrix square that will be loaded per iteration through an mcool file.
-If you are loading *cis* matrices, it is recommended to set the
-`dont.look.for.chr2` parameter to TRUE, as the first read records for chr1
-will always correspond to those originating from chr2. In cases of *trans*
-matrices, this option should be set to FALSE allowing the function to
-locate the first occurence of a chr1 vs chr2 interaction. `remove.prior`
-defaults to FALSE and prevents users from loading datasets twice.
-
-
-## Loading other datasets as Brick objects
+## Loading datasets as Brick objects
 
 Currently, HiCBricks only supports data import from 2D matrices and
 mcool files with more to come. If you have a 2D matrix, you can
@@ -1140,4 +1013,144 @@ y axis.
 - `title.size` controls the size of the plot title.
 
 
+## Loading 4DN mcool files as Brick objects
+
+Due to limitations placed on package build times, any code chunks that are 
+displayed under this header were not executed during the building of this 
+package.
+
+In this exercise we will download a file from the 4DN data portal at
+https://data.4dnucleome.org/. For the purposes of this vignette we will use
+a randomly chosen H1-hESC Hi-C data.
+
+Please note, that these are very large files, and require a lot of time to
+download.
+
+You can download it using curl.
+
+```{r eval = FALSE}
+require(curl)
+Consortium.home = "https://data.4dnucleome.org/files-processed"
+File = file.path(Consortium.home,"4DNFI7JNCNFB",
+    "@@download","4DNFI7JNCNFB.mcool")
+curl_download(url = File,
+    destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+
+```
+
+This contains normalised Hi-C data on H1-hESC cells using the DpnII enzyme.
+Note that there are a few normalisation weights available within the sample.
+We can check what normalisation weights are available using
+`Brick_list_mcool_normalisations`. Please note, that this function does not
+list the normalisation weights available within the mcool file, but rather
+lists normalisation factors that HiCBricks accepts from the mcool files.
+Notice, the human readable names and the actual dataset names, what you are
+interested in are the human readable names, which makes the type of
+normalisation apparent. Such as for example, KR is an abbreviation for
+the Knight Ruitz matrix balancing algorithm introduced by Rao et al., 2014^[
+A 3D map of the human genome at kilobase resolution reveals principles 
+of chromatin looping.
+Rao SS, Huntley MH, Durand NC, Stamenova EK, Bochkov ID, Robinson JT, 
+Sanborn AL, Machol I, Omer AD, Lander ES and Aiden EL.
+Cell, 2014].
+
+
+```{r eval = FALSE}
+
+Brick_list_mcool_normalisations(names.only = TRUE)
+
+```
+
+This lists only the human-readable names. To see both the abbreviation and the
+base column name, 
+
+```{r eval = FALSE}
+
+Brick_list_mcool_normalisations(names.only = FALSE)
+
+```
+will list all names including their linked columns in the HDF file. 
+
+The 4D nucleome project bins their data into several different resolutions, to
+check out the available resolutions, it is as simple as.
+
+```{r eval = FALSE}
+mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+Brick_list_mcool_resolutions(mcool = mcoolName)
+
+```
+
+Once, you have viewed all of the listed resolutions, we can go ahead and
+create Brick objects from these files. Please note, that users cannot load
+multiple resolutions in a single Brick file, this is because the aim of
+HiCBricks is not to create an alternative storage format to already very
+well designed pre-existing formats, but rather to create a **straightforward**,
+**memory efficient** storage and retrieval library for Hi-C data formats in R.
+
+Although it is possible to load all chromosomes in a single Brick object,
+this is not recommended because,
+- It is not possible for multiple processes to concurrently access the
+same HDF file. Therefore, it hinders parallelization.
+- The presence of multiple matrices in the same file, results in an increase in
+read and write speeds.
+
+Instead when using very large matrices, users are encouraged to separate the
+matrices chromosome by chromosome into different brick objects.
+
+We can go ahead and create a Brick corresponding for a single chromosome from
+the downloaded mcool file and import data relevant to the cis-interaction
+maps for that chromosome. 
+
+```{r eval = FALSE}
+
+Brick.name <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick"
+mcool <- mcoolName
+
+Output.brick <- CreateBrick_from_mcool(Brick = Brick.name, 
+    mcool = mcool, binsize = 10000, chrs = "chr1", remove.existing = TRUE)
+# Remember that Brick name as it does not contain a proper path to file, is 
+# stored in the bioc file cache directory. If at any point we want to relocated
+# it. We can fetch it using 
+Output.brick <- Brick_path_to_file(Brick.name)
+
+# Or if a user does not remember the name of a Brick, they can list this 
+# information using
+Brick_list_tracked_bricks()
+
+
+# Check if the Iterative correction weights exist in the file.
+Brick_mcool_normalisation_exists(mcool = mcool, 
+    norm.factor = "Iterative-Correction",
+    binsize = 10000)
+
+Brick_load_data_from_mcool(Brick = Output.brick,
+    mcool = mcool,
+    chr1 = "chr1",
+    chr2 = "chr1",
+    binsize = 10000,
+    cooler.batch.size = 1000000,
+    matrix.chunk = 2000,
+    dont.look.for.chr2 = TRUE,
+    remove.prior = TRUE,
+    norm.factor = "Iterative-Correction")
+
+```
+The first function creates the basic Brick structure, whereas the second
+function loads data into the structure. Using the param `chrs`, users
+can limit the structure created to the relevant chromosomes or if left
+NULL, will create the structure for all chromosome pairs. Please note,
+that if the length of chrs is 2, 4 interaction maps will be created.
+Two for the `cis` (intra-chromosomal) interaction maps and two for the
+`trans` (inter-chromosomal) interaction maps. 
+
+Notice, that there are a few options allowing users to manipulate data read
+and write speeds. `cooler.batch.size` determines the number of records read
+per iteration through an mcool file. `matrix.chunk` determines the size of
+the matrix square that will be loaded per iteration through an mcool file.
+If you are loading *cis* matrices, it is recommended to set the
+`dont.look.for.chr2` parameter to TRUE, as the first read records for chr1
+will always correspond to those originating from chr2. In cases of *trans*
+matrices, this option should be set to FALSE allowing the function to
+locate the first occurence of a chr1 vs chr2 interaction. `remove.prior`
+defaults to FALSE and prevents users from loading datasets twice.
 

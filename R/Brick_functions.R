@@ -342,14 +342,14 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
         if(length(binsize) > 1){
             stop("binsize cannot have more than one value\n")
         }
-        if(!(as.character(binsize) %in% resolutions)){
+        if(!(as.character(as.integer(binsize)) %in% resolutions)){
             stop("all binsizes were not found in this mcool file. See all",
                 " resolutions available with Brick_list_mcool_resolutions\n")
         }
     }
     cooler.remap.chrom <- ._mcool_remap_chromosomes(File = mcool,
         mcool.version = mcool.version, resolution = !is.null(resolutions),
-        binsize = binsize)
+        binsize = as.character(as.integer(binsize)))
     ChromNames <- cooler.remap.chrom[,"chr.name"]
     ChromNames <- ifelse(!is.null(chrs),ChromNames[ChromNames %in% chrs],
         ChromNames)
@@ -361,7 +361,8 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
     }
     mcool_bintable_ranges <- ._mcool_bintable_ranges(mcool.file = mcool,
         resolution = !is.null(resolutions),
-        mcool.remap.chrom = cooler.remap.chrom, binsize = binsize,
+        mcool.remap.chrom = cooler.remap.chrom, 
+        binsize = as.character(as.integer(binsize)),
         mcool.version = mcool.version)
     mcool_bintable_ranges <- mcool_bintable_ranges[
     mcool_bintable_ranges[,"chr"] %in% ChromNames,]
@@ -457,21 +458,23 @@ Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
         stop("binsize must be provided when different resolutions are present",
             " in an mcool file.\n")
     }
-    if(!is.null(resolutions) & !(binsize %in% resolutions)){
+    if(!is.null(resolutions) & !(as.character(
+        as.integer(binsize)) %in% resolutions)){
         stop("binsize not found in mcool file.",
-            "Please check available binsizes",
+            " Please check available binsizes",
             " with Brick_list_mcool_resolutions.\n")
     }
     if(!is.null(resolutions)){
         Bintable.group.path <- Create_Path(
-            c(Reference.object$mcool.resolutions.name,binsize,Bintable.group)) 
+            c(Reference.object$mcool.resolutions.name,
+                as.character(as.integer(binsize)),Bintable.group)) 
     }else{
         Bintable.group.path <- Create_Path(Bintable.group)
     }
     Handler <- ._Brick_Get_Something_(Group.path = Bintable.group.path,
         Brick = mcool, return.what = "group_handle")
-    CloseH5Con(Handle = Handler, type = "group")
     GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)[,"name"]
+    CloseH5Con(Handle = Handler, type = "group")
     return(Norm.factor %in% GroupList)
 }
 
@@ -1374,15 +1377,17 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
         stop("binsize must be provided when ",
             "different resolutions are present in an mcool file.\n")
     }
-    if(!is.null(resolutions) & !(binsize %in% resolutions)){
+    if(!is.null(resolutions) & !(as.character(
+        as.integer(binsize)) %in% resolutions)){
         stop("binsize not found in mcool file. ",
             "Please check available binsizes ",
             "with Brick_list_mcool_resolutions.\n")
     }
-    if(!is.null(Norm.factor)){
+    if(!is.null(norm.factor)){
         if(!Brick_mcool_normalisation_exists(mcool = mcool,
-            norm.factor = norm.factor, binsize = binsize)){
-            stop(norm.factor," was not found in this mcool file.\n")           
+            norm.factor = norm.factor, binsize = as.character(
+        as.integer(binsize)))){
+            stop(norm.factor," was not found in this mcool file.\n")            
         }
         Norm.factors <- Brick_list_mcool_normalisations()
         Norm.factor <- Norm.factors[norm.factor]
@@ -1391,8 +1396,8 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
         Norm.factor <- NULL
     }
     RetVar <- ._Process_mcool(Brick = Brick, File = mcool,
-        cooler.batch.size = cooler.batch.size, binsize = binsize,
-    matrix.chunk = matrix.chunk, chr1 = chr1,
+        cooler.batch.size = cooler.batch.size, binsize = as.character(
+        as.integer(binsize)), matrix.chunk = matrix.chunk, chr1 = chr1,
     chr2 = chr2, dont.look.for.chr2 = dont.look.for.chr2,
     norm.factor = Norm.factor, resolution = !is.null(resolutions))
     return(RetVar)

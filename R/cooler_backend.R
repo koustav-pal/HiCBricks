@@ -8,12 +8,12 @@
     Indexes.group <- Indexes.Keys[1]
     Indexes.chrom.key <- Indexes.Keys[3]
     Indexes.bin.key <- Indexes.Keys[2]
-    Bintable.keys <- Reference.object$mcool.bintable.keys(
-        version = mcool.version)
 
     mcool.version <- GetAttributes(Path = NULL, File=File,
         Attributes="format-version", on = "file",
         ignore.fun.cast = TRUE)[,"format-version"]
+    Bintable.keys <- Reference.object$mcool.bintable.keys(
+        version = mcool.version)
     cooler.remap.chrom <- ._mcool_remap_chromosomes(File = File,
         resolution = resolution, binsize = binsize,
         mcool.version = mcool.version)
