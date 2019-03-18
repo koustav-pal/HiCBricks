@@ -1138,5 +1138,6 @@ y axis.
 - `legend.title.text.size` controls the font size of the legend title.
 - `legend.text.size` controls the font size of individual legend elements.
 - `title.size` controls the size of the plot title.
-        
+
+
 
