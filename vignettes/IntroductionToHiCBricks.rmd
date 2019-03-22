@@ -19,46 +19,72 @@ vignette: |
   %\VignetteEncoding{UTF-8}
 ---
 
-## Introduction
+# Short message from the author
 
-HiCBricks is a storage and retrieval library for high-resolution Hi-C data.
-This library attempts to encapsulate the entire HDF data structure and present
-accessor functions allowing users to access and manipulate Hi-C data without
-having to deal with the structural complexity associated to dealing with
-HDF files. Please note, HiCBricks is not meant to compete with other data
-formats. Instead it is a library to better facilitate access to Hi-C data
-stored in various formats. Therefore, it is not possible at this time to
-create a direct mirror of for example, mcool files. mcool files, for the
-uninitiated are a standard data format for the 4D nucleome project and better
-facilitates the storage of very large experiments within a single data file.
-HiCBricks, on the other hand stores the complete matrix, as opposed to the
-upper triangle in mcools files. As you will see in this vignette, it is a
-very simple task to import entire resolutions/normalizations from a
-standard 4DN mcool file to a __Brick__ object.
+This package has been designed and implemented from the ground up by me 
+(Koustav Pal), and at the time of writing this message (22/03/2019), is being 
+maintained only by me. Therefore, if users find some features to be missing, 
+I apologize for delays in feature implementation. Nonetheless, I ask users to 
+be considerate towards the existing codebase and to open a issue on the 
+[github page](https://github.com/koustav-pal/HiCBricks) regarding whatever 
+pitfalls and issues they may be facing with regards to the HiCBricks 
+package. HiCBricks is currently in version 1.0, and the sky is the limit as 
+they say.
+
+# Introduction
+
+HiCBricks is a storage and retrieval library for high-resolution Hi-C data. 
+During first use, the package creates HDF files for storing and accessing the
+Hi-C data. HDF, short for Hierarchical Data Format is an general-purpose 
+on-disk data structure. Once created, HDF files can be reaccessed without the
+need for reloading the data an infinite number of times (theoretically 
+speaking). 
+Although HDF provides extreme flexibility to users for creating their own 
+specialised on-disk data structures, this comes at the cost of usability. 
+Designing and implementing a specific, easy to use HDF data format can become 
+extremely time-intesive. This is due to the range of possibilities and 
+underlying granular control that the HDF C library provides. Furthermore, 
+dealing with the intricacies associated to reading and writing HDF files can 
+prove to be challenges for the inexperienced user.
+
+HiCBricks implements a Hi-C specific HDF data structure, referred to as a 
+_Brick_ and presents accessor functions allowing users to access and 
+manipulate Hi-C data without having to deal with the structural complexity 
+associated to dealing with HDF files. 
 
 HiCBricks, the brick objects created by it, and the set of retrieval methods
 are meant to serve as building blocks for future Hi-C analysis packages in and
-outside (ROpenSci) Bioconductor. We welcome your feedback and suggestions as
-to how we can improve the package. Please feel free to reach out to me via
-email, github or the bioconductor support site.
+outside (ROpenSci, CRAN) Bioconductor. We welcome your feedback and suggestions 
+as to how we can improve the package. Please feel free to reach out to me via
+email, [github](https://github.com/koustav-pal/HiCBricks) or the bioconductor 
+support site.
 
-### About Brick objects
+# Important details
 
-HiCBricks creates HDF5 files. These files have the extension _.brick_ and will
-be referred to as Brick objects from here on. The _Brick object_ implements a
-HDF structure consisting of three layers. In no specific order, the first
-houses Hi-C contact matrices as 2D matrices for every chromosome pair.
-The second, houses the associated genomic ranges related to the Hi-C contact
-matrix. Finally, the third layer contains any associated annotations that a
-user may want to store within the Brick object. This information may be,
-but is not limited to, TAD calls, Peak calls, RNA-seq expression data.
-In principle, if the annotation information can be cast as a ranges object,
-it can be stored in the Brick object.
+## HDF structure implemented within Brick objects
 
-### About file and path handling
+The _Brick object_ implements a HDF structure consisting of three layers. In 
+no specific order, the first houses Hi-C contact matrices as 2D matrices for 
+every chromosome pair. The second, houses the associated genomic ranges 
+related to the Hi-C contact matrix. Finally, the third layer contains any 
+associated annotations that a user may want to store within the Brick object. 
+This information may be, but is not limited to, TAD calls, Peak calls, 
+RNA-seq expression data. In principle, if the annotation information can be 
+cast as a ranges object, it can be stored in the Brick object.
+
+## Handling and tracking of files using BiocFileCache by HiCBricks
+
+When a user first creates a `Brick` object, they are required to provide an 
+argument specifying the path to the `Brick` object that they want to create. 
+Bioconductor standards require that users always provide an explicit path 
+definition. So in this case, users will need to provide the complete path to 
+the `Brick` object that they want to create. I realise that this may be 
+cumbersome to many users.
+
+To retain the possibility for users to provide an explicit path definition  
 
 To comply with Bioconductor standards, we make use of the `BiocFileCache`
-package in the backend. We keep the Brick objects within the Cache directory.
+package. We keep the Brick objects within the Cache directory.
 This, unless configured differently during installation, will be found under
 the path `${HOME}/.cache/HiCBricks/`. This only applies to scenarios where
 a brick object is created without an explicit path definition in the
@@ -541,7 +567,7 @@ basic commands required to generate a heatmap.
 
 ### Plotting one sample heatmaps
 
-```{r plot, fig.cap = "Figure 1. A normal heatmap without any transformations", fig.small = TRUE}
+```{r plot, fig.cap = "A normal heatmap without any transformations", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
     Bricks = Brick.file,
@@ -562,7 +588,7 @@ Since we are directly plotting the Hi-C signal, the colours may seem a bit
 muted. We should go ahead and change that with a *log10* transformation,
 which will squeeze the signal distribution and make it pretty.
 
-```{r plot2, fig.cap = "Figure 2. A normal heatmap with colours computed in log10 scale", fig.small = TRUE}
+```{r plot2, fig.cap = "A normal heatmap with colours computed in log10 scale", fig.small = TRUE}
 
 Failsafe_log10 <- function(x){
     x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
@@ -592,7 +618,7 @@ to blow up the entire distribution in a heatmap plot. We can pull in these
 values to create a more uniform and prettier picture, with the *value.cap*
 argument.
 
-```{r plot3, fig.cap = "Figure 3. A normal heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
+```{r plot3, fig.cap = "A normal heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal1.pdf",
     Bricks = Brick.file,
@@ -616,7 +642,7 @@ argument triggers presence of the greater than or less than sign.
 Sometimes, it is desirable to plot the heatmap as a rotated heatmap.
 
 
-```{r plot4, fig.cap = "Figure 4. Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 45 degree rotation", fig.small = TRUE}
+```{r plot4, fig.cap = "Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 45 degree rotation", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf",
     Bricks = Brick.file,
@@ -637,7 +663,7 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf",
 But this looks ugly. To fix it we need to modify the `width` and `height` as
 the rotated plots are broader than they are taller.
 
-```{r plot5, fig.cap = "Figure 5. Same heatmap as previous, but now the heatmaps are wider than they are taller", fig.wide = TRUE}
+```{r plot5, fig.cap = "Same heatmap as previous, but now the heatmaps are wider than they are taller", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf",
     Bricks = Brick.file,
@@ -657,7 +683,7 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf",
 
 We can now also plot the TADs on these plots.
 
-```{r plot6, fig.cap = "Figure 6. Normal rectangular heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.small = TRUE}
+```{r plot6, fig.cap = "Normal rectangular heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
     Bricks = Brick.file,
@@ -676,7 +702,7 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
 Notice, that using the distance parameter we can control the diagonal until
 which we plot the heatmap.
 
-```{r plot7, fig.cap = "Figure 7. Normal rotated heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.wide = TRUE}
+```{r plot7, fig.cap = "Normal rotated heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.wide = TRUE}
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
     Bricks = Brick.file,
     tad.ranges = TAD_ranges,
@@ -709,7 +735,7 @@ the `Brick` parameter.
 
 *NOTE:* The main diagonal will be set to the minimum value in both plots.
 
-```{r plot8, fig.cap = "Figure 8. A normal two sample heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
+```{r plot8, fig.cap = "A normal two sample heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
     Bricks = c(Brick.file, Brick.file),
@@ -731,7 +757,7 @@ of the `RColorBrewer` or `viridis` colour palettes. For example, we can use
 the Red to Gray (name RdGy) palette from `RColorBrewer`
 
 
-```{r plot9, fig.cap = "Figure 9. A normal two sample heatmap with colours computed in log10 scale on values until the 30th diagonal and capping these values to the 99th percentile.", fig.small = TRUE}
+```{r plot9, fig.cap = "A normal two sample heatmap with colours computed in log10 scale on values until the 30th diagonal and capping these values to the 99th percentile.", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
     Bricks = c(Brick.file, Brick.file),
@@ -750,7 +776,7 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
 
 Finally, we can once again rotate the two sample heatmaps.
 
-```{r plot10, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
+```{r plot10, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
     Bricks = c(Brick.file, Brick.file),
@@ -858,7 +884,7 @@ boundaries are provided, whereas `colours.names` can be left empty in case the
 user intends to provide `unique(TAD_ranges$colour.group)` as 
 the `colour.names`.
 
-```{r plot11, fig.cap = "Figure 10. A normal two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with TAD borders", fig.small = TRUE}
+```{r plot11, fig.cap = "A normal two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with TAD borders", fig.small = TRUE}
 
 Brick.file <- system.file("extdata",
     "test.hdf", package = "HiCBricks")
@@ -886,7 +912,7 @@ Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
 
 ```
 
-```{r plot12, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with non-truncated TAD borders", fig.wide = TRUE}
+```{r plot12, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with non-truncated TAD borders", fig.wide = TRUE}
 
 Brick.file <- system.file("extdata",
     "test.hdf", package = "HiCBricks")
@@ -921,7 +947,7 @@ continuous lines. To truncate lines at the corners of TADs, users should
 set this parameter as TRUE.
 
 
-```{r plot13, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with truncated TAD borders", fig.wide = TRUE}
+```{r plot13, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with truncated TAD borders", fig.wide = TRUE}
 
 Brick.file <- system.file("extdata",
     "test.hdf", package = "HiCBricks")
@@ -961,7 +987,7 @@ addressed by playing around with the `line.width` parameter.
 changes to the legend with a few parameter changes to the 
 `legend.key.width` and `legend.key.height` parameters.
 
-```{r plot14, fig.cap = "Figure 9. A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
+```{r plot14, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
     Bricks = c(Brick.file, Brick.file),
@@ -1014,6 +1040,12 @@ y axis.
 
 
 ## Loading 4DN mcool files as Brick objects
+
+It is not possible at this time to create a direct mirror of mcool files. 
+mcool files, for the uninitiated are a standard data format designed by the 
+4D nucleome project and better facilitates the storage of very large 
+experiments within a single data file. HiCBricks, on the other hand stores the 
+complete matrix, as opposed to the upper triangle in mcools files.
 
 Due to limitations placed on package build times, any code chunks that are 
 displayed under this header were not executed during the building of this 
@@ -1153,4 +1185,3 @@ will always correspond to those originating from chr2. In cases of *trans*
 matrices, this option should be set to FALSE allowing the function to
 locate the first occurence of a chr1 vs chr2 interaction. `remove.prior`
 defaults to FALSE and prevents users from loading datasets twice.
-
