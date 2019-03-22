@@ -4,7 +4,7 @@ author:
 - name: Koustav Pal
   affiliation: 
     - IFOM - FIRC Institute of Molecular Oncology, Milan, Italy
-- name: Carmen Livi
+- name: Carmen Maria Livi
   affiliation: IFOM - FIRC Institute of Molecular Oncology, Milan, Italy
 output: 
   BiocStyle::html_document:
@@ -12,28 +12,28 @@ output:
   BiocStyle::pdf_document: default
 package: HiCBricks
 abstract: |
-  An introduction to HiCBricks workflows and related methods
+  HiCBricks offers user-friendly and efficient solutions for handling large high-resolution Hi-C datasets. The package provides an R/Bioconductor framework with the bricks to build more complex data analysis pipelines and algorithms.
 vignette: |
   %\VignetteIndexEntry{Introduction To HiCBricks}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-# Short message from the author
-
-This package has been designed and implemented from the ground up by me 
-(Koustav Pal), and at the time of writing this message (22/03/2019), is being 
-maintained only by me. Therefore, if users find some features to be missing, 
-I apologize for delays in feature implementation. Nonetheless, I ask users to 
-be considerate towards the existing codebase and to open a issue on the 
-[github page](https://github.com/koustav-pal/HiCBricks) regarding whatever 
-pitfalls and issues they may be facing with regards to the HiCBricks 
-package. HiCBricks is currently in version 1.0, and the sky is the limit as 
-they say.
-
 # Introduction
 
-HiCBricks is a storage and retrieval library for high-resolution Hi-C data. 
+HiCBricks is a library specifically desigend for handling large 
+high-resolution Hi-C datasets. The Hi-C field  experienced a
+rapid increase in the size and complexity of datasets. HiCBricks is
+meant to overcome the challenges related to analyze such large datasets
+within the R environment.
+
+If users find some features to be missing, experience any issue with the
+package or find any problems in its usage please do open an issue on the 
+[github page](https://github.com/koustav-pal/HiCBricks). HiCBricks is 
+currently in version 1.0.
+
+
+
 During first use, the package creates HDF files for storing and accessing the
 Hi-C data. HDF, short for Hierarchical Data Format is an general-purpose 
 on-disk data structure. Once created, HDF files can be reaccessed without the
