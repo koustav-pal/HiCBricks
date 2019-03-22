@@ -50,18 +50,44 @@ packages.
 
 
 
+# Vignette tutorial workflow
 
-
-
-### Vignette workflow
-
-With HiCBricks, in this vignette you will;
-- Create a brick for a single chromosomes.
-- do TAD calls on this brick file.
-- keep the tad calls (or any ranges object) associated to the
+With HiCBricks, in this vignette tutorial you will learn:
+* How to create a _Brick object_
+* do TAD calls on this brick file.
+* keep the tad calls (or any ranges object) associated to the
 Brick file for future reference.
-- and later on retrieve them for quick plotting and viewing with
+* and later on retrieve them for quick plotting and viewing with
 HiCBrick functions.
+
+
+
+
+
+## Handling and tracking of files using BiocFileCache by HiCBricks
+
+When a user first creates a `Brick` object, they are required to provide an 
+argument specifying the path to the `Brick` object that they want to create. 
+Bioconductor standards require that users always provide an explicit path 
+definition. So in this case, users will need to provide the complete path to 
+the `Brick` object that they want to create. I realise that this may be 
+cumbersome to many users.
+
+To comply with Bioconductor standards, we make use of the `BiocFileCache`
+package. We keep the Brick objects within the Cache directory.
+This, unless configured differently during installation, will be found under
+the path `${HOME}/.cache/HiCBricks/`. This only applies to scenarios where
+a brick object is created without an explicit path definition in the
+`Output.Filename` parameter in the `CreateBrick` function. In this case,
+you can get the location of a particular file using the `Brick_path_to_file`
+function. Or, if you do not remember the name of the Brick object, you can
+use `Brick_list_tracked_bricks` to get a list of all Brick objects which
+are being tracked.
+On the other hand, if you explicitly specify the path to a file, the Brick
+object will be created at that particular path and a symbolic link to that
+particular file will be tracked through the cache directory.
+
+
 
 ## Loading datasets as Brick objects
 
@@ -1177,29 +1203,7 @@ This information may be, but is not limited to, TAD calls, Peak calls,
 RNA-seq expression data. In principle, if the annotation information can be 
 cast as a ranges object, it can be stored in the Brick object.
 
-## Handling and tracking of files using BiocFileCache by HiCBricks
 
-When a user first creates a `Brick` object, they are required to provide an 
-argument specifying the path to the `Brick` object that they want to create. 
-Bioconductor standards require that users always provide an explicit path 
-definition. So in this case, users will need to provide the complete path to 
-the `Brick` object that they want to create. I realise that this may be 
-cumbersome to many users.
 
-To retain the possibility for users to provide an explicit path definition  
-
-To comply with Bioconductor standards, we make use of the `BiocFileCache`
-package. We keep the Brick objects within the Cache directory.
-This, unless configured differently during installation, will be found under
-the path `${HOME}/.cache/HiCBricks/`. This only applies to scenarios where
-a brick object is created without an explicit path definition in the
-`Output.Filename` parameter in the `CreateBrick` function. In this case,
-you can get the location of a particular file using the `Brick_path_to_file`
-function. Or, if you do not remember the name of the Brick object, you can
-use `Brick_list_tracked_bricks` to get a list of all Brick objects which
-are being tracked.
-On the other hand, if you explicitly specify the path to a file, the Brick
-object will be created at that particular path and a symbolic link to that
-particular file will be tracked through the cache directory.
 
 
