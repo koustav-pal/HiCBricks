@@ -19,6 +19,16 @@ vignette: |
   %\VignetteEncoding{UTF-8}
 ---
 
+
+
+# Note by the developer
+
+HiCBricks is currently in version 1.0.
+If users find some features to be missing, experience any issue with the
+package or find any problems in its usage please do open an issue on the 
+[github page](https://github.com/koustav-pal/HiCBricks).
+
+
 # Introduction
 
 HiCBricks is a library specifically desigend for handling large 
@@ -27,75 +37,21 @@ rapid increase in the size and complexity of datasets. HiCBricks is
 meant to overcome the challenges related to analyze such large datasets
 within the R environment.
 
-If users find some features to be missing, experience any issue with the
-package or find any problems in its usage please do open an issue on the 
-[github page](https://github.com/koustav-pal/HiCBricks). HiCBricks is 
-currently in version 1.0.
+HiCBricks leverages HDF files to allow efficient handling of large Hi-C
+contat matrices. HiCBricks implements a Hi-C specific HDF data structure,
+referred to as a _Brick object_ and presents accessor functions allowing 
+users to access and manipulate Hi-C data without having to deal with
+the structural complexity associated to dealing with HDF files. 
+
+The HiCBricks package, its set of data retrieval functions along with the
+_Brick objects_ are meant to serve as building blocks for custom Hi-C
+analysis procedures as well as the development of new R or Bioconductor
+packages.
 
 
 
-During first use, the package creates HDF files for storing and accessing the
-Hi-C data. HDF, short for Hierarchical Data Format is an general-purpose 
-on-disk data structure. Once created, HDF files can be reaccessed without the
-need for reloading the data an infinite number of times (theoretically 
-speaking). 
-Although HDF provides extreme flexibility to users for creating their own 
-specialised on-disk data structures, this comes at the cost of usability. 
-Designing and implementing a specific, easy to use HDF data format can become 
-extremely time-intesive. This is due to the range of possibilities and 
-underlying granular control that the HDF C library provides. Furthermore, 
-dealing with the intricacies associated to reading and writing HDF files can 
-prove to be challenges for the inexperienced user.
 
-HiCBricks implements a Hi-C specific HDF data structure, referred to as a 
-_Brick_ and presents accessor functions allowing users to access and 
-manipulate Hi-C data without having to deal with the structural complexity 
-associated to dealing with HDF files. 
 
-HiCBricks, the brick objects created by it, and the set of retrieval methods
-are meant to serve as building blocks for future Hi-C analysis packages in and
-outside (ROpenSci, CRAN) Bioconductor. We welcome your feedback and suggestions 
-as to how we can improve the package. Please feel free to reach out to me via
-email, [github](https://github.com/koustav-pal/HiCBricks) or the bioconductor 
-support site.
-
-# Important details
-
-## HDF structure implemented within Brick objects
-
-The _Brick object_ implements a HDF structure consisting of three layers. In 
-no specific order, the first houses Hi-C contact matrices as 2D matrices for 
-every chromosome pair. The second, houses the associated genomic ranges 
-related to the Hi-C contact matrix. Finally, the third layer contains any 
-associated annotations that a user may want to store within the Brick object. 
-This information may be, but is not limited to, TAD calls, Peak calls, 
-RNA-seq expression data. In principle, if the annotation information can be 
-cast as a ranges object, it can be stored in the Brick object.
-
-## Handling and tracking of files using BiocFileCache by HiCBricks
-
-When a user first creates a `Brick` object, they are required to provide an 
-argument specifying the path to the `Brick` object that they want to create. 
-Bioconductor standards require that users always provide an explicit path 
-definition. So in this case, users will need to provide the complete path to 
-the `Brick` object that they want to create. I realise that this may be 
-cumbersome to many users.
-
-To retain the possibility for users to provide an explicit path definition  
-
-To comply with Bioconductor standards, we make use of the `BiocFileCache`
-package. We keep the Brick objects within the Cache directory.
-This, unless configured differently during installation, will be found under
-the path `${HOME}/.cache/HiCBricks/`. This only applies to scenarios where
-a brick object is created without an explicit path definition in the
-`Output.Filename` parameter in the `CreateBrick` function. In this case,
-you can get the location of a particular file using the `Brick_path_to_file`
-function. Or, if you do not remember the name of the Brick object, you can
-use `Brick_list_tracked_bricks` to get a list of all Brick objects which
-are being tracked.
-On the other hand, if you explicitly specify the path to a file, the Brick
-object will be created at that particular path and a symbolic link to that
-particular file will be tracked through the cache directory.
 
 ### Vignette workflow
 
@@ -1185,3 +1141,65 @@ will always correspond to those originating from chr2. In cases of *trans*
 matrices, this option should be set to FALSE allowing the function to
 locate the first occurence of a chr1 vs chr2 interaction. `remove.prior`
 defaults to FALSE and prevents users from loading datasets twice.
+
+
+
+
+
+
+
+
+# Additional details on HiCBricks implementation
+
+During first use, the package creates HDF files for storing and accessing the
+Hi-C data. HDF, short for Hierarchical Data Format is an general-purpose 
+on-disk data structure. Once created, HDF files can be reaccessed without the
+need for reloading the data an infinite number of times (theoretically 
+speaking). 
+Although HDF provides extreme flexibility to users for creating their own 
+specialised on-disk data structures, this comes at the cost of usability. 
+Designing and implementing a specific, easy to use HDF data format can become 
+extremely time-intesive. This is due to the range of possibilities and 
+underlying granular control that the HDF C library provides. Furthermore, 
+dealing with the intricacies associated to reading and writing HDF files can 
+prove to be challenges for the inexperienced user.
+
+
+
+## HDF structure implemented within Brick objects
+
+The _Brick object_ implements a HDF structure consisting of three layers. In 
+no specific order, the first houses Hi-C contact matrices as 2D matrices for 
+every chromosome pair. The second, houses the associated genomic ranges 
+related to the Hi-C contact matrix. Finally, the third layer contains any 
+associated annotations that a user may want to store within the Brick object. 
+This information may be, but is not limited to, TAD calls, Peak calls, 
+RNA-seq expression data. In principle, if the annotation information can be 
+cast as a ranges object, it can be stored in the Brick object.
+
+## Handling and tracking of files using BiocFileCache by HiCBricks
+
+When a user first creates a `Brick` object, they are required to provide an 
+argument specifying the path to the `Brick` object that they want to create. 
+Bioconductor standards require that users always provide an explicit path 
+definition. So in this case, users will need to provide the complete path to 
+the `Brick` object that they want to create. I realise that this may be 
+cumbersome to many users.
+
+To retain the possibility for users to provide an explicit path definition  
+
+To comply with Bioconductor standards, we make use of the `BiocFileCache`
+package. We keep the Brick objects within the Cache directory.
+This, unless configured differently during installation, will be found under
+the path `${HOME}/.cache/HiCBricks/`. This only applies to scenarios where
+a brick object is created without an explicit path definition in the
+`Output.Filename` parameter in the `CreateBrick` function. In this case,
+you can get the location of a particular file using the `Brick_path_to_file`
+function. Or, if you do not remember the name of the Brick object, you can
+use `Brick_list_tracked_bricks` to get a list of all Brick objects which
+are being tracked.
+On the other hand, if you explicitly specify the path to a file, the Brick
+object will be created at that particular path and a symbolic link to that
+particular file will be tracked through the cache directory.
+
+
