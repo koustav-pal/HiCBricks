@@ -9,10 +9,14 @@ author:
 output: 
   BiocStyle::html_document:
     toc_float: true
+    css: custom.css
   BiocStyle::pdf_document: default
 package: HiCBricks
 abstract: |
-  HiCBricks offers user-friendly and efficient solutions for handling large high-resolution Hi-C datasets. The package provides an R/Bioconductor framework with the bricks to build more complex data analysis pipelines and algorithms.
+  HiCBricks offers user-friendly and efficient solutions for handling large 
+  high-resolution Hi-C datasets. The package provides a R/Bioconductor 
+  framework with the bricks to build more complex data analysis pipelines 
+  and algorithms.
 vignette: |
   %\VignetteIndexEntry{Introduction To HiCBricks}
   %\VignetteEngine{knitr::rmarkdown}
@@ -21,112 +25,111 @@ vignette: |
 
 
 
-# Note by the developer
-
-HiCBricks is currently in version 1.0.
-If users find some features to be missing, experience any issue with the
-package or find any problems in its usage please do open an issue on the 
-[github page](https://github.com/koustav-pal/HiCBricks).
+> **Note by the developer**
+> HiCBricks is currently in version 1.0. If users find some features to be missing, experience any issue with the package or find any problems in its usage please do open an issue on the [github page](https://github.com/koustav-pal/HiCBricks).
 
 
 # Introduction
 
-HiCBricks is a library specifically desigend for handling large 
-high-resolution Hi-C datasets. The Hi-C field  experienced a
-rapid increase in the size and complexity of datasets. HiCBricks is
-meant to overcome the challenges related to analyze such large datasets
-within the R environment.
+HiCBricks is a library designed for handling large high-resolution Hi-C datasets. Over the years, the Hi-C field has experienced a rapid increase in the size and complexity of datasets. HiCBricks is meant to overcome the challenges related to the analysis of such large datasets within the R environment.
 
-HiCBricks leverages HDF files to allow efficient handling of large Hi-C
-contat matrices. HiCBricks implements a Hi-C specific HDF data structure,
-referred to as a _Brick object_ and presents accessor functions allowing 
-users to access and manipulate Hi-C data without having to deal with
-the structural complexity associated to dealing with HDF files. 
+HiCBricks leverages HDF (Hierarchical Data Format) files to allow efficient handling of large Hi-C contact matrices. HiCBricks implements a Hi-C specific HDF data structure, referred to as a _Brick object_ and presents accessor functions allowing users to access and manipulate Hi-C data without all the difficultis of dealing with the complex structure of HDF files.
 
-The HiCBricks package, its set of data retrieval functions along with the
-_Brick objects_ are meant to serve as building blocks for custom Hi-C
-analysis procedures as well as the development of new R or Bioconductor
-packages.
+The HiCBricks package, its set of data retrieval functions along with the _Brick objects_ are meant to serve as building blocks for custom Hi-C analysis procedures as well as the development of new R or Bioconductor packages.
 
 
+# Create Brick objects to store Hi-C data
 
-# Vignette tutorial workflow
+HiCBricks uses HDF files to efficiently manage large Hi-C datasets. Hereafter, we refer to the structured data contained into HiCBricks HDF files as _Brick objects_. The _Brick object_ implement a HDF structure consisting of three layers:
 
-With HiCBricks, in this vignette tutorial you will learn:
-* How to create a _Brick object_
-* do TAD calls on this brick file.
-* keep the tad calls (or any ranges object) associated to the
-Brick file for future reference.
-* and later on retrieve them for quick plotting and viewing with
-HiCBrick functions.
+1. The Hi-C contact matrix, defined as a complete 2D matrix for each chromosome and chromosome-pair. The contact matrix for the _cis_ (intra-chromosomal) contacts for each chromosome is square `n x n` dimensional matrix. On the other hand, the _trans_ (inter-chromosomal) contacts for each chromosome pair is a rectangular `n x m` dimensional matrix.
+2. The bin table, defined as the set of genomic positions intervals/ranges (chromosome, start, end) associated to each row or column of the contact matrix. This can be defined as eithed fixed size bins or variable size bins. The latter may be useful for example to handle very high-resolution Hi-C contacts at single restriction fragment resolution.
+3. Annotations (optional) that the end-user may want to associate to the Hi-C data. This information may be, but is not limited to, TAD calls, Peak calls, RNA-seq expression data. In principle, if the annotation information can be represented as a `GenomicRanges` object, it can be stored in the _Brick object_.
+ 
+In order to load Hi-C data matrix into a _Brick object_ we have to:
 
+1.  create HDF file with HiCBricks specific data structure
+2.  populate the HDF data structure with Hi-C data
 
+The key advantage of HDF files is that once they have been created and populated with data, the data can be accessed very efficiently without the need to reload the whole matrix into memory each time.
 
+Currently, HiCBricks functionalities allows importing data from text files with complete 2D matrices and binary cooler files (_.mcool_ or _.cool_).
 
+## Creating a Brick object from a text file 2D contact matrix
 
-## Handling and tracking of files using BiocFileCache by HiCBricks
+First of all load the HiCBricks library:
 
-When a user first creates a `Brick` object, they are required to provide an 
-argument specifying the path to the `Brick` object that they want to create. 
-Bioconductor standards require that users always provide an explicit path 
-definition. So in this case, users will need to provide the complete path to 
-the `Brick` object that they want to create. I realise that this may be 
-cumbersome to many users.
+```{r, message = FALSE}
+library("HiCBricks")
 
-To comply with Bioconductor standards, we make use of the `BiocFileCache`
-package. We keep the Brick objects within the Cache directory.
-This, unless configured differently during installation, will be found under
-the path `${HOME}/.cache/HiCBricks/`. This only applies to scenarios where
-a brick object is created without an explicit path definition in the
-`Output.Filename` parameter in the `CreateBrick` function. In this case,
-you can get the location of a particular file using the `Brick_path_to_file`
-function. Or, if you do not remember the name of the Brick object, you can
-use `Brick_list_tracked_bricks` to get a list of all Brick objects which
-are being tracked.
-On the other hand, if you explicitly specify the path to a file, the Brick
-object will be created at that particular path and a symbolic link to that
-particular file will be tracked through the cache directory.
+```
 
-
-
-## Loading datasets as Brick objects
-
-Currently, HiCBricks only supports data import from 2D matrices and
-mcool files with more to come. If you have a 2D matrix, you can
-load it like so,
+Then get the path to the test datasets provided with the package, and in particular the path to the “bin table” specifying the genomics coordinates associated to each genomic bin used to summarize the Hi-C data. These would correspond to row and columns of the Hi-C contact matrix. In this example the `bin table` provided is for human chromosome 19 divided in equally sized bins of 40 Kb.
 
 ```{r}
-library("HiCBricks")
-# Get the path to the test datasets provided with the package
-## Get the path to the test bintable
+
 Bintable.path <- system.file("extdata",
 "Bintable_40kb.txt", package = "HiCBricks")
 Chromosomes <- "chr19"
-## Create the Brick object
+
+```
+
+Then, the backbone of the _Brick object_ data structure is created using only the bin table. The actual contacts frequencies will be added later. The `CreateBrick` function returns a named character vector containing the complete path to the HDF file that will store the data. 
+
+
+```{r}
+
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
     BinTable = Bintable.path, bin.delim = " ",
     Output.Filename = "test.hdf", exec = "cat",
 remove.existing = TRUE)
 
-## Create an empty matrix
+```
+
+
+
+> **Technical note**
+This code chunk is the first place users will encounter the `exec` parameter. The `exec` argument is incredibly powerful as it allows users to provide any number of ways to first manipulate and then read the bin table file. Using `exec`, the file to be read is first processed and then read through one of many traditional system utility functions. The `exec` parameter takes `cat` as the default value. This corresponds to the system utility `cat` used for reading text files. Similarly, if the file is compressed, the `exec` parameter can take as values popular compression utilities `zcat` or `bzcat` for reading the compressed file. 
+For advanced users, the `exec` parameter can contain full length `awk` or `cut` commands to sort and filter out columns or rows which are not required from the file. Thus, rather than read the same file twice using two different programs, users can provide a system command which will process the file and then pipe the processed output to the R session.
+
+As an illustrative example, to clarify the expected structure of input data for a complete 2D matrix in text format, we are generating a fake contact matrix, containing pairwise distances between the genomic bins of the bin table, then loading these as if they were contact data.
+
+First we create an empty `n x n matrix (with n=800)`.
+
+```{r}
+
 Test.mat <- matrix(NA,nrow = 800, ncol = 800)
 
-## Fill the matrix with distances
+```
+
+Then we replace the matrix content with pairwise distances between genomic bins 
+
+```{r}
+
 Row <- row(Test.mat)
 Col <- col(Test.mat)
 Dist <- Col - Row
 
-## Write the matrix to a file
-Matrix.file <- "Test_matrix.txt"
+```
 
-## Write the matrix to a file
+Finally the matrix is written to a txt file, without headers or rownames, and using whitespace as the field delimiter in this example.
+
+
+```{r}
+
+Matrix.file <- "Test_matrix.txt"
 write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 
+```
+
+We are now ready to load the 2D matrix data from the `Matrix.file` into the _Brick object_. When doing so, we have to pass to the `Brick_load_matrix` function the path to the HDF file (so far containing only the bin table). Then we have to specify which chromosome (for intra-chromosomal _n x n_ contact matrix) or which pair of chromosomes (for inter-chromosomal _n x m_ contact matrix) are contained in the `matrix.file`. In case of intra-chromosomal contacts like in this example, `chr1` and `chr2` arguments will have the same value.
+
+
+```{r}
 
 Brick.file <- Path_to_cached_file
 
-## Load the matrix containing distances to the Brick object
 Brick_load_matrix(Brick = Brick.file,
     chr1 = "chr19",
     chr2 = "chr19",
@@ -137,8 +140,9 @@ Brick_load_matrix(Brick = Brick.file,
 
 ```
 
-If you have a very large 2D *cis* matrix, you can load data till a
-certain distance.
+If you have a very large 2D _cis_ matrix, you may want to load data till a certain distance from the diagonal, as the contact frequency is rapidly decaying with distance, thus a you may find a very sparse matrix at longer distances.
+
+In this example we load up to 100 diagonals:
 
 ```{r}
 
@@ -151,11 +155,146 @@ Brick_load_cis_matrix_till_distance(Brick = Brick.file,
 
 ```
 
+> **Technical note**
+When a _Brick object_ is created, the user is required to provide an argument specifying the path to the HDF that will be created. As per Bioconductor core-team recommendations, the users should always provide an explicit full path instead than just a filename assuming it will be written in the working directory.
+To enforce compliance with this Bioconductor recommendation, if the brick object is created (with `CreateBrick` function) without a full path in the filename (`Output.Filename` parameter), then the HDF file is saved into the Cache directory rather than in the current working directory. This will typically be in `${HOME}/.cache/HiCBricks/` unless otherwise configured.
+
+
+## Creating Brick objects from .mcool binary files
+
+HiCBricks functions allow HDF files with the _mcool_ or _cool_ formats to be converted into HDF files with the _Brick_ format. _mcool_, is a standard data format designed by the [4D nucleome project](https://www.4dnucleome.org/) and facilitates the storage of very large experiments within a single HDF file. These files contain Hi-C contact matrices in the sparse format. In this case, _mcool_ and _cool_ files store the non-zero upper-triangle values in the HDF file across multiple normalisations and resolutions. HiCBricks, on the other hand stores a single normalisation and single resolution in any given HDF file.
+
+In this exercise we will download a file from the 4DN data portal at https://data.4dnucleome.org/. For the purposes of this vignette we will use a randomly chosen H1-hESC Hi-C data.
+
+Please note, that these are very large files, and require a lot of time to download.
+
+You can download it using curl.
+
+```{r eval = FALSE}
+require(curl)
+Consortium.home = "https://data.4dnucleome.org/files-processed"
+File = file.path(Consortium.home,"4DNFI7JNCNFB",
+    "@@download","4DNFI7JNCNFB.mcool")
+curl_download(url = File,
+    destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+
+```
+
+This contains normalised Hi-C data on H1-hESC cells using the DpnII enzyme. Note that there are a few normalisation weights available within the sample. We can check what normalisation weights are available using `Brick_list_mcool_normalisations`. Please note, that this function does not list the normalisation weights available within the mcool file, but rather lists normalisation factors that HiCBricks accepts from the mcool files. Notice, the human readable names and the actual dataset names, what you are interested in are the human readable names, which makes the type of normalisation apparent. Such as for example, KR is an abbreviation for the Knight Ruitz matrix balancing algorithm introduced by Rao et al., 2014^[A 3D map of the human genome at kilobase resolution reveals principles 
+of chromatin looping.
+Rao SS, Huntley MH, Durand NC, Stamenova EK, Bochkov ID, Robinson JT, Sanborn AL, Machol I, Omer AD, Lander ES and Aiden EL. Cell, 2014].
+
+```{r eval = FALSE}
+
+Brick_list_mcool_normalisations(names.only = TRUE)
+
+## [1] "Knight-Ruitz"                 "Vanilla-coverage"
+## [3] "Vanilla-coverage-square-root" "Iterative-Correction"
+
+```
+
+This lists only the human-readable names. To see both the abbreviation and the
+base column name, 
+
+```{r eval = FALSE}
+
+Brick_list_mcool_normalisations()
+
+```
+will list all names including their linked columns in the HDF file. 
+
+The 4D nucleome project bins their data into several different resolutions, `Brick_list_mcool_resolutions` can help users to check what resolutions are available within the _mcool_ file. This function provides information regarding the different resolutions present within the _mcool_ files themselves.
+
+```{r eval = FALSE}
+
+mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+Brick_list_mcool_resolutions(mcool = mcoolName)
+
+```
+
+Using the information on the resolutions present within the _mcool_ file and the normalisation factors accepted by HiCBricks, users can query the _mcool_ files to find out if a given normalisation factor is present for a given resolution.
+
+```{r eval = FALSE}
+
+Brick_mcool_normalisation_exists(mcool = mcoolName, 
+    norm.factor = "Iterative-Correction",
+    binsize = 10000)
+
+```
+
+HiCBricks allows users to create HDF files with the _Brick_ format from _mcool_ and _cool_ files. Users are limited to a single resolution and normalisation factor per _Brick object_. When creating a _Brick object_ users are able to load all chromosomes in a single Brick object, but I do not recommend this because, 
+
+- It is not possible for multiple processes to concurrently access the same HDF file. Therefore, it hinders parallelization.
+- The presence of multiple matrices in the same file, results in an increase in read and write speeds.
+
+Instead when using high-resolution Hi-C contact matrices, I encourage users to separate the matrices chromosome by chromosome into different brick objects.
+
+Similar to the previous section, we will:
+
+1. Create a _Brick object_ containing the HiCBricks data structure
+2. populate this HDF data structure with Hi-C data
+
+Previously, users used the `CreateBrick` function to create _Brick objects_ for 2D matrices. To create _Brick objects_ from _mcool_ files we will use the `CreateBrick_from_mcool` function. 
+
+When creating _Brick objects_ from scratch users were required to provide a bin table. For _mcool_ files users do not need to provide a bin table as the bin table information is already embedded within the _mcool_ files. Therefore, users can provide the resolution they want to load, and the binning information will be fetched from the _mcool_ files.
+
+Using the `chrs` param users can limit the structure created to the relevant chromosomes or if left NULL, will create the structure for all chromosome pairs. Please note, that if the length of chrs is 2, 4 interaction maps will be created.
+Two for the `cis` (intra-chromosomal) interaction maps for each chromosome and two for the `trans` (inter-chromosomal) interaction maps corresponding to each chromosome pair. 
+
+```{r eval = FALSE}
+
+Brick.name <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick"
+
+Output.brick <- CreateBrick_from_mcool(Brick = Brick.name, 
+    mcool = mcoolName, binsize = 10000, chrs = "chr1", remove.existing = TRUE)
+
+```
+
+After the _Brick object_ has been created, we will populate the HDF file with values coming from the Hi-C interaction matrix stored within the _mcool_ file. For this, we use the `Brick_load_data_from_mcool` function.
+
+```{r eval = FALSE}
+
+Brick_load_data_from_mcool(Brick = Output.brick,
+    mcool = mcoolName,
+    chr1 = "chr1",
+    chr2 = "chr1",
+    binsize = 10000,
+    cooler.batch.size = 1000000,
+    matrix.chunk = 2000,
+    dont.look.for.chr2 = TRUE,
+    remove.prior = TRUE,
+    norm.factor = "Iterative-Correction")
+
+```
+
+There are a few options allowing users to manipulate data read and write speeds. `cooler.batch.size` determines the number of records read per iteration through an _mcool_ file. `matrix.chunk` determines the size of the matrix square that will be loaded per iteration through an _mcool_ file. If you are loading *cis* matrices, it is recommended to set the `dont.look.for.chr2` parameter to TRUE, as the first read records for chr1 will always correspond to those originating from chr2. In cases of *trans* matrices, this option should be set to FALSE allowing the function to locate the first occurence of a chr1 vs chr2 interaction. `remove.prior` defaults to FALSE and prevents users from loading datasets twice.
+
+## Creating Brick objects from .hic binary files
+
+The method to create a Brick object from a `.hic` file is still a work in progress and will be a part of the package in a future release. Meanwhile, if users wish to create a `.hic` file into a _Brick object_, they should first use the `hic2cool` utility to create an `mcool` file and then read that `mcool` file into a _Brick object_. This utility is available at 4D nucleome [github repository](https://github.com/4dn-dcic/hic2cool).
+
+# Accessing data in Brick objects
+
+There are three different types of information which are currently stored within _Brick objects_.
+
+1. The first, is the Hi-C interaction maps for each chromosome and chromosome-pair.
+2. The second are fixed width or variable width genomic coordinates laid out as `GenomicRanges` objects that maps the rows and columns of each Hi-C interaction matrix to their corresponding genomic coordinates.
+3. The last is the custom annotations that a user may want to associate with a _Brick object_ laid out as a `GenomicRanges` object. 
+
+Therefore, there are accessor functions related to the contact matrix, and to the `GenomicRanges` that are stored in the HiCBricks object. Within these accessor functions, there are the _list_, _fetch_ and _get_ methods.
+
+## Working with genomic coordinates in a brick object
+
+We refer to genomic coordinates as _ranges_ objects, since all genomic coordinate output from HiCBricks comes in the form of `GenomicRanges` objects. `GenomicRanges` is the de-facto standard for working with genomic coordinates in the R/Bioconductor environment. 
+
+As mentioned in the introduction to this section, HiCBricks objects contain two different types of `ranges` objects. The first is the bin table, which is central towards the proper functioning of HiCBricks functions, and is mostly inaccessible for user modifications. The second are annotation for the user's reference and is completely accessible for the user.
+
+
 ## Accessing ranges objects in a brick store
 
-HiCBricks implementes different fetch/get methods. Users can *list*
-attributes of a Brick object and they can *fetch* the same objects.
-Users have access to Ranges objects and matrix subset operations.
+Each of the _ranges objects_ are stored under a unique id. The bin table always holds the id, "Bintable" whereas other _ranges objects_ can hold other unique identifiers as per the user's purview. As mentioned before, users can *list* attributes of a Brick object and they can *fetch* the same objects. 
+
+Therefore, we can first *list* the unique identifiers of each of the _ranges_ that are stored in the HDF file. 
 
 ```{r}
 
@@ -165,9 +304,9 @@ Brick_list_rangekeys(Brick.file)
 
 ```
 
-This lists the available rangekeys in the Brick file. Alternatively,
-if you are interested in only the bintable associated to the Hi-C
-experiment, you can
+This lists the available rangekeys in the test _Brick object_. There are two _ranges_ that are listed. The first, is the bin table, whereas the second is an example custom annotations that I had stored in the HDF file after creating it.  
+
+If we want to retrieve the bin table, we can *fetch/get* the bin table.
 
 ```{r}
 
@@ -175,8 +314,7 @@ Brick_get_bintable(Brick.file)
 
 ```
 
-Otherwise, you can retrieve the object using `Brick_get_ranges`
-the method called by `Brick_get_bintable`.
+Otherwise, you can retrieve the object using `Brick_get_ranges` the method called by `Brick_get_bintable`.
 
 ```{r}
 
@@ -185,7 +323,7 @@ Brick_get_ranges(Brick = Brick.file,
 
 ```
 
-You can also subset the retrieved ranges by the chromosome of interest.
+While fetching the ranges object we can also subset the retrieved ranges by the chromosome of interest.
 
 ```{r}
 
@@ -197,8 +335,7 @@ Brick_get_ranges(Brick = Brick.file,
 
 ### Identifying matrix row/col using ranges operations
 
-Users may sometimes find it useful to identify the corresponding matrix
-row/col for a particular coordinate. Then it it as simple as.
+Users may sometimes find it useful to identify the corresponding matrix row/col for a particular coordinate.
 
 ```{r}
 
@@ -208,13 +345,9 @@ Brick_return_region_position(Brick = Brick.file,
 
 ```
 
-This does a **within** overlap operation and returns the corresponding
-coordinates. Therefore, sometimes when the region of interest is smaller
-than the ranges corresponding to the particular matrix region of interest,
-this function may fail.
+This does a **within** overlap operation and returns the corresponding coordinates. Therefore, sometimes when the region of interest is smaller than the ranges corresponding to the particular matrix region of interest, this function may fail.
 
-To have more fine-grain control, users may choose to use
-`Brick_fetch_range_index` which is called by `Brick_return_region_position`.
+To have more fine-grain control, users may choose to use `Brick_fetch_range_index` which is called by `Brick_return_region_position`.
 
 ```{r}
 
@@ -226,21 +359,19 @@ Brick_fetch_range_index(Brick = Brick.file,
 
 ```
 
-This function will return a GRanges object containing one row for each element
-in the provided *chr,start,end* vectors, with a `NumericList` column "Indexes"
-corresponding to the overlapping row/col coordinate of that matrix.
+This function will return a GRanges object containing one row for each element in the provided *chr,start,end* vectors, with a `NumericList` column "Indexes" corresponding to the overlapping row/col coordinate of that matrix.
 
 ## Accessing matrices in a brick store
 
 There are three ways to subset matrices.
+
 - By distance
 - Selecting sub-matrices
 - Selecting rows or columns
 
 ### Retrieving points separated by a certain distance
 
-It is possible to get the interactions between genomic loci separated by a
-certain distance.
+It is possible to get the interactions between genomic loci separated by a certain distance.
 
 ```{r}
 
@@ -267,7 +398,7 @@ Brick_get_values_by_distance(Brick = Brick.file,
 
 ```
 
-They can even subset the values by a certain region of interest
+They can even subset the values by a certain region of interest, such as TADs by using the `constrain.region` function. Notice, how we can provide human readable coordinate information to this particular parameter. HiCBricks, explicitly requires the delimiter of the coordinates to always be ":".
 
 
 ```{r}
@@ -287,19 +418,18 @@ Brick_get_values_by_distance(Brick = Brick.file,
 
 ### Retrieving subsets of a matrix
 
-HiCBricks, implements word-alike retrieval of sub-matrices. That means,
-you can retrieve data using coordinate in coordinate like fashion.
+HiCBricks, implements retrieval of sub-matrices in coordinate like manned. That means, you can retrieve data in an almost word like fashion. Once again, we ask users to make note of the human readable coordinate format in the `x.coords` and `y.coords` parameters.
 
 ```{r}
 
 Sub.matrix <- Brick_get_matrix_within_coords(Brick = Brick.file,
-    x.coords="chr19:5000001:10000000",
+    x.coords="chr19:5000000:10000000",
     force = TRUE,
-    y.coords = "chr19:5000001:10000000")
+    y.coords = "chr19:5000000:10000000")
 
 ```
 
-This is the same as
+Users may think, but it is not the same as getting the sub-matrix yourself.
 
 ```{r}
 
@@ -313,14 +443,9 @@ Sub.matrix <- Brick_get_matrix(Brick = Brick.file,
 
 ```
 
-Notice, that this selection is not the same as the previous one and it has
-one more row and column. This is because the region of interest spans from
-**5000001:10000000**, which starts from the `x.axis + 1` and not from `x.axis`.
+Notice, that this selection has one more row and column. This is because the region of interest spans from **5000001:10000000**, which starts from the `x.axis + 1` and not from `x.axis`. 
 
-
-Finally, it is also possible to fetch entire rows and columns. Users can do
-so either with names, which correspond to names of the matrix rows/cols from
-the bintable. If these are names, it is required to specify `by = "ranges"`.
+Finally, it is also possible to fetch entire rows and columns. Users can do so either with names, which correspond to names of the matrix rows/cols from the bintable in the coordinate format specific earlier, i.e. `chr:start:end`. If these are names, it is required to specify `by = "ranges"`.
 
 ```{r}
 
@@ -354,20 +479,16 @@ Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
 
 ```
 
-If regions is provided, it will subset the corresponding row/col by the
-specified region. `regions` must be in coordinate format as shown below.
+If regions is provided, it will subset the corresponding row/col by the specified region. `regions` must be in coordinate format as shown below.
 
 ### Accessing matrix metadata columns
 
-There are several metrics which are computed at the time of matrix load.
-Principally,
+There are several metrics which are computed at the time of matrix load. Principally,
 - **bin.coverage** quantifies the proportion of non-zero rows/cols
 - **row.sums** quantifies the total signal value of any row
-- **sparsity** quantifies the proportion of non-zero values at a certain
-distance from the diagonal
+- **sparsity** quantifies the proportion of non-zero values at a certain distance from the diagonal
 
-Sparsity is only quantified if a matrix is defined as sparse during
-matrix load.
+Sparsity is only quantified if a matrix is defined as sparse during matrix load.
 
 Users can check the names of the various matrix metadata columns.
 
@@ -394,8 +515,7 @@ head(MCols.dat, 100)
 
 ### Matrix utility functions
 
-There are several utility functions that a user may take advantage of
-to do various checks.
+There are several utility functions that a user may take advantage of to do various checks.
 
 - Check if a matrix has been loaded into the Brick store
 
@@ -417,7 +537,7 @@ Brick_matrix_issparse(Brick = Brick.file,
 
 ```
 
-- Check the maximum distance until which a matrix was loaded.
+- Check the maximum distance until which a matrix was loaded. This particular function is relevant only when the `Brick_load_cis_matrix_till_distance` has been used.
 
 ```{r}
 
@@ -427,17 +547,17 @@ Brick_matrix_maxdist(Brick = Brick.file,
 
 ```
 
-- Check if a matrix was defined.
+- Check if a matrix was defined for a particular chromosome pair
 
 ```{r}
 
-Brick_matrix_minmax(Brick = Brick.file,
+Brick_matrix_exists(Brick = Brick.file,
     chr1 = "chr19",
     chr2 = "chr19")
 
 ```
 
-- Check the minimum and maximum values of a matrix
+- Check the minimum and maximum values present within the matrix
 
 ```{r}
 
@@ -457,7 +577,7 @@ Brick_matrix_dimensions(Brick = Brick.file,
 
 ```
 
-- Get the filename of a loaded matrix
+- Get the original filename of a loaded matrix
 
 ```{r}
 
@@ -466,6 +586,8 @@ Brick_matrix_filename(Brick = Brick.file,
     chr2 = "chr19")
 
 ```
+
+# Example analyses implemented in HiCBricks 
 
 ## Call Topologically Associated Domains with Local score differentiator (LSD)
 
@@ -499,19 +621,9 @@ TAD_ranges <- Brick_local_score_differentiator(Brick = Brick.file,
     chunk.size = 500)
 ```
 
-`lookup.window` value corresponds to the local window used to subset the
-directionality index distribution. Setting `strict` to TRUE, adds another
-additional filter wherein the directionality index is required to be less
-than or greater than 0 at potential change points identifying a domain
-boundary. LSD works by identifying domain starts and ends, if a particular
-domain start was not identified, but the adjacent domain end was identified,
-`fill.gaps` if set to TRUE, will infer the adjacent bin from the adjacent
-domain end as a domain start bin and create a domain. Any domains identified
-by `fill.gaps` are annotated under the *level* column in the resulting GRanges
-object with the value 2. `chunk.size` corresponds to the size of the square to
-retrieve and process per iteration. 
+`lookup.window` value corresponds to the local window used to subset the directionality index distribution. Setting `strict` to TRUE, adds another additional filter wherein the directionality index is required to be less than or greater than 0 at potential change points identifying a domain boundary. LSD works by identifying domain starts and ends, if a particular domain start was not identified, but the adjacent domain end was identified, `fill.gaps` if set to TRUE, will infer the adjacent bin from the adjacent domain end as a domain start bin and create a domain. Any domains identified by `fill.gaps` are annotated under the *level* column in the resulting GRanges object with the value 2. `chunk.size` corresponds to the size of the square to retrieve and process per iteration. 
 
-These TAD calls can also be stored along with the Brick file.
+As shown previously, we can store these TAD calls along with the _Brick object_.
 
 ```{r}
 
@@ -525,12 +637,9 @@ Brick_add_ranges(Brick = Path_to_cached_file,
 
 ```
 
-## Fetching associated ranges from a Brick file
+### Fetching the TAD calls from the Brick object
 
-Since a brick store is an on-disk database, it is possible to fetch ranges
-objects associated to the brick store. Users can first list the available
-ranges objects. Once, they have identified the available rangekeys,
-users can fetch the required rangekeys.
+As shown previously, we can list the unique identifiers of the stored ranges (_rangekeys_) using the `Brick_list_rangekeys` function and then retrieve them using the `Brick_get_ranges` function.
 
 ```{r}
 
@@ -543,9 +652,7 @@ TAD_ranges <- Brick_get_ranges(Brick = Path_to_cached_file,
 
 ## Creating pretty heatmaps using HiCBricks
 
-Using HiCBricks functions, users can plot pretty Hi-C heatmaps. HiCBricks 
-allows users to plot one sample or two sample heatmaps. This lists the most 
-basic commands required to generate a heatmap.
+Using HiCBricks functions, users can plot pretty Hi-C heatmaps. HiCBricks allows users to plot one sample or two sample heatmaps. This lists the most basic commands required to generate a heatmap.
 
 ### Plotting one sample heatmaps
 
@@ -1019,191 +1126,5 @@ y axis.
 - `legend.title.text.size` controls the font size of the legend title.
 - `legend.text.size` controls the font size of individual legend elements.
 - `title.size` controls the size of the plot title.
-
-
-## Loading 4DN mcool files as Brick objects
-
-It is not possible at this time to create a direct mirror of mcool files. 
-mcool files, for the uninitiated are a standard data format designed by the 
-4D nucleome project and better facilitates the storage of very large 
-experiments within a single data file. HiCBricks, on the other hand stores the 
-complete matrix, as opposed to the upper triangle in mcools files.
-
-Due to limitations placed on package build times, any code chunks that are 
-displayed under this header were not executed during the building of this 
-package.
-
-In this exercise we will download a file from the 4DN data portal at
-https://data.4dnucleome.org/. For the purposes of this vignette we will use
-a randomly chosen H1-hESC Hi-C data.
-
-Please note, that these are very large files, and require a lot of time to
-download.
-
-You can download it using curl.
-
-```{r eval = FALSE}
-require(curl)
-Consortium.home = "https://data.4dnucleome.org/files-processed"
-File = file.path(Consortium.home,"4DNFI7JNCNFB",
-    "@@download","4DNFI7JNCNFB.mcool")
-curl_download(url = File,
-    destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-
-```
-
-This contains normalised Hi-C data on H1-hESC cells using the DpnII enzyme.
-Note that there are a few normalisation weights available within the sample.
-We can check what normalisation weights are available using
-`Brick_list_mcool_normalisations`. Please note, that this function does not
-list the normalisation weights available within the mcool file, but rather
-lists normalisation factors that HiCBricks accepts from the mcool files.
-Notice, the human readable names and the actual dataset names, what you are
-interested in are the human readable names, which makes the type of
-normalisation apparent. Such as for example, KR is an abbreviation for
-the Knight Ruitz matrix balancing algorithm introduced by Rao et al., 2014^[
-A 3D map of the human genome at kilobase resolution reveals principles 
-of chromatin looping.
-Rao SS, Huntley MH, Durand NC, Stamenova EK, Bochkov ID, Robinson JT, 
-Sanborn AL, Machol I, Omer AD, Lander ES and Aiden EL.
-Cell, 2014].
-
-
-```{r eval = FALSE}
-
-Brick_list_mcool_normalisations(names.only = TRUE)
-
-```
-
-This lists only the human-readable names. To see both the abbreviation and the
-base column name, 
-
-```{r eval = FALSE}
-
-Brick_list_mcool_normalisations(names.only = FALSE)
-
-```
-will list all names including their linked columns in the HDF file. 
-
-The 4D nucleome project bins their data into several different resolutions, to
-check out the available resolutions, it is as simple as.
-
-```{r eval = FALSE}
-mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
-Brick_list_mcool_resolutions(mcool = mcoolName)
-
-```
-
-Once, you have viewed all of the listed resolutions, we can go ahead and
-create Brick objects from these files. Please note, that users cannot load
-multiple resolutions in a single Brick file, this is because the aim of
-HiCBricks is not to create an alternative storage format to already very
-well designed pre-existing formats, but rather to create a **straightforward**,
-**memory efficient** storage and retrieval library for Hi-C data formats in R.
-
-Although it is possible to load all chromosomes in a single Brick object,
-this is not recommended because,
-- It is not possible for multiple processes to concurrently access the
-same HDF file. Therefore, it hinders parallelization.
-- The presence of multiple matrices in the same file, results in an increase in
-read and write speeds.
-
-Instead when using very large matrices, users are encouraged to separate the
-matrices chromosome by chromosome into different brick objects.
-
-We can go ahead and create a Brick corresponding for a single chromosome from
-the downloaded mcool file and import data relevant to the cis-interaction
-maps for that chromosome. 
-
-```{r eval = FALSE}
-
-Brick.name <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick"
-mcool <- mcoolName
-
-Output.brick <- CreateBrick_from_mcool(Brick = Brick.name, 
-    mcool = mcool, binsize = 10000, chrs = "chr1", remove.existing = TRUE)
-# Remember that Brick name as it does not contain a proper path to file, is 
-# stored in the bioc file cache directory. If at any point we want to relocated
-# it. We can fetch it using 
-Output.brick <- Brick_path_to_file(Brick.name)
-
-# Or if a user does not remember the name of a Brick, they can list this 
-# information using
-Brick_list_tracked_bricks()
-
-
-# Check if the Iterative correction weights exist in the file.
-Brick_mcool_normalisation_exists(mcool = mcool, 
-    norm.factor = "Iterative-Correction",
-    binsize = 10000)
-
-Brick_load_data_from_mcool(Brick = Output.brick,
-    mcool = mcool,
-    chr1 = "chr1",
-    chr2 = "chr1",
-    binsize = 10000,
-    cooler.batch.size = 1000000,
-    matrix.chunk = 2000,
-    dont.look.for.chr2 = TRUE,
-    remove.prior = TRUE,
-    norm.factor = "Iterative-Correction")
-
-```
-The first function creates the basic Brick structure, whereas the second
-function loads data into the structure. Using the param `chrs`, users
-can limit the structure created to the relevant chromosomes or if left
-NULL, will create the structure for all chromosome pairs. Please note,
-that if the length of chrs is 2, 4 interaction maps will be created.
-Two for the `cis` (intra-chromosomal) interaction maps and two for the
-`trans` (inter-chromosomal) interaction maps. 
-
-Notice, that there are a few options allowing users to manipulate data read
-and write speeds. `cooler.batch.size` determines the number of records read
-per iteration through an mcool file. `matrix.chunk` determines the size of
-the matrix square that will be loaded per iteration through an mcool file.
-If you are loading *cis* matrices, it is recommended to set the
-`dont.look.for.chr2` parameter to TRUE, as the first read records for chr1
-will always correspond to those originating from chr2. In cases of *trans*
-matrices, this option should be set to FALSE allowing the function to
-locate the first occurence of a chr1 vs chr2 interaction. `remove.prior`
-defaults to FALSE and prevents users from loading datasets twice.
-
-
-
-
-
-
-
-
-# Additional details on HiCBricks implementation
-
-During first use, the package creates HDF files for storing and accessing the
-Hi-C data. HDF, short for Hierarchical Data Format is an general-purpose 
-on-disk data structure. Once created, HDF files can be reaccessed without the
-need for reloading the data an infinite number of times (theoretically 
-speaking). 
-Although HDF provides extreme flexibility to users for creating their own 
-specialised on-disk data structures, this comes at the cost of usability. 
-Designing and implementing a specific, easy to use HDF data format can become 
-extremely time-intesive. This is due to the range of possibilities and 
-underlying granular control that the HDF C library provides. Furthermore, 
-dealing with the intricacies associated to reading and writing HDF files can 
-prove to be challenges for the inexperienced user.
-
-
-
-## HDF structure implemented within Brick objects
-
-The _Brick object_ implements a HDF structure consisting of three layers. In 
-no specific order, the first houses Hi-C contact matrices as 2D matrices for 
-every chromosome pair. The second, houses the associated genomic ranges 
-related to the Hi-C contact matrix. Finally, the third layer contains any 
-associated annotations that a user may want to store within the Brick object. 
-This information may be, but is not limited to, TAD calls, Peak calls, 
-RNA-seq expression data. In principle, if the annotation information can be 
-cast as a ranges object, it can be stored in the Brick object.
-
-
-
 
 
