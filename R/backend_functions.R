@@ -146,6 +146,22 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     return(is.numeric(x) | is.integer(x))
 }
 
+._format_by_charlen <- function(string = NULL, length = 80){
+    Space_locations <- str_locate_all(pattern = " ", paste(string," "))[[1]]
+    Space_locations_ends <- Space_locations[,"end"]
+    Binned_locations <- rle(ceiling(Space_locations_ends/length))
+    Break_loc_end <- Space_locations_ends[cumsum(Binned_locations$lengths)]
+    Break_loc_start <- 1
+    if(length(Break_loc_end) > 1){
+        Break_loc_start <- c(Break_loc_start, 
+            Break_loc_end[-length(Break_loc_end)]+1)
+    }
+    Trimmed_string <- str_trim(str_sub(string, 
+        start = Break_loc_start, 
+        end = Break_loc_end))
+    Finished_message <- paste(Trimmed_string, collapse = "\n")
+}
+
 
 ._GenerateRandomName_ <- function(seed = NULL, 
     algo = c("sha1", "crc32", "md5", "sha256", 
@@ -600,39 +616,39 @@ humanize_size <- function(x){
     }
 }
 
-._Get_cachedir <- function(){
-    Reference.object <- GenomicMatrix$new()
-    Cache.dir.basename <- Reference.object$cache.basename
-    Cachebasepath <- user_cache_dir()
-    Cache.dir <- BiocFileCache(cache = file.path(Cachebasepath,
-        Cache.dir.basename), ask = FALSE)
-    return(Cache.dir)
-}
+# ._Get_cachedir <- function(){
+#     Reference.object <- GenomicMatrix$new()
+#     Cache.dir.basename <- Reference.object$cache.basename
+#     Cachebasepath <- user_cache_dir()
+#     Cache.dir <- BiocFileCache(cache = file.path(Cachebasepath,
+#         Cache.dir.basename), ask = FALSE)
+#     return(Cache.dir)
+# }
 
-._add_metadata_to_cache <- function(metadata.df = NULL, cache.dir = NULL){
-    Reference.object <- GenomicMatrix$new()
-    bfcmeta(cache.dir, 
-        name = Reference.object$cache.metacol.cols,
-        append = TRUE) <- metadata.df    
-}
-._Create_new_cached_file <- function(Cache.dir = NULL, Brick.path = NULL){
-    Reference.object <- GenomicMatrix$new()
-    Filename <- basename(Brick.path)
-    Dir.path <- normalizePath(dirname(Brick.path))
-    Tracked_name <- ._Get_Brick_hashname(Brick.path)
-    Working.File <- bfcnew(x = Cache.dir, 
-        rname = Filename, 
-        ext = Reference.object$brick.extension,
-        rtype = "local")
-    DB_id <- names(Working.File)
-    Metadata.df <- data.frame(dbid = DB_id,
-        hashname = Tracked_name,
-        dirpath = Dir.path)
-    colnames(Metadata.df) <- c(
-        Reference.object$cache.metacol.dbid,
-        Reference.object$cache.metacol.hashname,
-        Reference.object$cache.metacol.dirpath)
-    ._add_metadata_to_cache(metadata.df = Metadata.df, 
-        cache.dir = Cache.dir)
-    return(Working.File)
-}
+# ._add_metadata_to_cache <- function(metadata.df = NULL, cache.dir = NULL){
+#     Reference.object <- GenomicMatrix$new()
+#     bfcmeta(cache.dir, 
+#         name = Reference.object$cache.metacol.cols,
+#         append = TRUE) <- metadata.df    
+# }
+# ._Create_new_cached_file <- function(Cache.dir = NULL, Brick.path = NULL){
+#     Reference.object <- GenomicMatrix$new()
+#     Filename <- basename(Brick.path)
+#     Dir.path <- normalizePath(dirname(Brick.path))
+#     Tracked_name <- ._Get_Brick_hashname(Brick.path)
+#     Working.File <- bfcnew(x = Cache.dir, 
+#         rname = Filename, 
+#         ext = Reference.object$brick.extension,
+#         rtype = "local")
+#     DB_id <- names(Working.File)
+#     Metadata.df <- data.frame(dbid = DB_id,
+#         hashname = Tracked_name,
+#         dirpath = Dir.path)
+#     colnames(Metadata.df) <- c(
+#         Reference.object$cache.metacol.dbid,
+#         Reference.object$cache.metacol.hashname,
+#         Reference.object$cache.metacol.dirpath)
+#     ._add_metadata_to_cache(metadata.df = Metadata.df, 
+#         cache.dir = Cache.dir)
+#     return(Working.File)
+# }
