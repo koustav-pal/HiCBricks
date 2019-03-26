@@ -168,47 +168,35 @@ CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
     col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL,
     Output.Filename, exec="cat", remove.existing=FALSE){
     H5close()
+
     Dir.path <- dirname(Output.Filename)
+    if(Dir.path == "."){
+        Err.msg <- paste("Unable to create", Output.Filename, 
+            "without an explicit path", "definition!", "If you want to create",
+            Output.Filename, "inside the", "current working directory,",
+            "please provide", "the complete path to", "the file. Or, you can",
+            "provide as an", "argument,", 
+            paste("file.path(getwd(),\"", Output.Filename, "\")", sep = ""), 
+        sep = " ")
+        stop(._format_by_charlen(string = Err.msg))
+    }
     Filename <- basename(Output.Filename)
     Output.Filename <- file.path(normalizePath(Dir.path),Filename)
-    Tracked_name <- ._Get_Brick_hashname(Brick = Output.Filename)
     Reference.object <- GenomicMatrix$new()
-    CreateCacheObject <- FALSE
-    CreateNewCacheObject <- FALSE
-    Cache.dir <- ._Get_cachedir()
-    if(Dir.path == "."){
-        warning("HDF file will be created and tracked by",
-            "BioC cache directory.\n")
-        if(Brick_is_tracked(Brick = Output.Filename)){
-            Working.File <- Brick_path_to_file(Output.Filename)
-            CreateNewCacheObject <- TRUE
-        }else{
-            Working.File <- ._Create_new_cached_file(Cache.dir = Cache.dir,
-                Brick.path = Output.Filename)
-            CreateNewCacheObject <- FALSE
-        }
-    }else{
-        Working.File <- Output.Filename
-        CreateCacheObject <- TRUE
-    }
+
     Root.folders <- Reference.object$GetRootFolders()
     if(is.null(ChromNames) | length(ChromNames) == 0){
         stop("Variable ChromNames cannot be empty")
     }
-    HDF.File <- as.character(Working.File)
+
+    HDF.File <- as.character(Output.Filename)
+
     if(file.exists(HDF.File)){
         if(!remove.existing){
             stop("Provided HDF file already exists. Please provide ",
                 "remove.existing = TRUE to overwrite it\n")
         }
         file.remove(HDF.File)
-        if(Brick_is_tracked(Brick = Output.Filename)){
-            Brick_untrack_brick(Brick = Output.Filename)
-        }
-        if(CreateNewCacheObject){
-            HDF.File <- ._Create_new_cached_file(Cache.dir = Cache.dir,
-                Brick.path = Output.Filename)
-        }
     }
     ChromosomeList<-ChromNames
     if(is.null(BinTable)){
@@ -271,10 +259,6 @@ CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
                 dims = Dims, maxdims = Dims)
         }
     }
-    if(CreateCacheObject){
-        Brick_track_bricks(Brick = HDF.File)
-    }
-    names(HDF.File) <- Output.Filename
     return(HDF.File)
 }
 #' Create the entire HDF5 structure and load the bintable from a mcool file
@@ -2173,204 +2157,204 @@ Brick_list_matrix_mcols = function(Brick, chr1, chr2){
 }
 
 
-#' List all Bricks that have been created with .
-#'
-#' `Brick_list_tracked_bricks` will list all Brick objects that are being
-#' tracked.
-#'
-#' @param detailed \strong{Optional}
-#' If FALSE, produces a data.frame of file paths pointing to the
-#' Brick objects. If TRUE, produces a tibble containing additional information
-#' such as the bioc cache tracking id, and the creation, last accession and
-#' modification times.
-#'
-#' @param preserve.col.names \strong{Optional}
-#' If TRUE, will preserve the original colnames from the bioc cache tibble
-#' object. If FALSE, will attempt to humanize the colnames to improve
-#' readability.
-#' 
-#' @return Returns a data.frame or tibble containing the path to tracked
-#' Brick objects. If tibble will contain additional information related to
-#' the tracking. For details see parameter detailed.
-#'
-#' @examples
-#' Brick_list_tracked_bricks()
-Brick_list_tracked_bricks = function(detailed = FALSE,
-    preserve.col.names = FALSE){
-    Reference.object <- GenomicMatrix$new()
-    Cache.dir <- ._Get_cachedir()
-    Info.tib <- bfcquery(x = Cache.dir,
-        query = paste(".",Reference.object$brick.extension,sep = ""),
-        field = "rpath")
-    if(nrow(Info.tib) == 0){
-        return(NULL)
-    }
-    File.names <- Info.tib[["rname"]]
-    File.dirs <- Info.tib[[Reference.object$cache.metacol.dirpath]]
-    File.paths <- Info.tib[["rpath"]]
-    File.hashes <- Info.tib[[Reference.object$cache.metacol.hashname]]
-    Minimal.df <- data.frame( filename = file.path(File.dirs, File.names),
-        paths = File.paths, hashes = File.hashes)
-    if(!detailed){
-        return(Minimal.df)
-    }else{
-        Info.tib$path_to_file <- File.paths
-        Info.tib <- Info.tib[,c(1, 2, 5, 9, 10, 11, 3, 4, 8)]
-        if(!preserve.col.names){
-            colnames(Info.tib) <- c("Unique_db_identifier",
-                "name_of_origin_file", "name_in_cache_dir",
-                "path_to_file", "unique_file_hash", "path_to_origin_dir",
-                "create_time", "access_time", "last_modified_time")
-        }
-        return(Info.tib)
-    }
-}
+# #' List all Bricks that have been created with .
+# #'
+# #' `Brick_list_tracked_bricks` will list all Brick objects that are being
+# #' tracked.
+# #'
+# #' @param detailed \strong{Optional}
+# #' If FALSE, produces a data.frame of file paths pointing to the
+# #' Brick objects. If TRUE, produces a tibble containing additional information
+# #' such as the bioc cache tracking id, and the creation, last accession and
+# #' modification times.
+# #'
+# #' @param preserve.col.names \strong{Optional}
+# #' If TRUE, will preserve the original colnames from the bioc cache tibble
+# #' object. If FALSE, will attempt to humanize the colnames to improve
+# #' readability.
+# #' 
+# #' @return Returns a data.frame or tibble containing the path to tracked
+# #' Brick objects. If tibble will contain additional information related to
+# #' the tracking. For details see parameter detailed.
+# #'
+# #' @examples
+# #' Brick_list_tracked_bricks()
+# Brick_list_tracked_bricks = function(detailed = FALSE,
+#     preserve.col.names = FALSE){
+#     Reference.object <- GenomicMatrix$new()
+#     Cache.dir <- ._Get_cachedir()
+#     Info.tib <- bfcquery(x = Cache.dir,
+#         query = paste(".",Reference.object$brick.extension,sep = ""),
+#         field = "rpath")
+#     if(nrow(Info.tib) == 0){
+#         return(NULL)
+#     }
+#     File.names <- Info.tib[["rname"]]
+#     File.dirs <- Info.tib[[Reference.object$cache.metacol.dirpath]]
+#     File.paths <- Info.tib[["rpath"]]
+#     File.hashes <- Info.tib[[Reference.object$cache.metacol.hashname]]
+#     Minimal.df <- data.frame( filename = file.path(File.dirs, File.names),
+#         paths = File.paths, hashes = File.hashes)
+#     if(!detailed){
+#         return(Minimal.df)
+#     }else{
+#         Info.tib$path_to_file <- File.paths
+#         Info.tib <- Info.tib[,c(1, 2, 5, 9, 10, 11, 3, 4, 8)]
+#         if(!preserve.col.names){
+#             colnames(Info.tib) <- c("Unique_db_identifier",
+#                 "name_of_origin_file", "name_in_cache_dir",
+#                 "path_to_file", "unique_file_hash", "path_to_origin_dir",
+#                 "create_time", "access_time", "last_modified_time")
+#         }
+#         return(Info.tib)
+#     }
+# }
 
 
-#' Check if a Brick is being tracked.
-#'
-#' `Brick_is_tracked` checks if the provided Brick file is being
-#' tracked or not.
-#'
-#' @param Brick \strong{required}
-#' Path to the Brick file to check.
-#' 
-#' @return Returns TRUE or FALSE indicating if the file path is being tracked
-#' or not.
-#'
-#' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_is_tracked(Brick = Brick.file)
-Brick_is_tracked = function(Brick){
-    Reference.object <- GenomicMatrix$new()
-    Cache.dir <- ._Get_cachedir()
-    Tracked_name <- ._Get_Brick_hashname(Brick = Brick)
-    Col.present <- Reference.object$cache.metacol.hashname %in%
-    bfcquerycols(Cache.dir)
-    if(Col.present){
-        Info.tib <- bfcquery(x = Cache.dir,
-            query = Tracked_name,
-            field = Reference.object$cache.metacol.hashname)
-        return(nrow(Info.tib) > 0 )
-    }else{
-        return(Col.present)
-    }
-}
+# #' Check if a Brick is being tracked.
+# #'
+# #' `Brick_is_tracked` checks if the provided Brick file is being
+# #' tracked or not.
+# #'
+# #' @param Brick \strong{required}
+# #' Path to the Brick file to check.
+# #' 
+# #' @return Returns TRUE or FALSE indicating if the file path is being tracked
+# #' or not.
+# #'
+# #' @examples
+# #' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
+# #' Brick_is_tracked(Brick = Brick.file)
+# Brick_is_tracked = function(Brick){
+#     Reference.object <- GenomicMatrix$new()
+#     Cache.dir <- ._Get_cachedir()
+#     Tracked_name <- ._Get_Brick_hashname(Brick = Brick)
+#     Col.present <- Reference.object$cache.metacol.hashname %in%
+#     bfcquerycols(Cache.dir)
+#     if(Col.present){
+#         Info.tib <- bfcquery(x = Cache.dir,
+#             query = Tracked_name,
+#             field = Reference.object$cache.metacol.hashname)
+#         return(nrow(Info.tib) > 0 )
+#     }else{
+#         return(Col.present)
+#     }
+# }
 
 
-#' Check if a Brick is being tracked.
-#'
-#' `Brick_track_bricks` will start tracking the provided Brick file.
-#'
-#' @param Brick \strong{required}
-#' Path to the Brick file to track.
-#' 
-#' @return Returns a named vector containing the path to the file along with
-#' the bioc Cache id as its name.
-#'
-#' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' if(Brick_is_tracked(Brick.file)) {
-#'     Brick_untrack_brick(Brick = Brick.file)
-#'     Brick_track_bricks(Brick = Brick.file)
-#' }else{
-#'     Brick_track_bricks(Brick = Brick.file)
-#' }
-Brick_track_bricks = function(Brick){
-    Reference.object <- GenomicMatrix$new()
-    Cache.dir <- ._Get_cachedir()
-    Dir.path <- normalizePath(dirname(Brick))
-    Filename <- basename(Brick)
-    Tracked_name <- ._Get_Brick_hashname(Brick)
-    if(Brick_is_tracked(Brick = Brick)){
-        stop("This Brick object is already being tracked!")
-    }
-    ReturnThingy <- bfcadd(x = Cache.dir, rname = Filename,
-        fpath = file.path(Dir.path, Filename),
-        ext = Reference.object$brick.extension,
-        rtype = "local", action = "asis")
-    DB_id <- names(ReturnThingy)
-    Metadata.df <- data.frame(dbid = DB_id,
-        hashname = Tracked_name,
-        dirpath = Dir.path)
-    colnames(Metadata.df) <- c(
-        Reference.object$cache.metacol.dbid,
-        Reference.object$cache.metacol.hashname,
-        Reference.object$cache.metacol.dirpath)
-    ._add_metadata_to_cache(metadata.df = Metadata.df,
-        cache.dir = Cache.dir)
-    return(ReturnThingy)
-}
+# #' Check if a Brick is being tracked.
+# #'
+# #' `Brick_track_bricks` will start tracking the provided Brick file.
+# #'
+# #' @param Brick \strong{required}
+# #' Path to the Brick file to track.
+# #' 
+# #' @return Returns a named vector containing the path to the file along with
+# #' the bioc Cache id as its name.
+# #'
+# #' @examples
+# #' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
+# #' if(Brick_is_tracked(Brick.file)) {
+# #'     Brick_untrack_brick(Brick = Brick.file)
+# #'     Brick_track_bricks(Brick = Brick.file)
+# #' }else{
+# #'     Brick_track_bricks(Brick = Brick.file)
+# #' }
+# Brick_track_bricks = function(Brick){
+#     Reference.object <- GenomicMatrix$new()
+#     Cache.dir <- ._Get_cachedir()
+#     Dir.path <- normalizePath(dirname(Brick))
+#     Filename <- basename(Brick)
+#     Tracked_name <- ._Get_Brick_hashname(Brick)
+#     if(Brick_is_tracked(Brick = Brick)){
+#         stop("This Brick object is already being tracked!")
+#     }
+#     ReturnThingy <- bfcadd(x = Cache.dir, rname = Filename,
+#         fpath = file.path(Dir.path, Filename),
+#         ext = Reference.object$brick.extension,
+#         rtype = "local", action = "asis")
+#     DB_id <- names(ReturnThingy)
+#     Metadata.df <- data.frame(dbid = DB_id,
+#         hashname = Tracked_name,
+#         dirpath = Dir.path)
+#     colnames(Metadata.df) <- c(
+#         Reference.object$cache.metacol.dbid,
+#         Reference.object$cache.metacol.hashname,
+#         Reference.object$cache.metacol.dirpath)
+#     ._add_metadata_to_cache(metadata.df = Metadata.df,
+#         cache.dir = Cache.dir)
+#     return(ReturnThingy)
+# }
 
 
-#' Check if a Brick is being tracked.
-#'
-#' `Brick_untrack_brick` will stop tracking the provided Brick file,
-#' if it exists.
-#'
-#' @param Brick \strong{required}
-#' Path to the Brick file to untrack.
-#'
-#' @return Returns any value provided by bfcremove.
-#'
-#' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' if(Brick_is_tracked(Brick.file)){
-#'     Brick_untrack_brick(Brick = Brick.file)
-#' }else{
-#'     Brick_track_bricks(Brick = Brick.file)
-#'     Brick_untrack_brick(Brick = Brick.file)
-#' }
-Brick_untrack_brick = function(Brick){
-    Reference.object <- GenomicMatrix$new()
-    Cache.dir <- ._Get_cachedir()
-    if(!(Reference.object$cache.metacol.hashname %in%
-            bfcquerycols(Cache.dir))){
-        stop("Tracking of Brick objects is yet to be initialized!")
-    }
-    Tracked_name <- ._Get_Brick_hashname(Brick)
-    Info.tib <- bfcquery(x = Cache.dir, query = Tracked_name,
-        field = Reference.object$cache.metacol.hashname)
-    if(Brick_is_tracked(Brick = Brick)){
-        DB_id <- Info.tib$rid
-        Done <- bfcremove(Cache.dir, DB_id)
-        return(Done)
-    }else{
-        stop("Brick is not being tracked!")
-    }
-}
+# #' Check if a Brick is being tracked.
+# #'
+# #' `Brick_untrack_brick` will stop tracking the provided Brick file,
+# #' if it exists.
+# #'
+# #' @param Brick \strong{required}
+# #' Path to the Brick file to untrack.
+# #'
+# #' @return Returns any value provided by bfcremove.
+# #'
+# #' @examples
+# #' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
+# #' if(Brick_is_tracked(Brick.file)){
+# #'     Brick_untrack_brick(Brick = Brick.file)
+# #' }else{
+# #'     Brick_track_bricks(Brick = Brick.file)
+# #'     Brick_untrack_brick(Brick = Brick.file)
+# #' }
+# Brick_untrack_brick = function(Brick){
+#     Reference.object <- GenomicMatrix$new()
+#     Cache.dir <- ._Get_cachedir()
+#     if(!(Reference.object$cache.metacol.hashname %in%
+#             bfcquerycols(Cache.dir))){
+#         stop("Tracking of Brick objects is yet to be initialized!")
+#     }
+#     Tracked_name <- ._Get_Brick_hashname(Brick)
+#     Info.tib <- bfcquery(x = Cache.dir, query = Tracked_name,
+#         field = Reference.object$cache.metacol.hashname)
+#     if(Brick_is_tracked(Brick = Brick)){
+#         DB_id <- Info.tib$rid
+#         Done <- bfcremove(Cache.dir, DB_id)
+#         return(Done)
+#     }else{
+#         stop("Brick is not being tracked!")
+#     }
+# }
 
 
-#' Check if a Brick is being tracked.
-#'
-#' `Brick_path_to_file` will query the tracking cache and return the complete
-#' path to the file that is being tracked.
-#'
-#' @param Brick \strong{required}
-#' Path to the Brick file to locate.
-#'
-#' @return Returns the corresponding path to the file that is being tracked.
-#'
-#' @examples
-#'
-#' Bintable.path <- system.file("extdata",
-#' "Bintable_40kb.txt", package = "HiCBricks")
-#' Chromosomes <- "chr19"
-#' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = "test.hdf", exec = "cat",
-#' remove.existing = TRUE)
-#'
-#' Brick.file <- "test.hdf"
-#' Brick_path_to_file(Brick = Brick.file)
-Brick_path_to_file = function(Brick){
-    if(!(Brick_is_tracked(Brick))){
-        stop("The provided Brick is not being tracked")
-    }
-    Tracked_name <- ._Get_Brick_hashname(Brick)
-    Working.File.df <- Brick_list_tracked_bricks()
-    Hashes <- Working.File.df[,"hashes"]
-    Path.to.file <- as.character(Working.File.df[Hashes == Tracked_name &
-        !is.na(Hashes), "paths"])
-    return(Path.to.file)
-}
+# #' Check if a Brick is being tracked.
+# #'
+# #' `Brick_path_to_file` will query the tracking cache and return the complete
+# #' path to the file that is being tracked.
+# #'
+# #' @param Brick \strong{required}
+# #' Path to the Brick file to locate.
+# #'
+# #' @return Returns the corresponding path to the file that is being tracked.
+# #'
+# #' @examples
+# #'
+# #' Bintable.path <- system.file("extdata",
+# #' "Bintable_40kb.txt", package = "HiCBricks")
+# #' Chromosomes <- "chr19"
+# #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
+# #' BinTable = Bintable.path, bin.delim = " ",
+# #' Output.Filename = "test.hdf", exec = "cat",
+# #' remove.existing = TRUE)
+# #'
+# #' Brick.file <- "test.hdf"
+# #' Brick_path_to_file(Brick = Brick.file)
+# Brick_path_to_file = function(Brick){
+#     if(!(Brick_is_tracked(Brick))){
+#         stop("The provided Brick is not being tracked")
+#     }
+#     Tracked_name <- ._Get_Brick_hashname(Brick)
+#     Working.File.df <- Brick_list_tracked_bricks()
+#     Hashes <- Working.File.df[,"hashes"]
+#     Path.to.file <- as.character(Working.File.df[Hashes == Tracked_name &
+#         !is.na(Hashes), "paths"])
+#     return(Path.to.file)
+# }

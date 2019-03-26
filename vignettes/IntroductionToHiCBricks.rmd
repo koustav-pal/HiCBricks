@@ -57,6 +57,8 @@ Currently, HiCBricks functionalities allows importing data from text files with 
 
 ## Creating a Brick object from a text file 2D contact matrix
 
+> All files in this vignette will be created in a temporary directory, the location of which is available through `tempdir()`. Any files stored in this temporary directory will be deleted upon closure of the R session. Users are therefore advised to peruse the code before execution and to replace `tempdir()` with their own project directory locations when working with their own datasets. 
+
 First of all load the HiCBricks library:
 
 ```{r, message = FALSE}
@@ -81,11 +83,10 @@ Then, the backbone of the _Brick object_ data structure is created using only th
 
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
     BinTable = Bintable.path, bin.delim = " ",
-    Output.Filename = "test.hdf", exec = "cat",
+    Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 remove.existing = TRUE)
 
 ```
-
 
 
 > **Technical note**
@@ -117,7 +118,7 @@ Finally the matrix is written to a txt file, without headers or rownames, and us
 
 ```{r}
 
-Matrix.file <- "Test_matrix.txt"
+Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
 write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 
@@ -154,11 +155,6 @@ Brick_load_cis_matrix_till_distance(Brick = Brick.file,
     remove.prior = TRUE)
 
 ```
-
-> **Technical note**
-When a _Brick object_ is created, the user is required to provide an argument specifying the path to the HDF that will be created. As per Bioconductor core-team recommendations, the users should always provide an explicit full path instead than just a filename assuming it will be written in the working directory.
-To enforce compliance with this Bioconductor recommendation, if the brick object is created (with `CreateBrick` function) without a full path in the filename (`Output.Filename` parameter), then the HDF file is saved into the Cache directory rather than in the current working directory. This will typically be in `${HOME}/.cache/HiCBricks/` unless otherwise configured.
-
 
 ## Creating Brick objects from .mcool binary files
 
@@ -658,7 +654,8 @@ Using HiCBricks functions, users can plot pretty Hi-C heatmaps. HiCBricks allows
 
 ```{r plot, fig.cap = "A normal heatmap without any transformations", fig.small = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(), 
+  "chr19-5MB-10MB-normal.pdf"),
     Bricks = Brick.file,
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -684,7 +681,8 @@ Failsafe_log10 <- function(x){
     return(log10(x+1))
 }
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(), 
+  "chr19-5MB-10MB-normal-colours-log10.pdf"),
     Bricks = Brick.file,
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -709,7 +707,8 @@ argument.
 
 ```{r plot3, fig.cap = "A normal heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal1.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-normal-colours-log10-valuecap-99.pdf"),
     Bricks = Brick.file,
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -733,7 +732,8 @@ Sometimes, it is desirable to plot the heatmap as a rotated heatmap.
 
 ```{r plot4, fig.cap = "Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 45 degree rotation", fig.small = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-normal-colours-log10-rotate.pdf"),
     Bricks = Brick.file,
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -754,7 +754,8 @@ the rotated plots are broader than they are taller.
 
 ```{r plot5, fig.cap = "Same heatmap as previous, but now the heatmaps are wider than they are taller", fig.wide = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal3.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-normal-colours-log10-rotate-2.pdf"),
     Bricks = Brick.file,
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -774,7 +775,8 @@ We can now also plot the TADs on these plots.
 
 ```{r plot6, fig.cap = "Normal rectangular heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.small = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal4.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-normal-colours-log10-rotate-2-tads.pdf"),
     Bricks = Brick.file,
     tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000",
@@ -792,7 +794,8 @@ Notice, that using the distance parameter we can control the diagonal until
 which we plot the heatmap.
 
 ```{r plot7, fig.cap = "Normal rotated heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.wide = TRUE}
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-normal5.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-normal-colours-log10-rotate-3-tads.pdf"),
     Bricks = Brick.file,
     tad.ranges = TAD_ranges,
     x.coords = "chr19:5000000:10000000",
@@ -826,7 +829,8 @@ the `Brick` parameter.
 
 ```{r plot8, fig.cap = "A normal two sample heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-colours-log10-valuecap-99.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -848,7 +852,8 @@ the Red to Gray (name RdGy) palette from `RColorBrewer`
 
 ```{r plot9, fig.cap = "A normal two sample heatmap with colours computed in log10 scale on values until the 30th diagonal and capping these values to the 99th percentile.", fig.small = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-colours-log10-valuecap-99-2.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -867,7 +872,8 @@ Finally, we can once again rotate the two sample heatmaps.
 
 ```{r plot10, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-colours-log10-valuecap-99-rotate.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -981,7 +987,8 @@ Brick.file <- system.file("extdata",
 Colours <- c("#B4436C", "#F78154")
 Colour.names <- unique(TADs_ranges$colour.group)
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-colours-log10-valuecap-99-tads.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000001:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -1009,7 +1016,8 @@ Brick.file <- system.file("extdata",
 Colours <- c("#B4436C", "#F78154")
 Colour.names <- unique(TADs_ranges$colour.group)
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-colours-log10-valuecap-99-rotate-tads.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -1044,7 +1052,8 @@ Brick.file <- system.file("extdata",
 Colours <- c("#B4436C", "#F78154")
 Colour.names <- unique(TADs_ranges$colour.group)
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-colours-log10-valuecap-99-rotate-tads-2.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
@@ -1078,7 +1087,8 @@ changes to the legend with a few parameter changes to the
 
 ```{r plot14, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
-Brick_vizart_plot_heatmap(File = "chr19-5MB-10MB-bipartite-normal2.pdf",
+Brick_vizart_plot_heatmap(File = file.path(tempdir(),
+  "chr19-5MB-10MB-bipartite-final.pdf"),
     Bricks = c(Brick.file, Brick.file),
     x.coords = "chr19:5000000:10000000",
     y.coords = "chr19:5000001:10000000",
