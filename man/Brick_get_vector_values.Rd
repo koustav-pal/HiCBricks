@@ -46,7 +46,7 @@ returns a matrix of dimension xaxis length by yaxis length.
 other matrix retrieval functions.
 }
 \section{Note}{
-Whatever the length of xaxis or yaxis may be, the coordinates
+ Whatever the length of xaxis or yaxis may be, the coordinates
 under consideration will range from min(xaxis) to max(xaxis) on the rows or
 min(yaxis) to max(yaxis) on the columns.
 }

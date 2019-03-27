@@ -41,7 +41,7 @@ Bintable.path <- system.file("extdata",
 Chromosomes <- "chr19"
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = "test.hdf", exec = "cat",
+Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 remove.existing = TRUE)
 
 Brick.file <- Brick_path_to_file("test.hdf")

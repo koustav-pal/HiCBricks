@@ -128,20 +128,7 @@ normalisation vector exists in an mcool file.
 in an mcool file.
 }
 }
-\section{Bioc Cache functions}{
-\itemize{
-\item \code{\link{Brick_is_tracked}} - Check if a Brick is being tracked
-\item \code{\link{Brick_untrack_brick}} - Untrack the Brick file at path, if
-it is being tracked
-\item \code{\link{Brick_track_bricks}} - Track the Brick file at path
-\item \code{\link{Brick_list_tracked_bricks}} - List all Bricks that are being
-tracked by the HiCBricks package.
-\item \code{\link{Brick_list_tracked_bricks}} - List all Bricks that are being
-tracked by the HiCBricks package.
-\item \code{\link{Brick_path_to_file}} - Returns the path to a file that is 
-being tracked.
-}
-}
+
 
 
 

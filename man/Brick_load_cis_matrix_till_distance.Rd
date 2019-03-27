@@ -62,18 +62,15 @@ Bintable.path <- system.file("extdata",
 Chromosomes <- "chr19"
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = "test.hdf", exec = "cat",
+Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 remove.existing = TRUE)
 
-Test.mat <- matrix(NA,nrow = 800, ncol = 800)
-Row <- row(Test.mat)
-Col <- col(Test.mat)
-Dist <- Col - Row
-Matrix.file <- "Test_matrix.txt"
-write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
+Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
+Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
+write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
-Brick.file <- Brick_path_to_file("test.hdf")
-Brick_load_cis_matrix_till_distance(Brick = Brick.file, chr = "chr19",
-matrix.file = Matrix.file, delim = " ", distance = 200, remove.prior = TRUE)
+Brick_load_cis_matrix_till_distance(Brick = Path_to_cached_file, 
+chr = "chr19", matrix.file = Matrix.file, delim = " ", 
+distance = 200, remove.prior = TRUE)
 
 }

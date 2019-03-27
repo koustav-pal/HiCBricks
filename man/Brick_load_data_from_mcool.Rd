@@ -64,11 +64,11 @@ require(curl)
 curl_download(url = paste("https://data.4dnucleome.org/"
 "files-processed/4DNFI7JNCNFB/"
 "@download/4DNFI7JNCNFB.mcool",sep = ""),
-destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+destfile = file.path(tempdir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
-Output.brick <- paste("./H1-hESC-HiC-4DNFI7JNCNFB-10000",
-"ICE-normalised-chr1.brick",sep = "-")
-mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+Output.brick <- file.path(tempdir(), 
+ "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
+mcool <- file.path(tempdir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 CreateBrick_from_mcool(Brick = Output.brick,
 mcool = mcool,

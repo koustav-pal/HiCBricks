@@ -4,9 +4,8 @@
 \alias{Brick_vizart_plot_heatmap}
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
-Brick_vizart_plot_heatmap(File, Bricks,
-    x.coords, y.coords, FUN = NULL, value.cap = NULL,
-    distance = NULL, rotate = FALSE, x.axis = TRUE,
+Brick_vizart_plot_heatmap(File, Bricks, x.coords, y.coords, FUN = NULL,
+    value.cap = NULL, distance = NULL, rotate = FALSE, x.axis = TRUE,
     x.axis.title = NULL, y.axis = TRUE, y.axis.title = NULL,
     title = NULL, legend.title = NULL, return.object = FALSE,
     x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette,
@@ -181,8 +180,8 @@ Hi-C data.
 }
 \examples{
 FailSafe_log10 <- function(x){
-    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
-    return(log10(x+1))
+     x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+     return(log10(x+1))
 }
 
 Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")

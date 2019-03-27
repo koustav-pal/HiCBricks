@@ -4,8 +4,8 @@
 \alias{Brick_get_values_by_distance}
 \title{Return values separated by a certain distance.}
 \usage{
-Brick_get_values_by_distance(Brick, chr, distance, constrain.region = NULL,
-    batch.size = 500, FUN = NULL)
+Brick_get_values_by_distance(Brick, chr, distance,
+    constrain.region = NULL, batch.size = 500, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -18,7 +18,7 @@ will be retrieved at a certain distance.}
 \item{distance}{\strong{Required}. 0 based.
 Fetch values separated by distance.}
 
-\item{constrain.region}{\strong{Required}.
+\item{constrain.region}{\strong{Optional}.
 A character vector of length 1 with the form chr:start:end specifying the
 region for which the distance values must be retrieved.}
 
@@ -45,8 +45,8 @@ Brick_get_values_by_distance(Brick = Brick.file, chr = "chr19",
 distance = 0)
 
 Failsafe_median <- function(x){
-    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
-    return(median(x))
+     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
+     return(median(x))
 }
 
 Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")

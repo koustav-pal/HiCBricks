@@ -138,7 +138,7 @@ Bintable.path <- system.file("extdata",
 Chromosomes <- "chr19"
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = "test.hdf", exec = "cat",
+Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 remove.existing = TRUE)
 
 \dontrun{
@@ -147,7 +147,7 @@ Bintable.path <- system.file("extdata",
 Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 BinTable = Bintable.path, impose.discontinuity=TRUE,
-col.index = c(1,2,3), Output.Filename = "test.hdf",
+col.index = c(1,2,3), Output.Filename = file.path(tempdir(),"test.hdf"),
 exec = "cat", remove.existing = TRUE)
 
 This will cause an error as the file located at Bintable.path,

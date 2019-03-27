@@ -362,6 +362,7 @@ Users have the flexibility to apply custom operations on data while they are ret
 ```{r}
 
 Failsafe_median_log10 <- function(x){
+    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
     return(median(log10(x+1)))
 }
 
@@ -377,6 +378,7 @@ Moreover, these functions can also subset the interaction values by a certain re
 ```{r}
 
 Failsafe_median_log10 <- function(x){
+    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
     return(median(log10(x+1)))
 }
 

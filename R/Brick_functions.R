@@ -128,7 +128,7 @@
 #' Chromosomes <- "chr19"
 #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 #' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = "test.hdf", exec = "cat",
+#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 #' remove.existing = TRUE)
 #'
 #' \dontrun{
@@ -137,7 +137,7 @@
 #' Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
 #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 #' BinTable = Bintable.path, impose.discontinuity=TRUE,
-#' col.index = c(1,2,3), Output.Filename = "test.hdf",
+#' col.index = c(1,2,3), Output.Filename = file.path(tempdir(),"test.hdf"),
 #' exec = "cat", remove.existing = TRUE)
 #'
 #' This will cause an error as the file located at Bintable.path,
@@ -290,11 +290,11 @@ CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
 #' curl_download(url = paste("https://data.4dnucleome.org/"
 #' "files-processed/4DNFI7JNCNFB/"
 #' "@@download/4DNFI7JNCNFB.mcool",sep = ""),
-#' destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+#' destfile = file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 #'
-#' Output.brick <- paste("./H1-hESC-HiC-4DNFI7JNCNFB-10000",
-#' "ICE-normalised-chr1.brick",sep = "-")
-#' mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+#' Output.brick <- file.path(tempdir(), 
+#' "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
+#' mcool <- file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 #'
 #' CreateBrick_from_mcool(Brick = Output.brick,
 #' mcool = mcool,
@@ -580,7 +580,7 @@ Brick_make_ranges = function(Chrom, Start, End, Strand=NULL,
 #' Chromosomes <- "chr19"
 #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 #' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = "test.hdf", exec = "cat",
+#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 #' remove.existing = TRUE)
 #'
 #' Brick.file <- Brick_path_to_file("test.hdf")
@@ -1129,19 +1129,15 @@ Brick_return_region_position = function(Brick, region){
 #' Chromosomes <- "chr19"
 #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 #' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = "test.hdf", exec = "cat",
+#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 #' remove.existing = TRUE)
 #'
-#' Test.mat <- matrix(NA,nrow = 800, ncol = 800)
-#' Row <- row(Test.mat)
-#' Col <- col(Test.mat)
-#' Dist <- Col - Row
-#' Matrix.file <- "Test_matrix.txt"
-#' write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
+#' Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
+#' Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
+#' write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
 #' row.names = FALSE, col.names = FALSE)
-#' Brick.file <- Brick_path_to_file(Brick = "test.hdf")
-#' Brick_load_matrix(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-#' matrix.file = Matrix.file, delim = " ", exec = "cat",
+#' Brick_load_matrix(Brick = Path_to_cached_file, chr1 = "chr19", 
+#' chr2 = "chr19", matrix.file = Matrix.file, delim = " ", exec = "cat",
 #' remove.prior = TRUE)
 #'
 Brick_load_matrix = function(Brick, chr1, chr2,
@@ -1219,19 +1215,16 @@ Brick_load_matrix = function(Brick, chr1, chr2,
 #' Chromosomes <- "chr19"
 #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
 #' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = "test.hdf", exec = "cat",
+#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 #' remove.existing = TRUE)
 #'
-#' Test.mat <- matrix(NA,nrow = 800, ncol = 800)
-#' Row <- row(Test.mat)
-#' Col <- col(Test.mat)
-#' Dist <- Col - Row
-#' Matrix.file <- "Test_matrix.txt"
-#' write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
+#' Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
+#' Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
+#' write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
 #' row.names = FALSE, col.names = FALSE)
-#' Brick.file <- Brick_path_to_file("test.hdf")
-#' Brick_load_cis_matrix_till_distance(Brick = Brick.file, chr = "chr19",
-#' matrix.file = Matrix.file, delim = " ", distance = 200, remove.prior = TRUE)
+#' Brick_load_cis_matrix_till_distance(Brick = Path_to_cached_file, 
+#' chr = "chr19", matrix.file = Matrix.file, delim = " ", 
+#' distance = 200, remove.prior = TRUE)
 #'
 Brick_load_cis_matrix_till_distance = function(Brick, chr,
     matrix.file, delim = " ", distance, remove.prior = FALSE,
@@ -1319,11 +1312,11 @@ Brick_load_cis_matrix_till_distance = function(Brick, chr,
 #' curl_download(url = paste("https://data.4dnucleome.org/"
 #' "files-processed/4DNFI7JNCNFB/"
 #' "@@download/4DNFI7JNCNFB.mcool",sep = ""),
-#' destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+#' destfile = file.path(tempdir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 #'
-#' Output.brick <- paste("./H1-hESC-HiC-4DNFI7JNCNFB-10000",
-#' "ICE-normalised-chr1.brick",sep = "-")
-#' mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+#' Output.brick <- file.path(tempdir(), 
+#'  "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
+#' mcool <- file.path(tempdir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 #'
 #' CreateBrick_from_mcool(Brick = Output.brick,
 #' mcool = mcool,
