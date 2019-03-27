@@ -44,7 +44,10 @@ If a matrix was loaded before, it will not be replaced. Use remove.prior to
 override and replace the existing matrix.}
 
 \item{norm.factor}{\strong{Optional}. Default "Iterative-Correction".
-The normalization factor to use for normalization from an mcool file.}
+The normalization factor to use for normalization from an mcool file.
+norm.factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+"Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
+the function will load only counts from the mcool file.}
 }
 \value{
 Returns TRUE if all went well.

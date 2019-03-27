@@ -42,18 +42,20 @@ The HiCBricks package, its set of data retrieval functions along with the _Brick
 
 HiCBricks uses HDF files to efficiently manage large Hi-C datasets. Hereafter, we refer to the structured data contained into HiCBricks HDF files as _Brick objects_. The _Brick object_ implement a HDF structure consisting of three layers:
 
-1. The Hi-C contact matrix, defined as a complete 2D matrix for each chromosome and chromosome-pair. The contact matrix for the _cis_ (intra-chromosomal) contacts for each chromosome is square `n x n` dimensional matrix. On the other hand, the _trans_ (inter-chromosomal) contacts for each chromosome pair is a rectangular `n x m` dimensional matrix.
-2. The bin table, defined as the set of genomic positions intervals/ranges (chromosome, start, end) associated to each row or column of the contact matrix. This can be defined as eithed fixed size bins or variable size bins. The latter may be useful for example to handle very high-resolution Hi-C contacts at single restriction fragment resolution.
-3. Annotations (optional) that the end-user may want to associate to the Hi-C data. This information may be, but is not limited to, TAD calls, Peak calls, RNA-seq expression data. In principle, if the annotation information can be represented as a `GenomicRanges` object, it can be stored in the _Brick object_.
+1. The Hi-C **contact matrix**, defined as a complete 2D matrix for each chromosome or chromosome-pair. The contact matrix for the _cis_ (intra-chromosomal) contacts for each chromosome is square `n x n` dimensional matrix. On the other hand, the _trans_ (inter-chromosomal) contacts for each chromosome pair is a rectangular `n x m` dimensional matrix. The contact matrix loaded into a _brick object_ can include the whole genome, or only specfic chromosomes selected by the end-user.
+2. The **bin table**, defined as the set of genomic positions intervals or ranges `(chromosome, start, end)` associated to each row or column of the contact matrix. Hi-C data are usually aggregated and summarized over relatively large genomic intervals (bins) to achieve a more robust quantification of signal (read counts or normalized read counts). These can be defined as either fixed size bins or variable size bins. The latter may be useful for example to handle very high-resolution Hi-C contacts at single restriction fragment resolution.
+3. **Annotations** (optional) that the end-user may want to associate to the Hi-C data. This information may be, but is not limited to, Topologically Associated Domains (TAD) calls, peak calls for other chromatin marks, gene expression data. In principle, if the annotation information can be represented as a `GenomicRanges` object, it can be stored in the _Brick object_.
  
 In order to load Hi-C data matrix into a _Brick object_ we have to:
 
-1.  create HDF file with HiCBricks specific data structure
+1.  create the HDF file with HiCBricks specific data structure
 2.  populate the HDF data structure with Hi-C data
 
 The key advantage of HDF files is that once they have been created and populated with data, the data can be accessed very efficiently without the need to reload the whole matrix into memory each time.
 
-Currently, HiCBricks functionalities allows importing data from text files with complete 2D matrices and binary cooler files (_.mcool_ or _.cool_).
+Currently, HiCBricks functionalities allows importing data from text files with complete 2D matrices and binary cooler files (_.mcool_ or _.cool_), as described below in section 2.1 and 2.3, respectively.
+
+In section 2.3 below we also explain how to extract data from a binary _.hic_ file format (produced by the Juicer^[Durand NC, Shamim MS, Machol I, Rao SSP, Huntley MH, Lander ES, Aiden EL. 2016. Juicer Provides a One-Click System for Analyzing Loop-Resolution Hi-C Experiments. Cell Syst 3: 95–98.] Hi-C data analysis framework) to import them into a Brick object.
 
 ## Creating a Brick object from a text file 2D contact matrix
 
@@ -75,9 +77,14 @@ Bintable.path <- system.file("extdata",
 Chromosomes <- "chr19"
 
 ```
+Note that in this example the bin table is a space delimited text file with 3 columns for chromosome, start and end coordinates of each genomic bin, respectively. **This format is not mandatory** as:
+
+1. The headers are auto-detected upon load.
+2. The **CreateBrick** functions has another parameter, `col.index` which takes as input the column index of the columns containing the chr, start and end coordinates. This parameter defaults to `c(1,2,3)`. When users have bin tables with many additional columns, they can take advantage of this parameter and provide the column indices relevant for this function, i.e. the indices corresponding to the chr, start and end columns. The indices must be provided in the specific order of chr,start,end.
+
+There must be a one to one match between elements in the bin table and in the contact matrix. The "Bintable_40kb.txt" file contains 800 rows, i.e. the genomic intervals for 800 bins with 40 Kb size.
 
 Then, the backbone of the _Brick object_ data structure is created using only the bin table. The actual contacts frequencies will be added later. The `CreateBrick` function returns a named character vector containing the complete path to the HDF file that will store the data. 
-
 
 ```{r}
 
@@ -88,38 +95,28 @@ remove.existing = TRUE)
 
 ```
 
+> **HiCBricks does not overwrite your files without you saying so** Keeping in line with Bioconductor standards and community guidelines, HiCBricks will never replace a user's files without their explicit permission. When a user defines `remove.existing=TRUE`, they are giving their permission to HiCBricks function to remove any _Brick objects_ they may have created previously. Otherwise, without this parameter the `CreateBrick` will not overwrite existing files. You will encounter this parameter in another form, `remove.prior` when populating HDF files with Hi-C data.
 
-> **Technical note**
-This code chunk is the first place users will encounter the `exec` parameter. The `exec` argument is incredibly powerful as it allows users to provide any number of ways to first manipulate and then read the bin table file. Using `exec`, the file to be read is first processed and then read through one of many traditional system utility functions. The `exec` parameter takes `cat` as the default value. This corresponds to the system utility `cat` used for reading text files. Similarly, if the file is compressed, the `exec` parameter can take as values popular compression utilities `zcat` or `bzcat` for reading the compressed file. 
-For advanced users, the `exec` parameter can contain full length `awk` or `cut` commands to sort and filter out columns or rows which are not required from the file. Thus, rather than read the same file twice using two different programs, users can provide a system command which will process the file and then pipe the processed output to the R session.
+> **Technical note** 
+> This code chunk is the first place users will encounter the `exec` parameter. The `exec` argument allows users complete flexibility in specifying a call to a system command to manipulate and read the bin table input file. The `exec` parameter takes `cat` as the default value, i.e. a call to the system utility `cat` used for reading text files. Similarly, if the file is compressed, the `exec` parameter can take as values popular compression utilities such as `zcat` or `bzcat` for reading the compressed file.
+> For advanced users, the `exec` parameter can contain full length `awk` or `cut` commands to sort and filter out columns or rows which are not required from the file. Thus, rather than read the same file twice using two different programs, users can provide a system command which will process the file and then pipe the processed output to the R session.
 
-As an illustrative example, to clarify the expected structure of input data for a complete 2D matrix in text format, we are generating a fake contact matrix, containing pairwise distances between the genomic bins of the bin table, then loading these as if they were contact data.
+As an illustrative example, to clarify the expected structure of input data for a complete 2D matrix in text format, we are generating a fake contact matrix, containing containing random values, then loading these as if they were contact data. 
 
-First we create an empty `n x n matrix (with n=800)`.
-
-```{r}
-
-Test.mat <- matrix(NA,nrow = 800, ncol = 800)
-
-```
-
-Then we replace the matrix content with pairwise distances between genomic bins 
+First we create an empty `n x n matrix (with n=800)` with uniformly sampled random numbers.
 
 ```{r}
 
-Row <- row(Test.mat)
-Col <- col(Test.mat)
-Dist <- Col - Row
+Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
 
 ```
 
-Finally the matrix is written to a txt file, without headers or rownames, and using whitespace as the field delimiter in this example.
-
+Then the matrix is written to a txt file, without headers or rownames, and using whitespace as the field delimiter in this example.
 
 ```{r}
 
 Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
-write.table(x = Dist, file = Matrix.file, sep = " ", quote = FALSE,
+write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 
 ```
@@ -141,9 +138,9 @@ Brick_load_matrix(Brick = Brick.file,
 
 ```
 
-If you have a very large 2D _cis_ matrix, you may want to load data till a certain distance from the diagonal, as the contact frequency is rapidly decaying with distance, thus a you may find a very sparse matrix at longer distances.
+Note that also in this case we specify a column delimiter `(delim= " ")` and an `exec` parameter command for reading the input file. If you have a very large 2D _cis_ matrix, you may want to load data up to a certain diagonal, i.e. up to bin pairs separated by a certain distance on the genome. The rationale in this case is that the contact frequency is rapidly decaying with distance, thus a you may find a very sparse matrix at longer distances.
 
-In this example we load up to 100 diagonals:
+In this example we load up to 100 diagonals with `Brick_load_cis_matrix_till_distance`
 
 ```{r}
 
@@ -156,15 +153,17 @@ Brick_load_cis_matrix_till_distance(Brick = Brick.file,
 
 ```
 
-## Creating Brick objects from .mcool binary files
+## Creating Brick objects from _.mcool_ binary files
 
-HiCBricks functions allow HDF files with the _mcool_ or _cool_ formats to be converted into HDF files with the _Brick_ format. _mcool_, is a standard data format designed by the [4D nucleome project](https://www.4dnucleome.org/) and facilitates the storage of very large experiments within a single HDF file. These files contain Hi-C contact matrices in the sparse format. In this case, _mcool_ and _cool_ files store the non-zero upper-triangle values in the HDF file across multiple normalisations and resolutions. HiCBricks, on the other hand stores a single normalisation and single resolution in any given HDF file.
+HiCBricks functions allow converting files with the _mcool_ or _cool_ (cooler) formats into HDF files with the _Brick_ format. On a technical side, it must be noted that _cooler_ file formats are also based on HDF, but the conversion to `HiCBricks` data structure allowed us to design more efficient data accessors. `mcool`, is a data formats adopted by the 4D nucleome project to disseminate data. These files contain Hi-C contact matrices in a sparse format, storing the non-zero values of the upper triangular matrix in the HDF file. `mcool` files can include multiple normalisations and resolutions within the same file. HiCBricks, on the other hand stores a single normalisation and single resolution in any given HDF file.
 
-In this exercise we will download a file from the 4DN data portal at https://data.4dnucleome.org/. For the purposes of this vignette we will use a randomly chosen H1-hESC Hi-C data.
+In this exercise we will download one mcool file from the 4DN data portal at https://data.4dnucleome.org/. For the purposes of this vignette we will use a sample H1 human embryonic stem cell line (H1-hESC) Hi-C data.
 
-Please note, that these are very large files, and require a lot of time to download.
+> HiCBricks currently accepts mcool and cool files following cool format version 2 and all prior versions. I do not make any guarantees for future versions, since development of the cooler package is independent of the HiCBricks package. If you are a user from the future and have encountered a format specific issue while reading mcool files with HiCBricks, please open an issue on the [HiCBricks github repository](https://github.com/koustav-pal/HiCBricks)
 
-You can download it using curl.
+Please note, that these are very large files, and they may require a significant amount of time to download, depending on the speed of network connection.
+
+For convenience, you can download the file using "curl" directly within the R prompt.
 
 ```{r eval = FALSE}
 require(curl)
@@ -172,43 +171,24 @@ Consortium.home = "https://data.4dnucleome.org/files-processed"
 File = file.path(Consortium.home,"4DNFI7JNCNFB",
     "@@download","4DNFI7JNCNFB.mcool")
 curl_download(url = File,
-    destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-
+    destfile = file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 ```
 
-This contains normalised Hi-C data on H1-hESC cells using the DpnII enzyme. Note that there are a few normalisation weights available within the sample. We can check what normalisation weights are available using `Brick_list_mcool_normalisations`. Please note, that this function does not list the normalisation weights available within the mcool file, but rather lists normalisation factors that HiCBricks accepts from the mcool files. Notice, the human readable names and the actual dataset names, what you are interested in are the human readable names, which makes the type of normalisation apparent. Such as for example, KR is an abbreviation for the Knight Ruitz matrix balancing algorithm introduced by Rao et al., 2014^[A 3D map of the human genome at kilobase resolution reveals principles 
-of chromatin looping.
+This file contains normalised Hi-C data for H1-hESC cells obtained using the DpnII restriction enzyme. Note that there are multiple types of normalisations available within the sample. We can check what normalisation weights are available using `Brick_list_mcool_normalisations(names.only = TRUE)`.
+
+HiCBricks accepts from the mcool files, normalization factors for "Knight-Ruitz", "Vanilla-coverage", "Vanilla-coverage-square-root" or "Iterative-Correction". For more details about the different normalizations see Rao et al., 2014^[A 3D map of the human genome at kilobase resolution reveals principles of chromatin looping.
 Rao SS, Huntley MH, Durand NC, Stamenova EK, Bochkov ID, Robinson JT, Sanborn AL, Machol I, Omer AD, Lander ES and Aiden EL. Cell, 2014].
 
-```{r eval = FALSE}
-
-Brick_list_mcool_normalisations(names.only = TRUE)
-
-## [1] "Knight-Ruitz"                 "Vanilla-coverage"
-## [3] "Vanilla-coverage-square-root" "Iterative-Correction"
-
-```
-
-This lists only the human-readable names. To see both the abbreviation and the
-base column name, 
+The 4D nucleome project disseminates its data with several different resolutions, i.e. different bin sizes. `Brick_list_mcool_resolutions` provides information regarding the different resolutions available within the _mcool_ files.
 
 ```{r eval = FALSE}
 
-Brick_list_mcool_normalisations()
-
-```
-will list all names including their linked columns in the HDF file. 
-
-The 4D nucleome project bins their data into several different resolutions, `Brick_list_mcool_resolutions` can help users to check what resolutions are available within the _mcool_ file. This function provides information regarding the different resolutions present within the _mcool_ files themselves.
-
-```{r eval = FALSE}
-
-mcoolName="H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+mcoolName=file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 Brick_list_mcool_resolutions(mcool = mcoolName)
 
 ```
 
-Using the information on the resolutions present within the _mcool_ file and the normalisation factors accepted by HiCBricks, users can query the _mcool_ files to find out if a given normalisation factor is present for a given resolution.
+Then users can query the mcool files to find out if a given normalisation factor is present for a given resolution.
 
 ```{r eval = FALSE}
 
@@ -218,28 +198,28 @@ Brick_mcool_normalisation_exists(mcool = mcoolName,
 
 ```
 
-HiCBricks allows users to create HDF files with the _Brick_ format from _mcool_ and _cool_ files. Users are limited to a single resolution and normalisation factor per _Brick object_. When creating a _Brick object_ users are able to load all chromosomes in a single Brick object, but I do not recommend this because, 
+HiCBricks allows users to create HDF files with the _Brick_ format from _mcool_ and _cool_ files. Users are limited to a single resolution and normalisation factor per _Brick object_. When creating a _Brick object_ users are able to load all chromosomes in a single Brick object, but this is not recommended because, 
 
-- It is not possible for multiple processes to concurrently access the same HDF file. Therefore, it hinders parallelization.
-- The presence of multiple matrices in the same file, results in an increase in read and write speeds.
+- Due to HDF files locking rules, it is not possible for multiple processes to concurrently access the same HDF. Thus, loading all chromosomes into the same HDF hinders parallelization of downstream analyses.
+- The presence of multiple matrices in the same file, results in an increase in read and write times.
 
-Instead when using high-resolution Hi-C contact matrices, I encourage users to separate the matrices chromosome by chromosome into different brick objects.
+For these reasons, when dealing with high-resolution Hi-C contact matrices it may be more efficient to separate the matrices saving them chromosome by chromosome into different _brick objects_. 
 
-Similar to the previous section, we will:
+Similar to the previous section, we will start from the _mcool_ file content to:
 
 1. Create a _Brick object_ containing the HiCBricks data structure
 2. populate this HDF data structure with Hi-C data
 
-Previously, users used the `CreateBrick` function to create _Brick objects_ for 2D matrices. To create _Brick objects_ from _mcool_ files we will use the `CreateBrick_from_mcool` function. 
+In the previous example for 2D text matrices, we used the `CreateBrick` function to create _Brick objects_ for 2D matrices. Instead, to create _Brick objects_ from _mcool_ files we will use the `CreateBrick_from_mcool` function. 
 
-When creating _Brick objects_ from scratch users were required to provide a bin table. For _mcool_ files users do not need to provide a bin table as the bin table information is already embedded within the _mcool_ files. Therefore, users can provide the resolution they want to load, and the binning information will be fetched from the _mcool_ files.
+When creating _Brick objects_ from scratch users were required to provide a bin table. Instead when starting from _mcool_ files the users do not need to provide a bin table as such information is already embedded within the _mcool_ files. Therefore, users can just provide the resolution they want to load, and the corresponding bin table information will be fetched from the _mcool_ files.
 
-Using the `chrs` param users can limit the structure created to the relevant chromosomes or if left NULL, will create the structure for all chromosome pairs. Please note, that if the length of chrs is 2, 4 interaction maps will be created.
-Two for the `cis` (intra-chromosomal) interaction maps for each chromosome and two for the `trans` (inter-chromosomal) interaction maps corresponding to each chromosome pair. 
+Using the `chrs` parameter users can limit the structure created to the relevant chromosomes or, if left NULL (default value), the structure for all chromosome and chromosome-pairs will be created. Please note, that if two chromosomes are specified in the `chrs` parameter, then 4 interaction maps will actually be created into the _Brick object_. These will be two for the `cis` (intra-chromosomal) interaction maps for each chromosome and two for the `trans` (inter-chromosomal) interaction maps corresponding to each chromosome pair. 
 
 ```{r eval = FALSE}
 
-Brick.name <- "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick"
+Brick.name <- file.path(tempdir(), 
+  "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
 
 Output.brick <- CreateBrick_from_mcool(Brick = Brick.name, 
     mcool = mcoolName, binsize = 10000, chrs = "chr1", remove.existing = TRUE)
@@ -263,7 +243,9 @@ Brick_load_data_from_mcool(Brick = Output.brick,
 
 ```
 
-There are a few options allowing users to manipulate data read and write speeds. `cooler.batch.size` determines the number of records read per iteration through an _mcool_ file. `matrix.chunk` determines the size of the matrix square that will be loaded per iteration through an _mcool_ file. If you are loading *cis* matrices, it is recommended to set the `dont.look.for.chr2` parameter to TRUE, as the first read records for chr1 will always correspond to those originating from chr2. In cases of *trans* matrices, this option should be set to FALSE allowing the function to locate the first occurence of a chr1 vs chr2 interaction. `remove.prior` defaults to FALSE and prevents users from loading datasets twice.
+There are a few options allowing users to manipulate data read and write speed. `cooler.batch.size` determines the data read buffer size. `matrix.chunk` determines data write buffer, i.e. the size of the matrix square that will be loaded per iteration through an _mcool_ file. If you are loading *cis* (intra-chromosomal) contact matrices, it is recommended to set the `dont.look.for.chr2` parameter to TRUE to speed up the loading of data. In cases of *trans* (inter-chromosomal) contact matrices, this option should be set to FALSE. `remove.prior` defaults to FALSE to prevent users from overwriting data already loaded into an HDF file.
+
+Note that if the end users wishes to load raw read counts from the cooler file to the Brick object, this can be achieved by specifying the `norm.factor=NULL` parameter.
 
 ## Creating Brick objects from .hic binary files
 
@@ -271,26 +253,24 @@ The method to create a Brick object from a `.hic` file is still a work in progre
 
 # Accessing data in Brick objects
 
-There are three different types of information which are currently stored within _Brick objects_.
+As mentioned above, there are three different types of information stored within _Brick objects_.
 
-1. The first, is the Hi-C interaction maps for each chromosome and chromosome-pair.
-2. The second are fixed width or variable width genomic coordinates laid out as `GenomicRanges` objects that maps the rows and columns of each Hi-C interaction matrix to their corresponding genomic coordinates.
-3. The last is the custom annotations that a user may want to associate with a _Brick object_ laid out as a `GenomicRanges` object. 
+1. The Hi-C **contact matrix**,  for each chromosome and chromosome-pair.
+2. The **bin table**, with the genomic coordinates associated to rows and columns of each Hi-C contact matrix.
+3. The custom annotations (optional) that end-users may want to associate to the data. 
 
-Therefore, there are accessor functions related to the contact matrix, and to the `GenomicRanges` that are stored in the HiCBricks object. Within these accessor functions, there are the _list_, _fetch_ and _get_ methods.
+Both the **bin table** and the **annotations** are represented as `GRanges` objects, i.e. lists of genomic intervals as defined in the Bioconductor package `GenomicRanges`.This is the de-facto standard for working with genomic coordinates in the R/Bioconductor environment.
 
-## Working with genomic coordinates in a brick object
+## Accessing genomic coordinates in a Brick object
 
-We refer to genomic coordinates as _ranges_ objects, since all genomic coordinate output from HiCBricks comes in the form of `GenomicRanges` objects. `GenomicRanges` is the de-facto standard for working with genomic coordinates in the R/Bioconductor environment. 
+As mentioned in the introduction to this section, `HiCBricks` objects contain two different types of `GRanges` objects. Hereafter we will refer to them as _ranges_ objects. 
 
-As mentioned in the introduction to this section, HiCBricks objects contain two different types of `ranges` objects. The first is the bin table, which is central towards the proper functioning of HiCBricks functions, and is mostly inaccessible for user modifications. The second are annotation for the user's reference and is completely accessible for the user.
+The first is the bin table, which is central towards the proper functioning of HiCBricks functions, and is mostly inaccessible for user modifications. The second are annotation for the user's reference and is completely accessible for the user.
 
+Each of the _ranges objects_ are stored under a unique id. The bin table always holds the id, "Bintable" whereas other annotations _ranges objects_ can hold user-defined unique identifiers. Users can *list* unique identifiers of all _ranges objects_ inside a Brick object using `Brick_list_rangekeys`. In the example below there are two ranges objects that are listed. The first, is the bin table, whereas the second is an example custom annotation stored in the test HDF file.
 
-## Accessing ranges objects in a brick store
+> Similar functions are available inside `HiCBricks` to list attributes or features of elements within _Brick objects_. See the package manual pages for functions with names like *Brick_list_*. These are the *list* functions. Afterwards, we will also come across the *get* or *fetch* functions. While *list* functions *list* features and attributes of elements within _Brick objects_, *get* and *fetch* functions help users get the same elements. 
 
-Each of the _ranges objects_ are stored under a unique id. The bin table always holds the id, "Bintable" whereas other _ranges objects_ can hold other unique identifiers as per the user's purview. As mentioned before, users can *list* attributes of a Brick object and they can *fetch* the same objects. 
-
-Therefore, we can first *list* the unique identifiers of each of the _ranges_ that are stored in the HDF file. 
 
 ```{r}
 
@@ -300,9 +280,7 @@ Brick_list_rangekeys(Brick.file)
 
 ```
 
-This lists the available rangekeys in the test _Brick object_. There are two _ranges_ that are listed. The first, is the bin table, whereas the second is an example custom annotations that I had stored in the HDF file after creating it.  
-
-If we want to retrieve the bin table, we can *fetch/get* the bin table.
+If we want to retrieve the bin table, we can retrieve its content using the `Brick_get_bintable` function
 
 ```{r}
 
@@ -319,7 +297,7 @@ Brick_get_ranges(Brick = Brick.file,
 
 ```
 
-While fetching the ranges object we can also subset the retrieved ranges by the chromosome of interest.
+While fetching the ranges object we can also subset the retrieved _GRanges_ by the chromosome of interest.
 
 ```{r}
 
@@ -331,7 +309,7 @@ Brick_get_ranges(Brick = Brick.file,
 
 ### Identifying matrix row/col using ranges operations
 
-Users may sometimes find it useful to identify the corresponding matrix row/col for a particular coordinate.
+Users may sometimes find it useful to identify the corresponding contact matrix row or column for a particular genomic coordinate.
 
 ```{r}
 
@@ -341,9 +319,11 @@ Brick_return_region_position(Brick = Brick.file,
 
 ```
 
-This does a **within** overlap operation and returns the corresponding coordinates. Therefore, sometimes when the region of interest is smaller than the ranges corresponding to the particular matrix region of interest, this function may fail.
+This does a **within** overlap operation and returns the corresponding bins indexes, i.e. the indexes of contact matrix rows or columns covering the user-specified region. This function may fail if the region of interest is smaller than the genomic bins corresponding to the region of interest in the contact matrix.
 
-To have more fine-grain control, users may choose to use `Brick_fetch_range_index` which is called by `Brick_return_region_position`.
+To have a more fine-grain control, users may choose to use `Brick_fetch_range_index` which is also called by the above described `Brick_return_region_position` function. Note that in this case, multiple regions can be provided as input at once, by specifying vectors with multiple values as `chr`, `start` and `end` input parameters. Differently from above, the output of this function is a `GRanges` object, with an entry for each input query regions. The matching genomic bins are stored in the **Indexes** column. This column is of class `IntegerList`. 
+
+> Users, unfamiliar with the `IntegerList` and other classes like it are encouraged to check out the IRanges package on Bioconductor.
 
 ```{r}
 
@@ -355,9 +335,7 @@ Brick_fetch_range_index(Brick = Brick.file,
 
 ```
 
-This function will return a GRanges object containing one row for each element in the provided *chr,start,end* vectors, with a `NumericList` column "Indexes" corresponding to the overlapping row/col coordinate of that matrix.
-
-## Accessing matrices in a brick store
+## Accessing contact matrices in a Brick object
 
 There are three ways to subset matrices.
 
@@ -367,7 +345,9 @@ There are three ways to subset matrices.
 
 ### Retrieving points separated by a certain distance
 
-It is possible to get the interactions between genomic loci separated by a certain distance.
+It is possible to get the interactions between genomic loci separated by a certain distance, which is indicated as number of genomic bins separating the data points of interest: e.g. distance=4 in the following example. 
+
+> Note that distances always range between 0 and number of rows or columns in contact matrix - 1. When distance is 0, we are fetching the vector of values corresponding to the interaction frequency between any given bin and itself. Similarly, 1 fetches values corresponding to the interaction frequency between any given bin and its immediate neighbour
 
 ```{r}
 
@@ -377,15 +357,13 @@ Values <- Brick_get_values_by_distance(Brick = Brick.file,
 
 ```
 
-Users can also choose to transform it during retrieval
+Users have the flexibility to apply custom operations on data while they are retrieved from the _Brick object_. In the example below, the Hi-C contact **frequencies** from the specified diagonal are transformed in log10 scale and their median value is computed. Custom operations are applied by providing function definitions in the parameter `FUN`.
 
 ```{r}
 
 Failsafe_median_log10 <- function(x){
-    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
     return(median(log10(x+1)))
 }
-
 
 Brick_get_values_by_distance(Brick = Brick.file,
     chr = "chr19",
@@ -394,13 +372,11 @@ Brick_get_values_by_distance(Brick = Brick.file,
 
 ```
 
-They can even subset the values by a certain region of interest, such as TADs by using the `constrain.region` function. Notice, how we can provide human readable coordinate information to this particular parameter. HiCBricks, explicitly requires the delimiter of the coordinates to always be ":".
-
+Moreover, these functions can also subset the interaction values by a certain region of interest, such as TADs, by using the `constrain.region` argument. Human readable coordinates can be provided to this particular paramenter in the form of `chr:start:end`. Note that HiCBricks requires the delimiter of the coordinates to always be `:`.
 
 ```{r}
 
 Failsafe_median_log10 <- function(x){
-    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
     return(median(log10(x+1)))
 }
 
@@ -414,7 +390,7 @@ Brick_get_values_by_distance(Brick = Brick.file,
 
 ### Retrieving subsets of a matrix
 
-HiCBricks, implements retrieval of sub-matrices in coordinate like manned. That means, you can retrieve data in an almost word like fashion. Once again, we ask users to make note of the human readable coordinate format in the `x.coords` and `y.coords` parameters.
+HiCBricks, by user-specified human readable coordinates, as defined above. Once again, we ask users to make note of the human readable coordinate format in the `x.coords` and `y.coords` parameters: the only accepted delimiter is `:`.
 
 ```{r}
 
@@ -423,9 +399,11 @@ Sub.matrix <- Brick_get_matrix_within_coords(Brick = Brick.file,
     force = TRUE,
     y.coords = "chr19:5000000:10000000")
 
+dim(Sub.matrix)
+
 ```
 
-Users may think, but it is not the same as getting the sub-matrix yourself.
+The range of genomic bins to be fetched can also be provided as rows and columns indexes. In this case users must be careful about how genomic coordinates are translated into bin indexes. For example, users may think the following code would return the the same values as above, but this is not the case.
 
 ```{r}
 
@@ -437,11 +415,13 @@ Sub.matrix <- Brick_get_matrix(Brick = Brick.file,
     x.vector = c(x.axis:y.axis),
     y.vector = c(x.axis:y.axis))
 
+dim(Sub.matrix)
+
 ```
 
 Notice, that this selection has one more row and column. This is because the region of interest spans from **5000001:10000000**, which starts from the `x.axis + 1` and not from `x.axis`. 
 
-Finally, it is also possible to fetch entire rows and columns. Users can do so either with names, which correspond to names of the matrix rows/cols from the bintable in the coordinate format specific earlier, i.e. `chr:start:end`. If these are names, it is required to specify `by = "ranges"`.
+Finally, it is also possible to fetch entire rows and columns from the contact matrix. Users can do so by specifying the exact bin name corresponding to names of the matrix rows or columns as indicated in the bintable. If these are names, it is required to specify `by = "ranges"`.
 
 ```{r}
 
@@ -453,12 +433,27 @@ Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
     chr1 = "chr19",
     chr2 = "chr19",
     by = "ranges",
-    vector = Coordinate,
-    regions = c("chr19:1:1000000", "chr19:40001:2000000"))
+    vector = Coordinate)
 
 ```
 
-Users can also choose to fetch data `by = positions`.
+As an alternative, users can also choose to fetch data by position `by = positions`. In this case, the Coordinate vector provides indexes to the rows or columns to be fetched.
+
+```{r}
+
+Coordinate <- c(1,2)
+Brick.file <- system.file("extdata",
+    "test.hdf",
+    package = "HiCBricks")
+Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
+    chr1 = "chr19",
+    chr2 = "chr19",
+    by = "position",
+    vector = Coordinate)
+
+```
+
+If regions is provided, it will subset the corresponding row/col by the specified region. `regions` must be in coordinate format as shown below.
 
 ```{r}
 
@@ -475,18 +470,15 @@ Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
 
 ```
 
-If regions is provided, it will subset the corresponding row/col by the specified region. `regions` must be in coordinate format as shown below.
-
 ### Accessing matrix metadata columns
 
-There are several metrics which are computed at the time of matrix load. Principally,
+There are several metrics which are computed at the time of matrix loading into the HDF file. Principally,
+
 - **bin.coverage** quantifies the proportion of non-zero rows/cols
 - **row.sums** quantifies the total signal value of any row
-- **sparsity** quantifies the proportion of non-zero values at a certain distance from the diagonal
+- **sparsity** quantifies the proportion of non-zero values at a certain distance from the diagonal Sparsity is only quantified if a matrix is defined as sparse during matrix loading.
 
-Sparsity is only quantified if a matrix is defined as sparse during matrix load.
-
-Users can check the names of the various matrix metadata columns.
+Users can _list_ the names of all the possible matrix metadata columns.
 
 ```{r}
 
@@ -513,7 +505,7 @@ head(MCols.dat, 100)
 
 There are several utility functions that a user may take advantage of to do various checks.
 
-- Check if a matrix has been loaded into the Brick store
+- Check if a matrix has been loaded into the Brick object.
 
 ```{r}
 
@@ -587,19 +579,9 @@ Brick_matrix_filename(Brick = Brick.file,
 
 ## Call Topologically Associated Domains with Local score differentiator (LSD)
 
-Local score differentiator (LSD) is a TAD calling procedure based on the
-directionality index introduced by Dixon et al., 2012^[Topological domains in 
-mammalian genomes identified by analysis of chromatin interactions.
-Dixon JR, Selvaraj S, Yue F, Kim A, Li Y, Shen Y, Hu M, Liu JS and Ren B.
-Nature 2012]. LSD is based on the computation of the directionality index 
-(DI), as described in the original article, but the genome is partitioned 
-into TADs based on the local directionality index distribution. Briefly, 
-transition points between negative and positive values marking TAD boundaries 
-are identified as the local extreme values in the first derivative of DI 
-computed within a local window of user defined size. We first introduced 
-this procedure with our study (Pal et al., in revision). This has been 
-adapted to work with HiCBricks to show how different analysis procedures 
-can take advantage of the HiCBricks accessor functions.
+Local score differentiator (LSD) is a TAD calling procedure based on the directionality index introduced by Dixon et al., 2012^[Topological domains in mammalian genomes identified by analysis of chromatin interactions.
+Dixon JR, Selvaraj S, Yue F, Kim A, Li Y, Shen Y, Hu M, Liu JS and Ren B. Nature 2012]. LSD is based on the computation of the directionality index (DI), as described in the original article, but the genome is partitioned into TADs based on the local directionality index distribution. Briefly, transition points between negative and positive values marking TAD boundaries 
+are identified as the local extreme values in the first derivative of DI computed within a local window of user defined size. This has been implemented into _HiCBricks_ as a test case example to show how custom data analysis procedures can be integrated inside the _HiCBricks_ framework by taking advantage of its accessor functions.
 
 ```{r}
 Brick.file <- system.file("extdata",
@@ -617,9 +599,9 @@ TAD_ranges <- Brick_local_score_differentiator(Brick = Brick.file,
     chunk.size = 500)
 ```
 
-`lookup.window` value corresponds to the local window used to subset the directionality index distribution. Setting `strict` to TRUE, adds another additional filter wherein the directionality index is required to be less than or greater than 0 at potential change points identifying a domain boundary. LSD works by identifying domain starts and ends, if a particular domain start was not identified, but the adjacent domain end was identified, `fill.gaps` if set to TRUE, will infer the adjacent bin from the adjacent domain end as a domain start bin and create a domain. Any domains identified by `fill.gaps` are annotated under the *level* column in the resulting GRanges object with the value 2. `chunk.size` corresponds to the size of the square to retrieve and process per iteration. 
+Briefly, the `lookup.window` value corresponds to the local window used to identify local extreme changes in the DI values. Setting `strict` to TRUE, adds another additional filter wherein the directionality index is required to be less than or greater than 0 at potential transition points identifying a domain boundary. LSD works by identifying domain starts and ends separately. If a particular domain start was not identified, but the adjacent domain end was identified, `fill.gaps` if set to TRUE, will infer the adjacent bin from the adjacent domain end as a domain start bin and create a domain region with both start and end. Any domains identified by `fill.gaps` are annotated under the *level* column in the resulting `GRanges` object with the value 2. `chunk.size` corresponds to the size of the square to retrieve and process per iteration. 
 
-As shown previously, we can store these TAD calls along with the _Brick object_.
+As shown previously, we can store these TAD calls inside the _Brick object_.
 
 ```{r}
 
@@ -646,9 +628,9 @@ TAD_ranges <- Brick_get_ranges(Brick = Path_to_cached_file,
 
 ```
 
-## Creating pretty heatmaps using HiCBricks
+## Creating sophisticated data visualization plots using HiCBricks
 
-Using HiCBricks functions, users can plot pretty Hi-C heatmaps. HiCBricks allows users to plot one sample or two sample heatmaps. This lists the most basic commands required to generate a heatmap.
+Using `HiCBricks` functions, users can generate sophisticated plot to visualize Hi-C contact matrices. The representation of contact matrices as a grid with numeric values mapped to a color gradient is commonly referred to as a “heatmap” plot. `HiCBricks` allows users to plot one sample or two samples heatmaps. The following examples show multiple options available to generate heatmaps.
 
 ### Plotting one sample heatmaps
 
@@ -666,13 +648,9 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```
 
-Notice the **palette** argument. It requires the user to provide a palette name
-from either the *RColorBrewer* or *viridis* colour palettes. It is not possible
-at this time to provide user defined colour palettes. 
+Please note the **palette** argument. It requires the user to provide a palette name from either the *RColorBrewer* or *viridis* packages colour palettes. At this time, HiCBricks does not allow the usage of user defined colour palettes. 
 
-Since we are directly plotting the Hi-C signal, the colours may seem a bit
-muted. We should go ahead and change that with a *log10* transformation,
-which will squeeze the signal distribution and make it pretty.
+In the examples above we are plotting the Hi-C signal (normalized read counts) which is expected to have a rapid decay when moving away from the diagonal. Log transformation of Hi-C signal is a popular choice to limit the range of values and have a more informative heatmap representation. We can apply a log10 transformation to the data before plotting, as in the example below, which results in a denser (less white spaces) heatmap.
 
 ```{r plot2, fig.cap = "A normal heatmap with colours computed in log10 scale", fig.small = TRUE}
 
@@ -695,15 +673,9 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```
 
-Notice, how we created a new function for log10 transformation. This function
-and others like it can be provided with the argument *FUN*. 
+Please note how we created a new custom function for log10 transformation. This as well as other user-defined custom functions to be applied on the data can be provided with the argument `FUN`.
 
-This is an already much more dense heatmap. 
-
-Sometimes, the Hi-C signal distribution is biased by extreme values which tends
-to blow up the entire distribution in a heatmap plot. We can pull in these
-values to create a more uniform and prettier picture, with the *value.cap*
-argument.
+Sometimes, the Hi-C signal distribution is biased by outlier values which may stretch the range of values in the color gradient. To limit the range of the color gradient we can cap its maximum value to a specified percentile in the distribution with the `value.cap` argument. This will avoid a skewed distribution of colors due to a few outliers with very high signal.
 
 ```{r plot3, fig.cap = "A normal heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
@@ -722,13 +694,9 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```
 
-*value.cap* takes as input a value ranging from 0,1 identifying the quantile at
-which the threshold will be applied. Also note, how the presence of this
-argument triggers presence of the greater than or less than sign.
+*value.cap* takes as input a value ranging from 0,1 specifying the percentile at which the threshold will be applied.
 
-
-Sometimes, it is desirable to plot the heatmap as a rotated heatmap.
-
+Sometimes, it is desirable to plot the heatmap as a 45 degree rotated heatmap, i.e. in it's triangular form. This can simply be obtained with the `rotate=TRUE` parameter.
 
 ```{r plot4, fig.cap = "Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 45 degree rotation", fig.small = TRUE}
 
@@ -748,9 +716,7 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
     return.object=TRUE)
 
 ```
-
-But this looks ugly. To fix it we need to modify the `width` and `height` as
-the rotated plots are broader than they are taller.
+To improve the appearance of the plot shown in the example above, we can modify the `width` and `height` as the rotated plots width is larger than their height.
 
 ```{r plot5, fig.cap = "Same heatmap as previous, but now the heatmaps are wider than they are taller", fig.wide = TRUE}
 
@@ -771,7 +737,7 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```
 
-We can now also plot the TADs on these plots.
+We can also add more features to this plot, such as the TADs identified in the previous examples.
 
 ```{r plot6, fig.cap = "Normal rectangular heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.small = TRUE}
 
@@ -790,8 +756,10 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
     height = 11,
     return.object=TRUE)
 ```
-Notice, that using the distance parameter we can control the diagonal until
-which we plot the heatmap.
+
+Note that by using the `distance` parameter we can limit the maximum distance from the diagonal up to which we plot the heatmap. 
+
+> Please ignore the warning messages that appear with this code chunk. The warnings relate to parts of the TADs that are outside the bounds of the plotting area. The function does not remove these regions before plotting, therefore an error is generated.
 
 ```{r plot7, fig.cap = "Normal rotated heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.wide = TRUE}
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
@@ -816,16 +784,13 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ### Plotting bipartite (two-sample) heatmaps
 
-HiCBricks makes it possible to plot bipartite or two sample heatmaps. 
-Bipartite heatmaps can be plotted as square maps or as rotated maps with or 
-without TADs. Due to space limitations placed on example datasets, we will 
-use the same dataset as before to showcase how two-sample heatmaps can be 
-made using the HiCBricks package. 
+HiCBricks allows to easily plot more complex figures, including bipartite heatmaps, i.e. showing two Hi-C samples in two halves of the same heatmap. Bipartite heatmaps can be plotted as squares plots or as 45 degrees rotated (triangular) heatmaps, with or without additional features such as TAD borders. 
 
-To plot a two sample heatmap, we need only include an additional Brick file in
-the `Brick` parameter. 
+Due to space limitations placed on example datasets within Bioconductor packages, in this vignette example we will use the same dataset as before to showcase how two-sample heatmaps can be drawn using the HiCBricks package.
 
-*NOTE:* The main diagonal will be set to the minimum value in both plots.
+To plot a two sample heatmap, we need only to include an additional Brick file in the `Brick` parameter. The data from the two brick files will be plotted in the upper and lower triangle, respectively. The first `Brick` file will go to the upper triangle, whereas the second `Brick` file will go to the lower triangle.
+
+> **NOTE:** The main diagonal will be set to the 0 in both plots as the main diagonal overlaps between the two contact matrices.
 
 ```{r plot8, fig.cap = "A normal two sample heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
@@ -844,11 +809,7 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```
 
-Since this Hi-C map is sparse, we can go ahead and remove distant interactions.
-This is achieved using the `distance` parameter. Remember, that we can use any
-of the `RColorBrewer` or `viridis` colour palettes. For example, we can use
-the Red to Gray (name RdGy) palette from `RColorBrewer`
-
+Since this Hi-C map is sparse there are few informative data points at larger distances. In this case the end-user may want to limit the plot by not showing longer distance interactions. This is achieved using the `distance` parameter. Remember, that we can use any of the `RColorBrewer` or `viridis` colour palettes. For example, we can use the Red to Gray (name `RdGy`) palette from `RColorBrewer`
 
 ```{r plot9, fig.cap = "A normal two sample heatmap with colours computed in log10 scale on values until the 30th diagonal and capping these values to the 99th percentile.", fig.small = TRUE}
 
@@ -891,14 +852,9 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ### Plotting TADs on Bipartite heatmaps
 
-HiCBricks also allows the possibility to plot TADs on the Bipartite heatmaps
-with categorical colours for each of the TAD calls. Although users may provide
-more than one category per sample, they should be aware that when TADs overlap,
-the TAD which is plotted at the end will always be the one that appears at the
-top, while other overlapping TADs will be hidden at the bottom.
+HiCBricks also allows the possibility to plot TADs on the Bipartite heatmaps with categorical colours for each of the TAD calls. Although users may provide more than one category per sample, they should be aware that when TADs overlap, the TAD which is plotted at the end will always be the one that appears at the top, while other overlapping TADs will be hidden at the bottom.
 
-As an example we will prepare a set of TAD calls and store them in the Brick
-object to compare them.
+As an example we will prepare a set of TAD calls and store them in the Brick object to compare them.
 
 ```{r}
 
@@ -932,11 +888,7 @@ for (i in seq_along(di_windows)) {
 
 ```
 
-To plot these TAD calls, they need to be formatted correctly before plotting.
-This involves assigning categorical values to each of the TAD calls we want to
-plot. We will assign two categorical variables, one will map the TADs to their
-respective Hi-C map, whereas the other will map the TADs to their respective
-category.
+To plot these TAD calls, they need to be formatted correctly before plotting. This involves assigning categorical values to each of the TAD calls we want to plot. We will assign two categorical variables, one will map the TADs to their respective Hi-C map, whereas the other will map the TADs to their respective category.
 
 ```{r}
 
@@ -970,14 +922,8 @@ TADs_ranges <- do.call(c, unlist(TADs_list, use.names = FALSE))
 ```
 
 As described in the manual, the two parameters, `group.col` and 
-`tad.colour.col` are relevant towards assigning any TAD to its respective Hi-C
-map or category, respectively. These two parameters take as input, the column
-names corresponding to their respective columns in the `TADs_ranges` object. 
-Meanwhile, `colours` and `colours.names` is the relevant parameter for the 
-colours of the TAD boundaries. `colours` is a required parameter in case TAD 
-boundaries are provided, whereas `colours.names` can be left empty in case the
-user intends to provide `unique(TAD_ranges$colour.group)` as 
-the `colour.names`.
+`tad.colour.col` are relevant towards assigning any TAD to its respective Hi-C map or category, respectively. These two parameters take as input, the column names corresponding to their respective columns in the `TADs_ranges` object. 
+Meanwhile, `colours` and `colours.names` are the relevant parameter for the colours of the TAD boundaries. `colours` is a required parameter in case TAD boundaries are provided, whereas `colours.names` can be left empty in case the user intends to provide `unique(TAD_ranges$colour.group)` as the `colour.names`.
 
 ```{r plot11, fig.cap = "A normal two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with TAD borders", fig.small = TRUE}
 
@@ -1038,11 +984,7 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```
 
-Notice, that while creating rotated plots with TADs, if the parameter 
-`cut.corners` is not set to TRUE, then the default behaviour is to plot
-continuous lines. To truncate lines at the corners of TADs, users should
-set this parameter as TRUE.
-
+Note, that while creating rotated plots with TADs, if the parameter `cut.corners` is not set to TRUE, then the default behaviour is to plot continuous lines. To truncate lines at the corners of TADs, users should set this parameter to value `TRUE`.
 
 ```{r plot13, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with truncated TAD borders", fig.wide = TRUE}
 
@@ -1077,13 +1019,10 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ### Making edits to additional plot elements
 
-There are several problems in the above plots which are quickly noticeable.
+There are several features that are not ideal in the above plots that can be fixed according to end-users preferences by adjusting additional parameters.
 
-- The TAD border lines are too thin and are not clearly. This problem can be
-addressed by playing around with the `line.width` parameter.
-- The legends are outside the bounds of the plotting area. We can make 
-changes to the legend with a few parameter changes to the 
-`legend.key.width` and `legend.key.height` parameters.
+- The TAD border lines are too thin and are not clearly visible. This problem can be addressed by adjusting the `line.width` parameter.
+- The legends are outside the bounds of the plotting area. We can make changes to the legend with a few parameter changes to the `legend.key.width` and `legend.key.height` parameters.
 
 ```{r plot14, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
@@ -1115,24 +1054,18 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ### Modifying text elements in plots
 
-There are several parameters which can be used to modify textual elements in 
-plots. 
+There are several additional parameters which can be used to modify tex elements in plots. 
 
-- It is possible to completely remove the x and y axis by setting the 
-parameters `x.axis` and `y.axis` to FALSE. 
-- The default x and y axis titles can be modified using the `x.axis.title` and 
-`y.axis.title` parameter. 
+- It is possible to completely remove the x and y axis by setting the parameters `x.axis` and `y.axis` to FALSE. 
+- The default x and y axis titles can be modified using the `x.axis.title` and `y.axis.title` parameter. 
 - The plot title can be adjusted using the `title` parameter.
 - The legend title can be adjusted using the `legend.title` parameter.
-- Furthermore, users can also adjust the number of ticks that appear on the
-x and y axis when these axis labels are present. The number of ticks can be
-identified using the `x.axis.num.breaks` and `y.axis.num.breaks` parameters.
+- Furthermore, users can also adjust the number of ticks that appear on the x and y axis when these axis labels are present. The number of ticks can be identified using the `x.axis.num.breaks` and `y.axis.num.breaks` parameters.
 
-The parameters to modify text size in these individual elements are as follows
-- `text.size` controls the font size across all plot elements, but is 
-superseded by individual parameters.
-- `x.axis.text.size` and `y.axis.text.size` control the text size on the x and
-y axis.
+Finally, the parameters to modify text size in these individual elements are the following ones:
+
+- `text.size` controls the font size across all plot elements, but is superseded by individual parameters.
+- `x.axis.text.size` and `y.axis.text.size` control the text size on the x and y axis.
 - `legend.title.text.size` controls the font size of the legend title.
 - `legend.text.size` controls the font size of individual legend elements.
 - `title.size` controls the size of the plot title.

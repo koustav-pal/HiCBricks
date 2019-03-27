@@ -12,7 +12,9 @@ Brick_mcool_normalisation_exists(mcool, norm.factor = NULL,
 Path to an mcool file.}
 
 \item{norm.factor}{\strong{Optional}. Default "Iterative-Correction".
-The normalization factor to use for normalization from an mcool file.}
+The normalization factor to use for normalization from an mcool file.
+norm.factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+"Vanilla-coverage", "Vanilla-coverage-square-root"}
 
 \item{binsize}{\strong{Optional}.
 The binsize to select from an mcool file.}

@@ -402,6 +402,11 @@ Brick_list_mcool_normalisations <- function(names.only = FALSE){
 #'
 #' @inheritParams Brick_load_data_from_mcool
 #'
+#' @param norm.factor \strong{Required}.
+#' The normalization factor to use for normalization from an mcool file.
+#' norm.factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+#' "Vanilla-coverage", "Vanilla-coverage-square-root".
+#' 
 #' @return A boolean vector of length 1
 #'
 #' @examples
@@ -1294,6 +1299,9 @@ Brick_load_cis_matrix_till_distance = function(Brick, chr,
 #'
 #' @param norm.factor \strong{Optional}. Default "Iterative-Correction".
 #' The normalization factor to use for normalization from an mcool file.
+#' norm.factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+#' "Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
+#' the function will load only counts from the mcool file.
 #'
 #' @param cooler.batch.size \strong{Optional}. Default 1000000.
 #' The number of values to read per iteration through a mcool file.
