@@ -127,9 +127,9 @@
 #' "Bintable_40kb.txt", package = "HiCBricks")
 #' Chromosomes <- "chr19"
 #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-#' remove.existing = TRUE)
+#'   BinTable = Bintable.path, bin.delim = " ",
+#'   Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
+#'   remove.existing = TRUE)
 #'
 #' \dontrun{
 #' Bintable.path <- system.file("extdata",
@@ -583,12 +583,11 @@ Brick_make_ranges = function(Chrom, Start, End, Strand=NULL,
 #' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
 #' remove.existing = TRUE)
 #'
-#' Brick.file <- Brick_path_to_file("test.hdf")
 #' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 #' Start <- c(10000,20000,40000,50000,60000)
 #' End <- c(10001,20001,40001,50001,60001)
 #' Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
-#' Brick_add_ranges(Brick = Brick.file, ranges = Test_ranges,
+#' Brick_add_ranges(Brick = Path_to_cached_file, ranges = Test_ranges,
 #' rangekey = "test_ranges")
 #'
 #' \dontrun{

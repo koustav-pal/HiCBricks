@@ -137,9 +137,9 @@ Bintable.path <- system.file("extdata",
 "Bintable_40kb.txt", package = "HiCBricks")
 Chromosomes <- "chr19"
 Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-remove.existing = TRUE)
+  BinTable = Bintable.path, bin.delim = " ",
+  Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
+  remove.existing = TRUE)
 
 \dontrun{
 Bintable.path <- system.file("extdata",
