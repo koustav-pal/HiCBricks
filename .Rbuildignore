@@ -8,3 +8,4 @@ HiCLegos.Rproj
 ._LICENSE
 ._MajorWIP.R
 ._OldGenomicMatrix.R
+.travis.yml
