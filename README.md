@@ -1,5 +1,10 @@
 Travis CI: [![Build Status](https://travis-ci.com/koustav-pal/HiCBricks.svg?branch=master)](https://travis-ci.com/koustav-pal/HiCBricks)
 
+<br/><br/>
+[<img src="https://www.bioconductor.org/images/logo/jpg/bioconductor_logo_rgb.jpg" width="300" align="right"/>](https://bioconductor.org/)
+<br/><br/>
+<br/><br/>
+<br/><br/>
 ![My Image](https://user-images.githubusercontent.com/20904402/55158335-ef97f600-515e-11e9-8b84-f8557428da70.png)
 
 # HiCBricks
