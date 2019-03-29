@@ -6,7 +6,7 @@ Travis CI: [![Build Status](https://travis-ci.com/koustav-pal/HiCBricks.svg?bran
 
 <a href="https://bioconductor.org/checkResults/devel/bioc-LATEST/HiCBricks/"><img src="https://bioconductor.org/shields/build/devel/bioc/HiCBricks.svg" align="right"/></a> <a href="https://bioconductor.org/packages/devel/bioc/html/HiCBricks.html#since"><img src="https://bioconductor.org/shields/years-in-bioc/HiCBricks.svg" align="right"/></a> <a href="https://bioconductor.org/packages/devel/bioc/html/HiCBricks.html#archives"><img src="https://bioconductor.org/shields/availability/3.9/HiCBricks.svg" align="right"/></a>
 
-<br/><br/><br/><br/>
+<br/><br/>
 
 ![My Image](https://user-images.githubusercontent.com/20904402/55158335-ef97f600-515e-11e9-8b84-f8557428da70.png)
 
