@@ -316,10 +316,11 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
         stop("mcool not found!")   
     }
     resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
-    mcool.version <- GetAttributes(Path = NULL, File=mcool,
-        Attributes="format-version", on = "file",
-        ignore.fun.cast = TRUE)[,"format-version"]
     if(!is.null(resolutions)){
+        mcool.version <- GetAttributes(Path = Create_Path(
+            c(Reference.object$mcool.resolutions.name, resolutions[1])), 
+            File=mcool, Attributes="format-version", on = "group",
+            ignore.fun.cast = TRUE)[,"format-version"]
         if(is.null(binsize)){
             stop("binsize cannot be NULL when resolutions are present..\n")
         }
@@ -330,13 +331,15 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
             stop("all binsizes were not found in this mcool file. See all",
                 " resolutions available with Brick_list_mcool_resolutions\n")
         }
+    }else{
+        mcool.version <- GetAttributes(Path = NULL, File=mcool, 
+            Attributes="format-version", on = "file",
+            ignore.fun.cast = TRUE)[,"format-version"]
     }
     cooler.remap.chrom <- ._mcool_remap_chromosomes(File = mcool,
         mcool.version = mcool.version, resolution = !is.null(resolutions),
         binsize = as.character(as.integer(binsize)))
     ChromNames <- cooler.remap.chrom[,"chr.name"]
-    ChromNames <- ifelse(!is.null(chrs),ChromNames[ChromNames %in% chrs],
-        ChromNames)
     if(!is.null(chrs)){
         if(any(!(chrs %in% ChromNames))){
             stop("Some chrs were not found in this mcool file.\n")
@@ -1361,17 +1364,27 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
         stop("binsize must be provided when ",
             "different resolutions are present in an mcool file.\n")
     }
-    if(!is.null(resolutions) & !(as.character(
-        as.integer(binsize)) %in% resolutions)){
-        stop("binsize not found in mcool file. ",
-            "Please check available binsizes ",
-            "with Brick_list_mcool_resolutions.\n")
+    if(!is.null(resolutions) & !is.null(binsize)){
+        if(!(as.character(as.integer(binsize)) %in% resolutions)){
+            stop("binsize not found in mcool file. ",
+                "Please check available binsizes ",
+                "with Brick_list_mcool_resolutions.\n")            
+        }
     }
     if(!is.null(norm.factor)){
+        All.factors <- Brick_list_mcool_normalisations(names.only=TRUE)
         if(!Brick_mcool_normalisation_exists(mcool = mcool,
             norm.factor = norm.factor, binsize = as.character(
         as.integer(binsize)))){
-            stop(norm.factor," was not found in this mcool file.\n")            
+            Factors.present <- All.factors[vapply(All.factors, 
+                function(x){
+                    Brick_mcool_normalisation_exists(mcool = mcool,
+                    norm.factor = x, binsize = as.character(
+                    as.integer(binsize))) 
+                })]
+            stop(norm.factor," was not found in this mcool file.\n",
+                "Normalisation factors present in the mcool file are: ",
+                paste(Factors.present, collapse = ", "))
         }
         Norm.factors <- Brick_list_mcool_normalisations()
         Norm.factor <- Norm.factors[norm.factor]
@@ -1777,7 +1790,7 @@ Brick_get_matrix_within_coords = function(Brick, x.coords,
         stop("Provided chromosomes were not found in chromosome list.")
     }
     if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
-        stop(chr1,chr2," matrix is yet to be loaded into the class.")
+        stop(chr1," ",chr2," matrix is yet to be loaded into the class.")
     }
     chr1.ranges <- Brick_fetch_range_index(Brick = Brick, chr = chr1,
     start = chr1.start, end = chr1.stop, names=NULL, type=type)
