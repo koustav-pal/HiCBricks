@@ -7,8 +7,9 @@ author:
 - name: Carmen Maria Livi
   affiliation: IFOM - FIRC Institute of Molecular Oncology, Milan, Italy
 output: 
-  BiocStyle::md_document:
-    toc: true
+  BiocStyle::html_document:
+    toc_float: true
+    css: custom.css
   BiocStyle::pdf_document: default
 package: HiCBricks
 abstract: |
