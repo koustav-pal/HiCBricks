@@ -12,6 +12,7 @@
     mcool.version <- GetAttributes(Path = NULL, File=File,
         Attributes="format-version", on = "file",
         ignore.fun.cast = TRUE)[,"format-version"]
+    mcool.version <- as.numeric(as.character(mcool.version))
     Bintable.keys <- Reference.object$mcool.bintable.keys(
         version = mcool.version)
     cooler.remap.chrom <- ._mcool_remap_chromosomes(File = File,

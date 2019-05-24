@@ -336,6 +336,8 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
             Attributes="format-version", on = "file",
             ignore.fun.cast = TRUE)[,"format-version"]
     }
+    mcool.version <- as.numeric(as.character(mcool.version))
+    message("Provided mcool is a version ", mcool.version," file.")
     cooler.remap.chrom <- ._mcool_remap_chromosomes(File = mcool,
         mcool.version = mcool.version, resolution = !is.null(resolutions),
         binsize = as.character(as.integer(binsize)))
@@ -442,6 +444,7 @@ Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
     mcool.version <- GetAttributes(Path = NULL, File=mcool,
         Attributes="format-version", on = "file",
         ignore.fun.cast = TRUE)[,"format-version"]
+    mcool.version <- as.numeric(as.character(mcool.version))
     Bintable.keys <- Reference.object$mcool.bintable.keys(
         version = mcool.version)
     Bintable.group <- Bintable.keys[1]
@@ -450,11 +453,12 @@ Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
         stop("binsize must be provided when different resolutions are present",
             " in an mcool file.\n")
     }
-    if(!is.null(resolutions) & !(as.character(
-        as.integer(binsize)) %in% resolutions)){
-        stop("binsize not found in mcool file.",
-            " Please check available binsizes",
-            " with Brick_list_mcool_resolutions.\n")
+    if(!is.null(resolutions) & !is.null(binsize)){
+        if(!(as.character(as.integer(binsize)) %in% resolutions)){
+            stop("binsize not found in mcool file. ",
+                "Please check available binsizes ",
+                "with Brick_list_mcool_resolutions.\n")            
+        }
     }
     if(!is.null(resolutions)){
         Bintable.group.path <- Create_Path(
@@ -1380,8 +1384,8 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
                 function(x){
                     Brick_mcool_normalisation_exists(mcool = mcool,
                     norm.factor = x, binsize = as.character(
-                    as.integer(binsize))) 
-                })]
+                    as.integer(binsize)))
+                }, TRUE)]
             stop(norm.factor," was not found in this mcool file.\n",
                 "Normalisation factors present in the mcool file are: ",
                 paste(Factors.present, collapse = ", "))
