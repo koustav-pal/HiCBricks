@@ -14,7 +14,7 @@ ReturnH5Handler <- function(Path=NULL,File = NULL){
 ReturnH5Attribute <- function(Handle = NULL, name = NULL, type = NULL){
     if(!H5Aexists(Handle, name)){
         CloseH5Con(Handle = Handle, type = type)
-        stop("Attribute ",name,"not found in HDF file.\n")
+        stop("Attribute ",name," not found in HDF file.\n")
     }
     Attributes <- H5Aread(H5Aopen(Handle,name))
     return(Attributes)

@@ -24,6 +24,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         cache.metacol.dirpath = "dirpath",
         brick.extension = "brick",
         Max.vector.size=104857600,
+        brick.config.name = "HiCBricks_builder_config.json",
         mcool.available.normalisations = function(){
             Names <- c("Knight-Ruitz","Vanilla-coverage",
                 "Vanilla-coverage-square-root","Iterative-Correction")
@@ -118,7 +119,12 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         },
         mcool.index.keys = function(){
             return(c("indexes","bin1_offset","chrom_offset"))
-        }
+        },
+        Configurator_JSON_headers_names = c("file_prefix", 
+            "project_directory", "experiment_name", "resolutions", 
+            "chromosomes", "lengths", "queues"),
+        Configurator_JSON_matrix_names = c("chrom1", 
+            "chrom2", "resolution", "dimensions", "mat_type", "filename")
     ),
     private = list(
         Attribute.List=NA,
@@ -600,6 +606,84 @@ humanize_size <- function(x){
         values = Attr.vals, 
         on = "group")
     return(TRUE)
+}
+
+.create_brick <- function(output_directory, filename, 
+    chrom1, chrom2, resolution, bintable_df, 
+    hdf_chunksize=NULL, remove_existing=FALSE,
+    link_existing = FALSE){
+
+    Reference.object <- GenomicMatrix$new()
+    Root.folders <- Reference.object$GetRootFolders()
+    Chrom_info_df <- return_chrominfo_df(bintable_df = bintable_df, 
+        chromosomes = NULL)
+    Dims <- c(Chrom_info_df[Chrom_info_df$chr == chrom1,"nrow"],
+        Chrom_info_df[Chrom_info_df$chr == chrom2,"nrow"])
+    mat_type <- ifelse(chrom1 == chrom2, "cis", "trans")
+    hdf_file <- file.path(output_directory, filename)
+    if(file.exists(hdf_file)){
+        if(link_existing){
+            return(.create_configuration_matrix_info(
+                resolution = resolution,
+                chrom1 = chrom1,
+                chrom2 = chrom2,
+                chrom1_binned_length = Dims[1],
+                chrom2_binned_length = Dims[2],
+                type = mat_type,
+                filename = filename))
+        }
+        if(!remove_existing){
+            stop("An HDF file by the same name already exists.",
+                " Please provide remove_existing = TRUE to overwrite it,",
+                " or link_existing = TRUE to add the same file",
+                " to the BrickContainer")
+        }
+        file.remove(hdf_file)
+    }
+    h5createFile(hdf_file)
+    for (Folder in Root.folders) {
+        CreateGroups(Group.path = Create_Path(Folder), 
+            File = hdf_file)
+    }
+    # Create metadata chromosome groups
+    ._Brick_WriteDataFrame_(Brick = hdf_file, 
+        Path = c(Root.folders['metadata']), 
+        name = Reference.object$metadata.chrom.dataset, 
+        object = Chrom_info_df)
+    ._Brick_Add_Ranges_(Group.path = Create_Path(
+        c(Root.folders['ranges'],
+        Reference.object$hdf.bintable.ranges.group)), 
+        Brick = hdf_file,
+        ranges.df = bintable_df, 
+        name = Reference.object$hdf.ranges.dataset.name,
+        mcol.list = NULL)
+    CreateGroups(Group.path = Create_Path(c(Root.folders['matrices'],
+        chrom1)), File = hdf_file)
+    chr2.path <- Create_Path(
+        c(Root.folders['matrices'],chrom1,chrom2))
+    # cat(Chrom.info.df$chr,chrom1,chrom2,"\n")
+    CreateGroups(Group.path = chr2.path, File = hdf_file)
+    CreateAttributes(Path = chr2.path, File = hdf_file,
+        Attributes = Reference.object$matrices.chrom.attributes,
+        data_types = Reference.object$matrices.chrom.attributes.dtype,
+        dims = Reference.object$matrices.chrom.attributes.dims,
+        maxdims = NULL,
+        on = "group")
+    if(is.null(hdf_chunksize)){
+        hdf_chunksize <- ceiling(Dims/100)
+    }
+    Array.dim <- Chrom_info_df[Chrom_info_df$chr == chrom1,"nrow"]
+    CreateDataset(Path = c(Root.folders['matrices'], chrom1, chrom2),
+        File = hdf_file, name = Reference.object$hdf.matrix.name,
+        dims = Dims, maxdims = Dims)
+    return(.create_configuration_matrix_info(
+        resolution = resolution,
+        chrom1 = chrom1,
+        chrom2 = chrom2,
+        chrom1_binned_length = Dims[1],
+        chrom2_binned_length = Dims[2],
+        type = mat_type,
+        filename = filename))
 }
 
 ._GetDimensions <- function(group.path = NULL, dataset.path = NULL, 

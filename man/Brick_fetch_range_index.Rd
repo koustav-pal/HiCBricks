@@ -5,12 +5,13 @@
 \title{Returns the position of the supplied ranges in the binning table
 associated to the Hi-C experiment.}
 \usage{
-Brick_fetch_range_index(Brick, chr, start, end, names = NULL,
-    type = "any")
+Brick_fetch_range_index(Brick = NA, chr = NA, start = NA, end = NA,
+  names = NA, resolution = NA, type = "any")
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr}{\strong{Required}.
 A character vector of length N specifying the chromosomes to select from
@@ -26,6 +27,10 @@ A numeric vector of length N specifying the end positions in the chromosome}
 \item{names}{\strong{Optional}.
 A character vector of length N specifying the names of the chromosomes. If
 absent, names will take the form chr:start:end.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{type}{\strong{Optional}. Default any
 Type of overlap operation to do. It should be one of two, any or within.
@@ -50,12 +55,13 @@ corresponding indices in the binning table.
 }
 \examples{
 
-Chrom <- c("chr19","chr19")
+Chrom <- c("chr2L","chr2L")
 Start <- c(1,40000)
 End <- c(1000000,2000000)
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Test_Run <- Brick_fetch_range_index(Brick = Brick.file, chr = Chrom,
-start = Start, end = End)
+Container_file <- system.file(file.path("extdata"), "HiCBricks")
+My_BrickContainer <- load_BrickContainer(project_dir = Container_file)
+Test_Run <- Brick_fetch_range_index(Brick = My_BrickContainer, 
+chr = Chrom, start = Start, end = End, resolution = 100000)
 Test_Run$Indexes[[1]]
 
 }

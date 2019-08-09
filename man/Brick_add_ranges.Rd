@@ -4,17 +4,32 @@
 \alias{Brick_add_ranges}
 \title{Store a ranges object in the Brick store.}
 \usage{
-Brick_add_ranges(Brick, ranges, rangekey, remove.existing = TRUE)
+Brick_add_ranges(Brick, ranges, rangekey, resolution = NA,
+  all_resolutions = FALSE, num_cpus = 1)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{ranges}{\strong{Required}.
 An object of class ranges specifying the ranges to store in the Brick.}
 
 \item{rangekey}{\strong{Required}.
 The name to use for the ranges within the Brick store.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{all_resolutions}{\strong{Optional}. Default FALSE
+If resolution is not defined and all_resolutions is TRUE, the resolution
+parameter will be ignored and the function is executed on all files listed
+in the Brick container}
+
+\item{num_cpus}{\strong{Optional}. Default 1
+When an object of class BrickContainer is provided, num_cpus defines the
+maximum number of parallel jobs that will be run.}
 
 \item{remove.existing}{\strong{Optional}. TRUE
 Will remove an existing Ranges by the same name and introduce the new one.}
@@ -37,29 +52,19 @@ Users can ignore these columns.
 }
 \examples{
 Bintable.path <- system.file("extdata",
-"Bintable_40kb.txt", package = "HiCBricks")
-Chromosomes <- "chr19"
-Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-remove.existing = TRUE)
+"Bintable_100kb.txt", package = "HiCBricks")
+out_dir <- file.path(tempdir(), "add_ranges_test")
+dir.create(out_dir)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
 
 Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)
 End <- c(10001,20001,40001,50001,60001)
-Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
-Brick_add_ranges(Brick = Path_to_cached_file, ranges = Test_ranges,
-rangekey = "test_ranges")
-
-\dontrun{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Chrom <- c("chrS","chrS","chrS","chrS","chrS")
-Start <- c(10000,20000,40000,50000,60000)
-End <- c(10001,20001,40001,50001,60001)
-Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
-Brick_add_ranges(Brick = Brick.file, ranges = Test_ranges,
-rangekey = "test_ranges", remove.existing = TRUE)
-
-}
+Test_ranges <- Brick_make_ranges(chrom = Chrom, start = Start, end = End)
+Brick_add_ranges(Brick = My_BrickContainer, ranges = Test_ranges,
+rangekey = "test_ranges", all_resolutions = TRUE)
 
 }

@@ -4,11 +4,16 @@
 \alias{Brick_get_chrominfo}
 \title{Get the chrominfo for the Hi-C experiment.}
 \usage{
-Brick_get_chrominfo(Brick)
+Brick_get_chrominfo(Brick, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 A three column data.frame containing chromosomes, nrows and length.
@@ -26,6 +31,8 @@ chromosome (max value for that chromosome in the bintable).
 Brick it is associated to.
 }
 \examples{
-Brick.file = system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_chrominfo(Brick = Brick.file)
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"))
+Brick_test <- load_BrickContainer(config_file = Container_file)
+Brick_get_chrominfo(Brick = Brick_test, resolution = 100000)
 }

@@ -4,26 +4,26 @@
 \alias{Brick_make_ranges}
 \title{Creates a ranges object from provided vectors.}
 \usage{
-Brick_make_ranges(Chrom, Start, End, Strand = NULL, Names = NULL)
+Brick_make_ranges(chrom, start, end, strand = NA, names = NA)
 }
 \arguments{
-\item{Chrom}{\strong{Required}.
+\item{chrom}{\strong{Required}.
 A 1 dimensional character vector of size N specifying the chromosomes in the
 ranges.}
 
-\item{Start}{\strong{Required}.
+\item{start}{\strong{Required}.
 A 1 dimensional numeric vector of size N specifying the start positions in
 the ranges.}
 
-\item{End}{\strong{Required}.
+\item{end}{\strong{Required}.
 A 1 dimensional numeric vector of size N specifying the end positions in
 the ranges. Must be less than Start.}
 
-\item{Strand}{\strong{Optional}.
+\item{strand}{\strong{Optional}.
 A 1 dimensional character vector of size N specifying the strand of the
 ranges. If not provided, this will be set to the default *.}
 
-\item{Names}{\strong{Optional}.
+\item{names}{\strong{Optional}.
 A 1 dimensional character vector of size N specifying the names of the
 ranges. If not provided, this will be set to the default chr:start:end.}
 }
@@ -38,6 +38,6 @@ A GenomicRanges object with the previous sort order being preserved
 Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)
 End <- c(10001,20001,40001,50001,60001)
-Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
+Test_ranges <- Brick_make_ranges(chrom = Chrom, start = Start, end = End)
 
 }

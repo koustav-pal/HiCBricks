@@ -4,22 +4,27 @@
 \alias{Brick_get_matrix_within_coords}
 \title{Return a matrix subset between two regions.}
 \usage{
-Brick_get_matrix_within_coords(Brick, x.coords, y.coords, force = FALSE,
-    FUN = NULL)
+Brick_get_matrix_within_coords(Brick, x_coords, y_coords, resolution,
+  force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
-\item{x.coords}{\strong{Required}.
+\item{x_coords}{\strong{Required}.
 A string specifying the region to subset on the rows. It takes the form
 chr:start:end. An overlap operation with the associated bintable will be
 done to identify the bins to subset on the row}
 
-\item{y.coords}{\strong{Required}.
+\item{y_coords}{\strong{Required}.
 A string specifying the region to subset on the rows. It takes the form
 chr:start:end. An overlap operation with the associated bintable will be
 done to identify the bins to subset on the column}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{force}{\strong{Optional}. Default FALSE
 If true, will force the retrieval operation when matrix contains loaded
@@ -30,7 +35,7 @@ If provided a data transformation with FUN will be applied before
 the matrix is returned.}
 }
 \value{
-Returns a matrix of dimension x.coords binned length by y.coords
+Returns a matrix of dimension x_coords binned length by y_coords
 binned length. This may differ based on FUN.
 }
 \description{
@@ -40,20 +45,20 @@ associated to the Brick store.
 This function calls \code{\link{Brick_get_matrix}}.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_matrix_within_coords(Brick = Brick.file,
-x.coords = "chr19:40000:2000000",
-y.coords = "chr19:40000:2000000")
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(config_file = Container_file)
+Brick_get_matrix_within_coords(Brick = Brick_test,
+x_coords = "chr2L:1:1000000",
+y_coords = "chr2L:1:1000000",
+resolution = 100000)
 
-Brick_get_matrix_within_coords(Brick = Brick.file,
-x.coords = "chr19:40000:2000000",
-y.coords = "chr19:40000:2000000",
+Brick_get_matrix_within_coords(Brick = Brick_test,
+x_coords = "chr2L:1:1000000",
+y_coords = "chr2L:1:1000000",
+resolution = 100000,
 FUN = mean)
 
-Brick_get_matrix_within_coords(Brick = Brick.file,
-x.coords = "chr19:40000:2000000",
-y.coords = "chr19:40000:2000000",
-FUN = median)
 
 }
 \seealso{

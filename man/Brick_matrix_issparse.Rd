@@ -4,11 +4,12 @@
 \alias{Brick_matrix_issparse}
 \title{Check if a matrix for a chromosome pair is sparse.}
 \usage{
-Brick_matrix_issparse(Brick, chr1, chr2)
+Brick_matrix_issparse(Brick, chr1, chr2, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -17,6 +18,10 @@ the rows of the matrix}
 \item{chr2}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 Returns a logical vector of length 1, specifying if a matrix was
@@ -26,7 +31,14 @@ loaded as a sparse matrix.
 Check if a matrix for a chromosome pair is sparse.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_matrix_issparse(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+Container_file <- system.file(file.path("extdata"))
+Brick_test <- load_BrickContainer(project_dir = Container_file)
+Brick_matrix_issparse(Brick = Brick.file, chr1 = "chr2L", chr2 = "chr2L",
+resolution = 100000)
+
+Container_file <- system.file(file.path("extdata"))
+Brick_test <- load_BrickContainer(project_dir = Container_file)
+Brick_matrix_issparse(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
+resolution = 100000)
 
 }

@@ -24,17 +24,17 @@
     return(parsed.string.list)
 }
 
-Get_one_or_two_brick_regions <- function(Bricks = NULL, x.coords = NULL, 
-    y.coords = NULL, distance = NULL, 
-    value.cap = NULL, FUN = NULL){
+Get_one_or_two_brick_regions <- function(Bricks = NULL, x_coords = NULL, 
+    y_coords = NULL, distance = NULL, 
+    value_cap = NULL, FUN = NULL){
     Reference.object <- GenomicMatrix$new()
     if(length(Bricks) > 2){
         stop("Polygonal layouts have not been implemented yet! 
             So for now we can only do two matrices at a time.\n")
     }
-    if(!is.null(value.cap)){
-        if(value.cap > 1 | value.cap < 0){
-            stop("value.cap must be a value between 0,1 ",
+    if(!is.null(value_cap)){
+        if(value_cap > 1 | value_cap < 0){
+            stop("value_cap must be a value between 0,1 ",
                 "representing the quantiles.\n")
         }
     }
@@ -43,11 +43,11 @@ Get_one_or_two_brick_regions <- function(Bricks = NULL, x.coords = NULL,
     for(i in seq_along(Bricks)){
         Brick <- Bricks[i]
         Matrix <- Brick_get_matrix_within_coords(Brick = Brick, 
-            x.coords = x.coords, y.coords = y.coords, force = TRUE, FUN = FUN)
+            x_coords = x_coords, y_coords = y_coords, force = TRUE, FUN = FUN)
         Region.position.x <- Brick_return_region_position(Brick = Brick, 
-            region = x.coords)
+            region = x_coords)
         Region.position.y <- Brick_return_region_position(Brick = Brick, 
-            region = y.coords)
+            region = y_coords)
         if(dim(Matrix)[1] != length(Region.position.x) | 
             dim(Matrix)[2] != length(Region.position.y)){
             stop("Matrix dimensions do not match the expected ",
@@ -60,8 +60,8 @@ Get_one_or_two_brick_regions <- function(Bricks = NULL, x.coords = NULL,
         Matrix.df <- melt(Matrix)
         colnames(Matrix.df) <- c("row","col","val")
 
-        if(!is.null(value.cap)){
-            capped.val <- quantile(Matrix.df$val,value.cap)
+        if(!is.null(value_cap)){
+            capped.val <- quantile(Matrix.df$val,value_cap)
             Matrix.df$val[Matrix.df$val > capped.val] <- capped.val
         }
         Matrix.df$dist <- Matrix.df$col - Matrix.df$row
@@ -94,7 +94,7 @@ Make_axis_labels = function(Brick = NULL, chr = NULL, positions = NULL){
     return(coord.labs)
 }
 
-Make_colours <- function(palette = NULL, extrapolate.on = NULL, direction = 1){
+Make_colours <- function(palette = NULL, extrapolate_on = NULL, direction = 1){
     # require(RColorBrewer)
     # require(viridis)
     viridis.cols <- list("plasma" = plasma, "inferno" = inferno, 
@@ -124,12 +124,12 @@ Make_colours <- function(palette = NULL, extrapolate.on = NULL, direction = 1){
         viridis.fun <- viridis.cols[[palette]]
         Colours <- viridis.fun(n = viridis.col.breaks, direction = direction)
     }
-    if(!is.null(extrapolate.on)){
-        if(extrapolate.on > 100){
+    if(!is.null(extrapolate_on)){
+        if(extrapolate_on > 100){
             stop("I don't think you can actually differentiate ",
                 "between more than 100 shades.")
         }
-        Colours <- colorRampPalette(Colours)(extrapolate.on)
+        Colours <- colorRampPalette(Colours)(extrapolate_on)
     }
     return(Colours)
 }
@@ -190,7 +190,7 @@ RotateHeatmap = function(Matrix=NULL, value.var=NULL, upper = FALSE){
 }
 
 make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL, 
-    region.end = NULL, distance = NULL, cut.corners = FALSE){
+    region.end = NULL, distance = NULL, cut_corners = FALSE){
     if(is.null(distance)){
         distance <- region.end - region.start
     }
@@ -274,7 +274,7 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
 
 make_boundaries_for_rotated_heatmap <- function(Object = NULL, 
     region.start = NULL, region.end = NULL, distance = NULL, 
-    cut.corners = FALSE){
+    cut_corners = FALSE){
     if(is.null(distance)){
         distance <- region.end - region.start
     }
@@ -296,7 +296,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
             Normalised.start.bin <- Start - region.start
             Normalised.end.bin <- End - region.start
 
-            if(cut.corners){
+            if(cut_corners){
                 Max.dist <- (End - Start)/2
                 if(Max.dist > distance){
                     Max.dist <- distance/2
@@ -339,24 +339,24 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
 }
 
 Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL, 
-    group.col = NULL, cut.corners = FALSE, colour.col = NULL, 
-    colours = NULL, colours.names = NULL, region.chr = NULL, 
+    group_col = NULL, cut_corners = FALSE, colour.col = NULL, 
+    colours = NULL, colours_names = NULL, region.chr = NULL, 
     region.start = NULL, region.end = NULL, distance = NULL, 
     rotate = FALSE){
     Reference.object <- GenomicMatrix$new()
-    if(!is.null(group.col)){
-        Col.values <- unique(elementMetadata(Ranges)[[group.col]])
+    if(!is.null(group_col)){
+        Col.values <- unique(elementMetadata(Ranges)[[group_col]])
         if(length(Col.values) > 2 | !is.numeric(Col.values)){
-            stop("group.col values must be numeric ",
+            stop("group_col values must be numeric ",
                 "values corresponding to ",
                 "the number of Brick objects ",
                 "(max. 2) specified.\n")
         }
     }else{
-        group.col <- "pseudogroups"
+        group_col <- "pseudogroups"
         Ranges.too <- Ranges
-        elementMetadata(Ranges)[[group.col]] <- 1
-        elementMetadata(Ranges.too)[[group.col]] <- 2
+        elementMetadata(Ranges)[[group_col]] <- 1
+        elementMetadata(Ranges.too)[[group_col]] <- 2
         Ranges <- c(Ranges,Ranges.too)
     }
     
@@ -376,15 +376,15 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
             "Length of colour names: ",length(Unique.colour.cols),"\n",
             "Names: ",paste(Unique.colour.cols,collapse=","))
     }
-    if(is.null(colours.names)){
-        colours.names <- Unique.colour.cols
-        names(colours) <- colours.names
+    if(is.null(colours_names)){
+        colours_names <- Unique.colour.cols
+        names(colours) <- colours_names
     }else{
-        if(any(!(Unique.colour.cols %in% colours.names))){
-            stop("Provided colours.names had differing values ",
+        if(any(!(Unique.colour.cols %in% colours_names))){
+            stop("Provided colours_names had differing values ",
                 "from unique values present in colour.cols")
         }
-        names(colours) <- colours.names
+        names(colours) <- colours_names
     }
 
     chr.ranges <- Ranges[seqnames(Ranges) == region.chr]
@@ -396,7 +396,7 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
         region = region)
     Range.to.df.list <- lapply(seq_along(Bricks),function(Brick.x){
         pos.ranges <- chr.ranges[
-        elementMetadata(chr.ranges)[[group.col]] == Brick.x]
+        elementMetadata(chr.ranges)[[group_col]] == Brick.x]
         chrs <- as.vector(seqnames(pos.ranges))
         start <- start(pos.ranges)
         end <- end(pos.ranges)
@@ -431,7 +431,7 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
     Range.to.df <- do.call(rbind, Range.to.df.list)
     if(rotate){
         Normal.heatmap.lines <- make_boundaries_for_rotated_heatmap(
-            Object = Range.to.df, cut.corners = cut.corners,
+            Object = Range.to.df, cut_corners = cut_corners,
             region.start = min(Region.positions), 
             region.end = max(Region.positions), distance = distance)      
     }else{
@@ -442,65 +442,65 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
     return(Normal.heatmap.lines)
 }
 
-Get_heatmap_theme <- function(x.axis=TRUE, y.axis=TRUE, 
-    x.axis.text = NULL, y.axis.text = NULL, text.size = 10, 
-    x.axis.text.size = 10, y.axis.text.size = 10,
-    legend.title.text.size = 8, legend.text.size = 8, title.size = 10,
-    legend.key.width = unit(3,"cm"), legend.key.height = unit(0.5,"cm")){
-    if(!x.axis){
-        x.axis.ticks <- element_blank()
-        x.axis.text <- element_blank()
+Get_heatmap_theme <- function(x_axis=TRUE, y_axis=TRUE, 
+    x_axis.text = NULL, y_axis.text = NULL, text_size = 10, 
+    x_axis_text_size = 10, y_axis_text_size = 10,
+    legend_title_text_size = 8, legend_text_size = 8, title_size = 10,
+    legend_key_width = unit(3,"cm"), legend_key_height = unit(0.5,"cm")){
+    if(!x_axis){
+        x_axis.ticks <- element_blank()
+        x_axis.text <- element_blank()
     }else{
-        x.axis.ticks <-element_line(colour = "#000000")
-        x.axis.text <- element_text(colour = "#000000", size = x.axis.text.size)
+        x_axis.ticks <-element_line(colour = "#000000")
+        x_axis.text <- element_text(colour = "#000000", size = x_axis_text_size)
     }
-    if(!y.axis){
-        y.axis.ticks <- element_blank()
-        y.axis.text <- element_blank()
+    if(!y_axis){
+        y_axis.ticks <- element_blank()
+        y_axis.text <- element_blank()
     }else{
-        y.axis.ticks <-element_line(colour = "#000000")
-        y.axis.text <- element_text(colour = "#000000", size = y.axis.text.size)
+        y_axis.ticks <-element_line(colour = "#000000")
+        y_axis.text <- element_text(colour = "#000000", size = y_axis_text_size)
     }
-    Brick_theme <- theme_bw() + theme(text = element_text(size=text.size),
+    Brick_theme <- theme_bw() + theme(text = element_text(size=text_size),
                 plot.background=element_blank(),
                 panel.grid.minor=element_blank(),
                 panel.grid.major=element_blank(),
                 panel.background = element_blank(),
-                axis.title.x=x.axis.text,
-                axis.title.y=y.axis.text,
-                axis.text.x = x.axis.text,
-                axis.text.y = x.axis.text,
-                axis.ticks.x = x.axis.ticks,
-                axis.ticks.y = y.axis.ticks,
+                axis.title.x=x_axis.text,
+                axis.title.y=y_axis.text,
+                axis.text.x = x_axis.text,
+                axis.text.y = x_axis.text,
+                axis.ticks.x = x_axis.ticks,
+                axis.ticks.y = y_axis.ticks,
                 legend.position="bottom",
-                legend.key.height = legend.key.height,
-                legend.key.width = legend.key.width,
-                legend.title=element_text(size=legend.title.text.size),
-                legend.text=element_text(size=legend.text.size),
-                plot.title=element_text(size=title.size))
+                legend_key_height = legend_key_height,
+                legend_key_width = legend_key_width,
+                legend_title=element_text(size=legend_title_text_size),
+                legend.text=element_text(size=legend_text_size),
+                plot.title=element_text(size=title_size))
     return(Brick_theme)
 }
 
-Get_heatmap_titles <- function(title = NULL, x.axis.title = NULL, 
-    y.axis.title = NULL, legend.title = NULL, x.coords = NULL, 
-    y.coords = NULL, rotate = NULL){
-    if(is.null(legend.title)){
-        legend.title <- "Signal"
+Get_heatmap_titles <- function(title = NULL, x_axis_title = NULL, 
+    y_axis_title = NULL, legend_title = NULL, x_coords = NULL, 
+    y_coords = NULL, rotate = NULL){
+    if(is.null(legend_title)){
+        legend_title <- "Signal"
     }
-    if(is.null(x.axis.title)){
-        x.axis.title <- paste("Genomic position",x.coords,sep = " ")
+    if(is.null(x_axis_title)){
+        x_axis_title <- paste("Genomic position",x_coords,sep = " ")
     }
-    if(is.null(y.axis.title)){
-        y.axis.title <- paste("Genomic position",y.coords,sep = " ")
+    if(is.null(y_axis_title)){
+        y_axis_title <- paste("Genomic position",y_coords,sep = " ")
     }
     if(is.null(title)){
-        title <- paste(x.coords,y.coords,sep = "-")
+        title <- paste(x_coords,y_coords,sep = "-")
     }
     if(rotate){
-        y.axis.title <- "distance in bins"
+        y_axis_title <- "distance in bins"
     }
-    Labels <- c(x.axis.title, y.axis.title, title, legend.title)
-    names(Labels) <- c("x.axis","y.axis","title","legend")
+    Labels <- c(x_axis_title, y_axis_title, title, legend_title)
+    names(Labels) <- c("x_axis","y_axis","title","legend")
     return(Labels)
 }
 
@@ -545,7 +545,7 @@ make_colour_breaks <- function(Object = NULL, how.many = NULL,
 }
 
 get_legend_breaks <- function(Object = NULL, mid.val = 0.5, 
-    how.many = 5, value.cap = NULL, colours = NULL, two.sample = NULL){
+    how.many = 5, value_cap = NULL, colours = NULL, two.sample = NULL){
     Len <- length(values)
     values <- Object[,'rescale']
     distances <- Object[,'dist']
@@ -566,7 +566,7 @@ get_legend_breaks <- function(Object = NULL, mid.val = 0.5,
         Colour.breaks <- unique(
             c(Colour.breaks.1,Colour.breaks.2))
         Colours <- c(rev(colours),colours)
-        if(!is.null(value.cap)){
+        if(!is.null(value_cap)){
             Colour.labs[1] <- paste(">",Colour.labs[1],sep = "")
             Colour.labs[length(Colour.labs)] <- paste(">",
                 Colour.labs[length(Colour.labs)],sep = "")
@@ -576,7 +576,7 @@ get_legend_breaks <- function(Object = NULL, mid.val = 0.5,
         Colour.breaks <- seq(min(values),max(values),length.out = 5)
         Colour.labs <- round(seq(min(original.values),
             max(original.values),length.out = 5),2)
-        if(!is.null(value.cap)){
+        if(!is.null(value_cap)){
             Colour.labs[length(Colour.labs)] <- paste(">",
                 Colour.labs[length(Colour.labs)], sep = "")
         }

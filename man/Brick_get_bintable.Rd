@@ -4,14 +4,19 @@
 \alias{Brick_get_bintable}
 \title{Returns the binning table associated to the Hi-C experiment.}
 \usage{
-Brick_get_bintable(Brick, chr = NULL)
+Brick_get_bintable(Brick, chr = NA, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr}{\strong{Optional}.
 A chr string specifying the chromosome to select from the ranges.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 Returns a GRanges object containing the binning
@@ -25,8 +30,9 @@ to passing the argument rangekey = "bintable" in
 }
 \examples{
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_bintable(Brick = Brick.file)
+Container_file <- system.file(file.path("extdata"), "HiCBricks")
+My_BrickContainer <- load_BrickContainer(project_dir = Container_file)
+Brick_get_bintable(Brick = My_BrickContainer, resolution = 100000)
 
 }
 \seealso{

@@ -532,5 +532,5 @@ mcool_list_resolutions <- function(mcool = NULL){
     }else{
         BinList <- NULL
     }
-    return(BinList)
+    return(.format_resolution(BinList))
 }

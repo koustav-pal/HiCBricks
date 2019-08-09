@@ -4,11 +4,30 @@
 \alias{Brick_list_matrices}
 \title{List the matrix pairs present in the Brick store.}
 \usage{
-Brick_list_matrices(Brick)
+Brick_list_matrices(Brick, chr1 = NA, chr2 = NA, resolution = NA,
+  all_resolutions = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
+
+\item{chr1}{\strong{Required}.
+A character vector of length 1 specifying the chromosome corresponding to
+the rows of the matrix}
+
+\item{chr2}{\strong{Required}.
+A character vector of length 1 specifying the chromosome corresponding to
+the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{all_resolutions}{\strong{Optional}. Default FALSE
+If resolution is not defined and all_resolutions is TRUE, the resolution
+parameter will be ignored and the function is executed on all files listed
+in the Brick container}
 }
 \value{
 Returns a data.frame object with columns chr1, chr2 corresponding
@@ -24,7 +43,9 @@ Brick store, with their associated filename, value range, done status
 and sparse
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_list_matrices(Brick = Brick.file)
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), "HiCBricks")
+My_BrickContainer <- load_BrickContainer(config_file = Container_file)
+Brick_list_matrices(Brick = My_BrickContainer, resolution = 100000)
 
 }

@@ -4,11 +4,12 @@
 \alias{Brick_matrix_exists}
 \title{Check if a chromosome pair exists.}
 \usage{
-Brick_matrix_exists(Brick, chr1, chr2)
+Brick_matrix_exists(Brick, chr1, chr2, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -17,6 +18,10 @@ the rows of the matrix}
 \item{chr2}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 Returns a logical vector of length 1, specifying if the matrix
@@ -30,10 +35,15 @@ particular chromosome, any matrices for that chromosome would not be present
 in the file
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_matrix_exists(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(Container_file)
+Brick_matrix_exists(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
+resolution = 100000)
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_matrix_exists(Brick = Brick.file, chr1 = "chr19", chr2 = "chr20")
+Container_file <- system.file(file.path("extdata"))
+Brick_test <- load_BrickContainer(project_dir = Container_file)
+Brick_matrix_exists(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
+resolution = 100000)
 
 }

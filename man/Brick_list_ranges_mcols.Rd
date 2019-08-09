@@ -5,15 +5,20 @@
 \title{Find out what metadata columns are associated to a ranges with a certain
 name}
 \usage{
-Brick_list_ranges_mcols(Brick, rangekey = NULL)
+Brick_list_ranges_mcols(Brick, rangekey = NULL, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{rangekey}{\strong{Optional}.
 A string specifying the name of the ranges. If not present, the metadata
 columns of all ranges will be listed.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 if no metadata columns are present, NA. If metadata columns are
@@ -25,7 +30,9 @@ associated metadata column name.
 ranges if it is present in the Brick store.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_list_ranges_mcols(Brick = Brick.file, rangekey = "test_ranges")
+Container_file <- system.file(file.path("extdata"), "HiCBricks")
+My_BrickContainer <- load_BrickContainer(project_dir = Container_file)
+Brick_list_ranges_mcols(Brick = My_BrickContainer, rangekey = "Bintable",
+resolution = 100000)
 
 }

@@ -4,12 +4,14 @@
 \alias{Brick_fetch_row_vector}
 \title{Return row or col vectors.}
 \usage{
-Brick_fetch_row_vector(Brick, chr1, chr2, by = c("position", "ranges"),
-    vector, regions = NULL, force = FALSE, flip = FALSE, FUN = NULL)
+Brick_fetch_row_vector(Brick, chr1, chr2, resolution, by = c("position",
+  "ranges"), vector, regions = NULL, force = FALSE, flip = FALSE,
+  FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -18,6 +20,10 @@ the rows of the matrix}
 \item{chr2}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{by}{\strong{Required}.
 One of two possible values, "position" or "ranges". A one-dimensional
@@ -62,11 +68,14 @@ rows subsetted.
 }
 \examples{
 
-Coordinate <- c("chr19:1:40000","chr19:40001:80000")
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
-chr1 = "chr19", chr2 = "chr19", by = "ranges", vector = Coordinate,
-regions = c("chr19:1:1000000", "chr19:40001:2000000"))
+Coordinate <- c("chr2L:1:40000","chr2L:40001:80000")
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(Container_file)
+Test_Run <- Brick_fetch_row_vector(Brick = Brick_test,
+chr1 = "chr2L", chr2 = "chr2L", resolution = 100000, 
+by = "ranges", vector = Coordinate,
+regions = c("chr2L:1:1000000", "chr2L:40001:2000000"))
 
 }
 \seealso{

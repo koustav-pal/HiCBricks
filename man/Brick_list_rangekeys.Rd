@@ -4,11 +4,21 @@
 \alias{Brick_list_rangekeys}
 \title{List the ranges tables stored within the Brick.}
 \usage{
-Brick_list_rangekeys(Brick)
+Brick_list_rangekeys(Brick, resolution = NA, all_resolutions = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{all_resolutions}{\strong{Optional}. Default FALSE
+If resolution is not defined and all_resolutions is TRUE, the resolution
+parameter will be ignored and the function is executed on all files listed
+in the Brick container}
 }
 \value{
 A one dimensional character vector of length x specifying the names
@@ -19,7 +29,9 @@ of all ranges currently present in the file.
 }
 \examples{
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_list_rangekeys(Brick = Brick.file)
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), "HiCBricks")
+My_BrickContainer <- load_BrickContainer(config_file = Container_file)
+Brick_list_rangekeys(Brick = My_BrickContainer, resolution = 100000)
 
 }

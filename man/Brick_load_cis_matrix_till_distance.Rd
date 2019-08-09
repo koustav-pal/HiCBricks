@@ -5,19 +5,25 @@
 \title{Load a NxN dimensional sub-distance \emph{cis} matrix into
 the Brick store.}
 \usage{
-Brick_load_cis_matrix_till_distance(Brick, chr, matrix.file, delim = " ",
-    distance, remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-    sparsity.bins = 100)
+Brick_load_cis_matrix_till_distance(Brick = NA, chr = NA,
+  resolution = NA, matrix_file, delim = " ", distance,
+  remove_prior = FALSE, num_rows = 2000, is_sparse = FALSE,
+  sparsity_bins = 100)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the rows and cols of the matrix}
 
-\item{matrix.file}{\strong{Required}.
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{matrix_file}{\strong{Required}.
 A character vector of length 1 specifying the name of the file to load as a
 matrix into the Brick store.}
 
@@ -31,20 +37,20 @@ after a certain distance, the matrix will become extremely sparse. This
 ensures that only interactions upto a certain distance from the main
 diagonal will be loaded into the data structure.}
 
-\item{remove.prior}{\strong{Optional}. Default FALSE
-If a matrix was loaded before, it will not be replaced. Use remove.prior to
+\item{remove_prior}{\strong{Optional}. Default FALSE
+If a matrix was loaded before, it will not be replaced. Use remove_prior to
 override and replace the existing matrix.}
 
-\item{num.rows}{\strong{Optional}. Default 2000
+\item{num_rows}{\strong{Optional}. Default 2000
 Number of rows to insert per write operation in the HDF file.}
 
-\item{is.sparse}{\strong{Optional}. Default FALSE
+\item{is_sparse}{\strong{Optional}. Default FALSE
 If true, designates the matrix as being a sparse matrix, and computes the
 sparsity.index. The sparsity index measures the proportion of non-zero rows
 or columns at a certain distance from the diagonal (100) in cis interaction
 matrices.}
 
-\item{sparsity.bins}{\strong{Optional}. Default 100
+\item{sparsity_bins}{\strong{Optional}. Default 100
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
 }
@@ -58,19 +64,20 @@ the Brick store.
 \examples{
 
 Bintable.path <- system.file("extdata",
-"Bintable_40kb.txt", package = "HiCBricks")
-Chromosomes <- "chr19"
-Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-remove.existing = TRUE)
+"Bintable_100kb.bins", package = "HiCBricks")
+out_dir <- file.path(tempdir(), "matrix_load_dist_test")
+dir.create(out_dir)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, 
+  file_prefix = "Test", exec = "cat", experiment_name = "Vignette Test", 
+  resolution = 100000, remove_existing = TRUE)
 
-Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
+Test.mat <- matrix(runif(231*231),nrow = 231, ncol = 231)
 Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
 write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
 row.names = FALSE, col.names = FALSE)
 Brick_load_cis_matrix_till_distance(Brick = Path_to_cached_file, 
-chr = "chr19", matrix.file = Matrix.file, delim = " ", 
-distance = 200, remove.prior = TRUE)
+chr = "chr2L", resolution = 100000, matrix_file = Matrix.file, delim = " ", 
+distance = 30, remove_prior = TRUE)
 
 }

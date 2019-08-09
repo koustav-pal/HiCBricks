@@ -18,9 +18,7 @@
     return(Alist)
 }
 Read_bintable = function(Filename = NULL, read.delim = " ", 
-    exec = "cat", 
-    col.index = c(1,2,3), 
-    chromosomes=NULL, impose.discontinuity=TRUE){
+    exec = "cat", col.index = c(1,2,3), impose.discontinuity=TRUE){
     if(is.null(exec)) {
         stop("exec is not allowed to be null")
     }
@@ -41,7 +39,7 @@ Read_bintable = function(Filename = NULL, read.delim = " ",
     is.stranded <- col.index[4] != NA
     has.names <- col.index[5] != NA
     Validate_table(Table=Table, colClasses=ColClasses, colnames = Colnames, 
-        col.index=col.index, chrom=chromosomes)
+        col.index=col.index)
     if(impose.discontinuity){
         CheckContinuousRanges(Table=Table,StartCol=c("start"),EndCol=c("end"))
     }
@@ -52,19 +50,12 @@ Read_bintable = function(Filename = NULL, read.delim = " ",
     return(Table.list)
 }
 Validate_table = function(Table = NULL, colnames = NULL, colClasses = NULL, 
-    col.index = NULL, chrom = NULL) {
+    col.index = NULL) {
     for (i in seq_len(length(colnames))) {
         if(!colClasses[[i]](Table[,i])){
             stop(paste("Values expected for",colnames[i],"at col",col.index[i],"
                 found values of class",class(Table[,i])))
         }
-    }
-    UniqueChromNames<-unique(Table[,'chr'])
-    if(any( !(UniqueChromNames %in% chrom) )){
-        stop("All chromosomes from BinTable are expected in ChromNames")
-    }
-    if(any( !(chrom %in% UniqueChromNames) )){
-        stop("All chromosomes from ChromNames are expected in BinTable")
     }
     if(any(!(Table[,'start'] %% 1 == 0)) | any(!(Table[,'end'] %% 1 == 0))) {
         stop("Genomic coordinates at col",col.index[2],"and",col.index[3],
@@ -114,4 +105,15 @@ Split_genomic_coordinates = function(Coordinate = NULL){
             "class definitions of character, numeric, numeric")
     }
     return(Coord.Split)
+}
+
+return_chrominfo_df <- function(bintable_df, chromosomes){
+    Chrom.lengths <- get_chrom_info(bin.table = bintable_df,
+        chrom = chromosomes, FUN = length, col.name = 'chr')
+    Chrom.sizes <- get_chrom_info(bin.table = bintable_df,
+        chrom = chromosomes, FUN = max, col.name = 'end')
+    Chrom.info.df <- data.frame(chr = names(Chrom.lengths),
+        nrow = as.vector(Chrom.lengths),
+        size = as.vector(Chrom.sizes), stringsAsFactors = FALSE)
+    return(Chrom.info.df)
 }

@@ -4,14 +4,20 @@
 \alias{Brick_rangekey_exists}
 \title{Check to see if the Brick contains a ranges with a certain name.}
 \usage{
-Brick_rangekey_exists(Brick, rangekey)
+Brick_rangekey_exists(Brick, rangekey, resolution = NA,
+  all_resolutions = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{rangekey}{\strong{Required}.
 A string specifying the name of the ranges to check for.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 A logical vector of length 1 with either TRUE or FALSE values.
@@ -22,7 +28,10 @@ a certain name.
 }
 \examples{
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_rangekey_exists(Brick = Brick.file, rangekey = "Bintable")
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), "HiCBricks")
+My_BrickContainer <- load_BrickContainer(config_file = Container_file)
+Brick_rangekey_exists(Brick = My_BrickContainer, rangekey = "Bintable",
+resolution = 100000)
 
 }

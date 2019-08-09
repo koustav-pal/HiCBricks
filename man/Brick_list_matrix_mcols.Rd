@@ -4,19 +4,7 @@
 \alias{Brick_list_matrix_mcols}
 \title{List the matrix metadata columns in the Brick store.}
 \usage{
-Brick_list_matrix_mcols(Brick, chr1, chr2)
-}
-\arguments{
-\item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
-
-\item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to
-the rows of the matrix}
-
-\item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to
-the columns of the matrix}
+Brick_list_matrix_mcols()
 }
 \value{
 Returns a vector containing the names of all matrix metadata columns
@@ -26,6 +14,8 @@ Returns a vector containing the names of all matrix metadata columns
 columns.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_list_matrix_mcols(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(Container_file)
+Brick_list_matrix_mcols()
 }

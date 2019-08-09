@@ -4,12 +4,13 @@
 \alias{Brick_get_matrix}
 \title{Return a matrix subset.}
 \usage{
-Brick_get_matrix(Brick, chr1, chr2, x.vector, y.vector, force = FALSE,
-    FUN = NULL)
+Brick_get_matrix(Brick, chr1, chr2, x_coords, y_coords, resolution,
+  force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -19,11 +20,15 @@ the rows of the matrix}
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
 
-\item{x.vector}{\strong{Required}.
+\item{x_coords}{\strong{Required}.
 A one-dimensional numeric vector specifying the rows to subset.}
 
-\item{y.vector}{\strong{Required}.
+\item{y_coords}{\strong{Required}.
 A one-dimensional numeric vector specifying the columns to subset.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{force}{\strong{Optional}. Default FALSE
 If true, will force the retrieval operation when matrix contains loaded
@@ -34,18 +39,20 @@ If provided a data transformation with FUN will be applied before the matrix
 is returned.}
 }
 \value{
-Returns a matrix of dimension x.vector length by y.vector length.
+Returns a matrix of dimension x_coords length by y_coords length.
 This may differ based on the operations with FUN.
 }
 \description{
 \code{Brick_get_matrix} will fetch a matrix subset between row values
-ranging from min(x.vector) to max(x.vector) and column values ranging from
-min(x.vector) to max(x.vector)
+ranging from min(x_coords) to max(x_coords) and column values ranging from
+min(x_coords) to max(x_coords)
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_matrix(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-x.vector = c(1:10), y.vector = c(1:10))
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(Container_file)
+Brick_get_matrix(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
+x_coords = c(1:10), y_coords = c(1:10), resolution = 100000)
 
 }
 \seealso{

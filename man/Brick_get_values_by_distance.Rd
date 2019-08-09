@@ -4,12 +4,13 @@
 \alias{Brick_get_values_by_distance}
 \title{Return values separated by a certain distance.}
 \usage{
-Brick_get_values_by_distance(Brick, chr, distance,
-    constrain.region = NULL, batch.size = 500, FUN = NULL)
+Brick_get_values_by_distance(Brick, chr, distance, resolution,
+  constrain_region = NULL, batch_size = 500, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr}{\strong{Required}.
 A string specifying the chromosome for the cis Hi-C matrix from which values
@@ -18,11 +19,15 @@ will be retrieved at a certain distance.}
 \item{distance}{\strong{Required}. 0 based.
 Fetch values separated by distance.}
 
-\item{constrain.region}{\strong{Optional}.
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{constrain_region}{\strong{Optional}.
 A character vector of length 1 with the form chr:start:end specifying the
 region for which the distance values must be retrieved.}
 
-\item{batch.size}{\strong{Optional}. Default 500
+\item{batch_size}{\strong{Optional}. Default 500
 A numeric vector of length 1 specifying the size of the chunk to retrieve
 for diagonal selection.}
 
@@ -32,7 +37,7 @@ are returned.}
 }
 \value{
 Returns a numeric vector of length N depending on the presence of
-constrain.region, FUN and distance from the main diagonal.
+constrain_region, FUN and distance from the main diagonal.
 }
 \description{
 \code{Brick_get_values_by_distance} can fetch values with or without
@@ -40,18 +45,21 @@ transformation or subsetted by a certain distance. Please note,
 this module is not an iterable module.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_values_by_distance(Brick = Brick.file, chr = "chr19",
-distance = 0)
+Container_file <- system.file(file.path("extdata",
+"HiCBricks_builder_config.json"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(config_file = Container_file)
+Brick_get_values_by_distance(Brick = Brick_test, chr = "chr2L",
+distance = 0, resolution = 100000)
 
 Failsafe_median <- function(x){
      x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
      return(median(x))
 }
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_values_by_distance(Brick = Brick.file, chr = "chr19",
-distance = 4, FUN = Failsafe_median)
+Container_file <- system.file(file.path("extdata"), package = "HiCBricks")
+Brick_test <- load_BrickContainer(project_dir = Container_file)
+Brick_get_values_by_distance(Brick = Brick_test, chr = "chr2L", 
+resolution = 100000, distance = 4, FUN = Failsafe_median)
 
 }
 \seealso{
