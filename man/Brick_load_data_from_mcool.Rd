@@ -64,6 +64,7 @@ Brick store.
 
 require(curl)
 out_dir <- file.path(tempdir(),"mcool_load_test")
+dir.create(path = out_dir)
 curl_download(url = paste("https://data.4dnucleome.org/"
 "files-processed/4DNFI7JNCNFB/"
 "@download/4DNFI7JNCNFB.mcool",sep = ""),
@@ -71,15 +72,13 @@ destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
 mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
-dir.create(path = out_dir)
-
-Output.brick <- CreateBrick_from_mcool(output_directory = out_dir,
+My_BrickContainer <- CreateBrick_from_mcool(output_directory = out_dir,
 file_prefix = "Test",
 mcool = mcool,
 resolution = 10000,
 experiment_name = "A random 4DN dataset")
 
-Brick_load_data_from_mcool(Brick = Output.brick, mcool = mcool,
+Brick_load_data_from_mcool(Brick = My_BrickContainer, mcool = mcool,
 chr1 = "chr1", chr2 = "chr1", resolution = 10000,
 cooler_batch_size = 1000000, matrix_chunk = 2000,
 dont_look_for_chr2 = TRUE, remove_prior = TRUE,

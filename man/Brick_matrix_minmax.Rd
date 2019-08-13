@@ -31,15 +31,26 @@ maximum finite real values in the matrix.
 Return the value range of the matrix
 }
 \examples{
-Container_file <- system.file(file.path("extdata",
-"HiCBricks_builder_config.json"), package = "HiCBricks")
-Brick_test <- load_BrickContainer(Container_file)
-Brick_matrix_minmax(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
-resolution = 100000)
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
 
-Container_file <- system.file(file.path("extdata"))
-Brick_test <- load_BrickContainer(project_dir = Container_file)
-Brick_matrix_minmax(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
-resolution = 100000)
+out_dir <- file.path(tempdir(), "matrix_minmax_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "cat",
+remove_prior = TRUE, resolution = 100000)
+
+Brick_matrix_minmax(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", resolution = 100000)
 
 }

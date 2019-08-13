@@ -37,7 +37,7 @@ return_output_directory <- function(x){
 }
 
 return_resolutions <- function(object) {
-        return(.format_resolution(object@resolutions))
+        return(trimws(.format_resolution(object@resolutions)))
 }
 
 return_chromosomes <- function(object) {

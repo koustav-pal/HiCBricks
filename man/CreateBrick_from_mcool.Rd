@@ -49,14 +49,13 @@ about the 4D nucleome project \href{https://data.4dnucleome.org/}{here}.
 \dontrun{
 require(curl)
 out_dir <- file.path(tempdir(),"mcool_test_dir")
+dir.create(path = out_dir)
 curl_download(url = paste("https://data.4dnucleome.org/"
 "files-processed/4DNFI7JNCNFB/"
 "@download/4DNFI7JNCNFB.mcool",sep = ""),
 destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
 mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-
-dir.create(path = out_dir)
 
 CreateBrick_from_mcool(output_directory = out_dir,
 file_prefix = "Test",

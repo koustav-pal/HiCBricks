@@ -45,15 +45,32 @@ associated to the Brick store.
 This function calls \code{\link{Brick_get_matrix}}.
 }
 \examples{
-Container_file <- system.file(file.path("extdata",
-"HiCBricks_builder_config.json"), package = "HiCBricks")
-Brick_test <- load_BrickContainer(config_file = Container_file)
-Brick_get_matrix_within_coords(Brick = Brick_test,
+
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "get_matrix_coords_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "cat",
+remove_prior = TRUE, resolution = 100000)
+
+Brick_get_matrix_within_coords(Brick = My_BrickContainer,
 x_coords = "chr2L:1:1000000",
 y_coords = "chr2L:1:1000000",
 resolution = 100000)
 
-Brick_get_matrix_within_coords(Brick = Brick_test,
+Brick_get_matrix_within_coords(Brick = My_BrickContainer,
 x_coords = "chr2L:1:1000000",
 y_coords = "chr2L:1:1000000",
 resolution = 100000,

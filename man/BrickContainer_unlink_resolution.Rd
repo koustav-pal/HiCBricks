@@ -23,6 +23,23 @@ and links to its associated files have been removed
 to a given resolution
 }
 \examples{
-Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-BrickContainer_unlink_resolution(Brick = Brick.file, resolution = 40000)
+Bintable.path <- system.file("extdata",
+"Bintable_100kb.bins", package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "BrickContainer_unlink_res_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+  remove_existing = TRUE)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  exec = "cat", experiment_name = "Vignette Test", resolution = 40000, 
+  remove_existing = TRUE)
+
+BrickContainer_unlink_resolution(Brick = My_BrickContainer, 
+resolution = 40000)
+
 }

@@ -31,8 +31,19 @@ chromosome (max value for that chromosome in the bintable).
 Brick it is associated to.
 }
 \examples{
-Container_file <- system.file(file.path("extdata",
-"HiCBricks_builder_config.json"))
-Brick_test <- load_BrickContainer(config_file = Container_file)
+
+Bintable_path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "HiCBricks_chrominfo_test")
+
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable_path, 
+bin_delim=" ", remove_existing=TRUE, output_directory = out_dir, 
+file_prefix = "HiCBricks_vignette_test", resolution = 100000,
+experiment_name = "HiCBricks vignette test")
+
 Brick_get_chrominfo(Brick = Brick_test, resolution = 100000)
+
 }

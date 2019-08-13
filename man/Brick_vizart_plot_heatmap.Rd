@@ -4,12 +4,13 @@
 \alias{Brick_vizart_plot_heatmap}
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
-Brick_vizart_plot_heatmap(File, Bricks, x_coords, y_coords, FUN = NULL,
-  value_cap = NULL, distance = NULL, rotate = FALSE, x_axis = TRUE,
-  x_axis_title = NULL, y_axis = TRUE, y_axis_title = NULL,
-  title = NULL, legend_title = NULL, return_object = FALSE,
-  x_axis_num_breaks = 5, y_axis_num_breaks = 5, palette,
-  col_direction = 1, extrapolate_on = NULL, x_axis_text_size = 10,
+Brick_vizart_plot_heatmap(File, Bricks, resolution, x_coords, y_coords,
+  FUN = NULL, value_cap = NULL, distance = NULL, rotate = FALSE,
+  x_axis = TRUE, x_axis_title = NULL, y_axis = TRUE,
+  y_axis_title = NULL, title = NULL, legend_title = NULL,
+  return_object = FALSE, x_axis_num_breaks = 5,
+  y_axis_num_breaks = 5, palette, col_direction = 1,
+  extrapolate_on = NULL, x_axis_text_size = 10,
   y_axis_text_size = 10, text_size = 10, legend_title_text_size = 8,
   legend_text_size = 8, title_size = 10, tad_ranges = NULL,
   group_col = NULL, tad_colour_col = NULL, colours = NULL,
@@ -23,9 +24,13 @@ Brick_vizart_plot_heatmap(File, Bricks, x_coords, y_coords, FUN = NULL,
 A character vector containing the output filename to write.}
 
 \item{Bricks}{\strong{Required}
-A character vector of length 1 (in case of one sample heatmaps) or 2 (in case
-of two sample heatmaps) specifying the names of the Brick stores from where
+A list of length 1 (in case of one sample heatmaps) or 2 (in case
+of two sample heatmaps) specifying the BrickContainers from where
 to fetch the data.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{x_coords}{\strong{Required}
 A character vector of length 1 specifying the coordinates from where to fetch

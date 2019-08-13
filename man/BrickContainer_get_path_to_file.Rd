@@ -36,7 +36,19 @@ A vector containing filepaths
 associated to a particular BrickContainer
 }
 \examples{
-Brick.json = system.file("extdata", "test.json", package = "HiCBricks")
-My_brick_container <- load_BrickContainer(Brick.file)
-BrickContainer_get_path_to_file(Brick = My_brick_container)
+
+Bintable.path <- system.file("extdata",
+"Bintable_100kb.bins", package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "BrickContainer_list_filepath_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+  remove_existing = TRUE)
+
+BrickContainer_get_path_to_file(Brick = My_BrickContainer, chr1 = "chr2L",
+chr2 = "chr2L", resolution = 100000)
+
 }

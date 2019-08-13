@@ -4,11 +4,11 @@
 \alias{Brick_local_score_differentiator}
 \title{Do TAD Calls with Local Score Differentiator on a Hi-C matrix}
 \usage{
-Brick_local_score_differentiator(Brick, chrs = NULL, min_sum = -1,
-  di_window = 200L, lookup_window = 200L, tukeys_constant = 1.5,
-  strict = TRUE, fill_gaps = TRUE, ignore_sparse = TRUE,
-  sparsity_threshold = 0.8, remove_empty = NULL, chunk_size = 500,
-  force_retrieve = TRUE)
+Brick_local_score_differentiator(Brick, chrs = NULL, resolution = NA,
+  all_resolutions = FALSE, min_sum = -1, di_window = 200L,
+  lookup_window = 200L, tukeys_constant = 1.5, strict = TRUE,
+  fill_gaps = TRUE, ignore_sparse = TRUE, sparsity_threshold = 0.8,
+  remove_empty = NULL, chunk_size = 500, force_retrieve = TRUE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -17,6 +17,15 @@ Create_many_Brick.}
 
 \item{chrs}{\strong{Optional}. Default NULL
 If present, only TAD calls for elements in \emph{chrs} will be done.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{all_resolutions}{\strong{Optional}. Default FALSE
+If resolution is not defined and all_resolutions is TRUE, the resolution
+parameter will be ignored and the function is executed on all files listed
+in the Brick container}
 
 \item{min_sum}{\strong{Optional}. Default -1
 Process bins in the matrix with row.sums greater than \emph{min_sum}.}

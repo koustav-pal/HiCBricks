@@ -14,8 +14,17 @@ Returns a vector containing the names of all matrix metadata columns
 columns.
 }
 \examples{
-Container_file <- system.file(file.path("extdata",
-"HiCBricks_builder_config.json"), package = "HiCBricks")
-Brick_test <- load_BrickContainer(Container_file)
+
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "get_matrix_mcols_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
 Brick_list_matrix_mcols()
 }

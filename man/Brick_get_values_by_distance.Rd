@@ -45,10 +45,26 @@ transformation or subsetted by a certain distance. Please note,
 this module is not an iterable module.
 }
 \examples{
-Container_file <- system.file(file.path("extdata",
-"HiCBricks_builder_config.json"), package = "HiCBricks")
-Brick_test <- load_BrickContainer(config_file = Container_file)
-Brick_get_values_by_distance(Brick = Brick_test, chr = "chr2L",
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "val_by_dist_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "cat",
+remove_prior = TRUE, resolution = 100000)
+
+Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L",
 distance = 0, resolution = 100000)
 
 Failsafe_median <- function(x){
@@ -56,9 +72,7 @@ Failsafe_median <- function(x){
      return(median(x))
 }
 
-Container_file <- system.file(file.path("extdata"), package = "HiCBricks")
-Brick_test <- load_BrickContainer(project_dir = Container_file)
-Brick_get_values_by_distance(Brick = Brick_test, chr = "chr2L", 
+Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L", 
 resolution = 100000, distance = 4, FUN = Failsafe_median)
 
 }

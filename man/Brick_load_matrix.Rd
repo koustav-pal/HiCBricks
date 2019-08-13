@@ -62,21 +62,23 @@ Load a NxM dimensional matrix into the Brick store.
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.bins", package = "HiCBricks")
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
 out_dir <- file.path(tempdir(), "matrix_load_test")
 dir.create(out_dir)
-My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, 
-  file_prefix = "Test", exec = "cat", experiment_name = "Vignette Test", 
-  resolution = 100000, remove_existing = TRUE)
 
-Test.mat <- matrix(runif(231*231),nrow = 231, ncol = 231)
-Matrix.file <- file.path(out_dir,"Test_matrix.txt")
-write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
-row.names = FALSE, col.names = FALSE)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
 Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-chr2 = "chr2L", matrix_file = Matrix.file, delim = " ", exec = "cat",
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "cat",
 remove_prior = TRUE, resolution = 100000)
 
 }

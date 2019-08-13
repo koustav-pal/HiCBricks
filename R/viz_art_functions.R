@@ -13,12 +13,14 @@
 #'  \item All of the above with TADs/TAD borders plotted on top.
 #' }
 #' 
+#' @inheritParams Brick_add_ranges
+#' 
 #' @param File \strong{Required}
 #' A character vector containing the output filename to write.
 #' 
 #' @param Bricks \strong{Required}
-#' A character vector of length 1 (in case of one sample heatmaps) or 2 (in case
-#' of two sample heatmaps) specifying the names of the Brick stores from where
+#' A list of length 1 (in case of one sample heatmaps) or 2 (in case
+#' of two sample heatmaps) specifying the BrickContainers from where
 #' to fetch the data.
 #' 
 #' @param x_coords \strong{Required}
@@ -169,7 +171,7 @@
 #' value_cap = 0.99, width = 10, height = 11, legend_key_width = unit(3,"mm"),
 #' legend_key_height = unit(0.3,"cm"))
 #' 
-Brick_vizart_plot_heatmap = function(File, Bricks, 
+Brick_vizart_plot_heatmap = function(File, Bricks, resolution,
     x_coords, y_coords, FUN = NULL, value_cap = NULL, 
     distance = NULL, rotate = FALSE, x_axis = TRUE, x_axis_title = NULL, 
     y_axis = TRUE, y_axis_title = NULL, title = NULL, legend_title = NULL, 
@@ -182,8 +184,13 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
     width = 10, height = 6, line_width = 0.5, units = "cm", 
     legend_key_width = unit(3,"cm"), legend_key_height = unit(0.5,"cm")){
 
+    if(!is.list(Bricks)){
+        stop("Bricks expects an argument of type list.",
+            " Please refer to the vignette to understand the parameter.")
+    }
     Matrix.df <- Get_one_or_two_brick_regions(Bricks = Bricks, 
-        x_coords = x_coords, y_coords = y_coords, distance = distance,
+        resolution = resolution, x_coords = x_coords, 
+        y_coords = y_coords, distance = distance,
         value_cap = value_cap, FUN = FUN)
     if(nrow(Matrix.df)==0){
         stop("The matrix was empty!")
@@ -196,15 +203,17 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
     x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
         to = max(Matrix.df$row), how.many = x_axis_num_breaks, 
         two.sample = FALSE)
-    x_axis.coord.labs <- Make_axis_labels(Brick = Bricks[1], 
-        chr = x.coord.parsed['chr'], positions = x.coord.breaks)
+    x_axis.coord.labs <- Make_axis_labels(Brick = Bricks[[1]], 
+        resolution = resolution, chr = x.coord.parsed['chr'], 
+        positions = x.coord.breaks)
 
     two.sample <- (rotate & length(Bricks)==2)
     y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
         to = max(Matrix.df$row), how.many = x_axis_num_breaks, 
         two.sample = two.sample)
-    y_axis.coord.labs <- Make_axis_labels(Brick = Bricks[1], 
-        chr = y.coord.parsed['chr'], positions = abs(y.coord.breaks))
+    y_axis.coord.labs <- Make_axis_labels(Brick = Bricks[[1]], 
+        resolution = resolution, chr = y.coord.parsed['chr'], 
+        positions = abs(y.coord.breaks))
 
     Colours <- Make_colours(palette = palette, 
         extrapolate_on = extrapolate_on, direction = col_direction)
@@ -258,13 +267,13 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
     Boundaries.obj <- NULL
     if(!is.null(tad_ranges)){
         Boundaries.obj <- Format_boundaries_normal_heatmap(Bricks = Bricks, 
-            Ranges = tad_ranges, group_col = group_col, 
-        cut_corners = cut_corners, colour.col = tad_colour_col, 
-        colours = colours, colours_names = colours_names, 
-        region.chr = x.coord.parsed['chr'], 
-        region.start = as.numeric(x.coord.parsed['start']), 
-        region.end = as.numeric(x.coord.parsed['end']), distance = distance,
-        rotate = rotate)
+            resolution = resolution, Ranges = tad_ranges, 
+            group_col = group_col, cut_corners = cut_corners, 
+            colour.col = tad_colour_col, colours = colours, 
+            colours_names = colours_names, region.chr = x.coord.parsed['chr'], 
+            region.start = as.numeric(x.coord.parsed['start']), 
+            region.end = as.numeric(x.coord.parsed['end']), distance = distance,
+            rotate = rotate)
     }
 
     if(rotate){

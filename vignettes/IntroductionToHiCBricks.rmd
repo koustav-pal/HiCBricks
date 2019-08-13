@@ -72,7 +72,7 @@ Then get the path to the test datasets provided with the package, and in particu
 
 ```{r}
 
-Bintable.path <- system.file(file.path("extdata",
+Bintable_path <- system.file(file.path("extdata",
 "Bintable_100kb.bins"), package = "HiCBricks")
 
 ```
@@ -102,7 +102,7 @@ Please note, that the `output_directory` is the project directory and only one p
 
 out_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
 dir.create(out_dir)
-Create_many_Bricks(BinTable = Bintable.path, 
+Create_many_Bricks(BinTable = Bintable_path, 
     bin_delim=" ", output_directory = out_dir, 
     file_prefix = "HiCBricks_vignette_test", remove_existing=TRUE, 
     experiment_name = "HiCBricks vignette test", resolution = 100000)
@@ -117,12 +117,11 @@ Create_many_Bricks(BinTable = Bintable.path,
 
 We are now ready to load a 2D matrix data into the _Brick object_. When doing so, we have to pass to the `Brick_load_matrix` function the path to the HDF file (so far containing only the bin table). Then we have to specify which chromosome (for intra-chromosomal _n x n_ contact matrix) or which pair of chromosomes (for inter-chromosomal _n x m_ contact matrix) are contained in the `matrix.file`. In case of intra-chromosomal contacts like in this example, `chr1` and `chr2` arguments will have the same value.
 
-
 ```{r}
 
-BrickContainer_file <- file.path(tempdir(), "HiCBricks_vignette_test")
-My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_file)
-Example_dataset_dir <- system.file(file.path("extdata"), package = "HiCBricks")
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+Example_dataset_dir <- system.file("extdata", package = "HiCBricks")
 
 Chromosomes <- c("chr2L", "chr2R", "chr3L", "chr3R", "chrX")
 for (chr in Chromosomes) {
@@ -135,7 +134,7 @@ for (chr in Chromosomes) {
         resolution = 100000,
         matrix_file = Matrix_file,
         delim = " ",
-        exec = "cat",
+        exec = "zcat",
         remove_prior = TRUE)
 }
 
@@ -147,12 +146,16 @@ In this example we load up to 100 diagonals with `Brick_load_cis_matrix_till_dis
 
 ```{r}
 
+Example_dataset_dir <- system.file("extdata", package = "HiCBricks")
+Matrix_file <- file.path(Example_dataset_dir,
+    paste(paste("Sexton2012_yaffetanay_CisTrans_100000_corrected", 
+        "chr2L", sep = "_"), "txt.gz", sep = "."))
 Brick_load_cis_matrix_till_distance(Brick = My_BrickContainer,
     chr = "chr2L",
     resolution = 100000,
     matrix_file = Matrix_file,
     delim = " ",
-    distance = 30,
+    distance = 100,
     remove_prior = TRUE)
 
 ```
@@ -172,10 +175,12 @@ For convenience, you can download the file using "curl" directly within the R pr
 ```{r eval = FALSE}
 require(curl)
 Consortium.home = "https://data.4dnucleome.org/files-processed"
-File = file.path(Consortium.home,"4DNFI7JNCNFB",
+File = file.path(Consortium.home, "4DNFI7JNCNFB",
     "@@download","4DNFI7JNCNFB.mcool")
+mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+dir.create(mcool_out_dir)
 curl_download(url = File,
-    destfile = file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
+    destfile = file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 ```
 
 This file contains normalised Hi-C data for H1-hESC cells obtained using the DpnII restriction enzyme. Note that there are multiple types of normalisations available within the sample. We can check what normalisation weights are available using `Brick_list_mcool_normalisations(names.only = TRUE)`.
@@ -187,8 +192,9 @@ The 4D nucleome project disseminates its data with several different resolutions
 
 ```{r eval = FALSE}
 
-mcoolName=file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-Brick_list_mcool_resolutions(mcool = mcoolName)
+mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+Brick_list_mcool_resolutions(mcool = mcool_path)
 
 ```
 
@@ -196,7 +202,9 @@ Then users can query the mcool files to find out if a given normalisation factor
 
 ```{r eval = FALSE}
 
-Brick_mcool_normalisation_exists(mcool = mcoolName, 
+mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+Brick_mcool_normalisation_exists(mcool = mcool_path, 
     norm.factor = "Iterative-Correction",
     resolution = 10000)
 
@@ -216,12 +224,16 @@ When creating _Brick objects_ from scratch users were required to provide a bin 
 Using the `chrs` parameter users can limit the structure created to the relevant chromosomes or, if left NULL (default value), the structure for all chromosome and chromosome-pairs will be created.  
 
 ```{r eval = FALSE}
+
+mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
 dir.create(out_dir)
 
 CreateBrick_from_mcool(output_directory = out_dir,
     file_prefix = "mcool_to_Brick_test", 
-    mcool = mcoolName, 
+    mcool = mcool_path, 
     resolution = 10000,
     experiment_name = "Testing mcool creation",
     remove_existing = TRUE)
@@ -232,10 +244,14 @@ You can also add other resolutions using the same function.
 
 ```{r eval = FALSE}
 
+mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
+
 CreateBrick_from_mcool(output_directory = out_dir,
     file_prefix = "mcool_to_Brick_test", 
-    mcool = mcoolName, 
+    mcool = mcool_path, 
     resolution = 40000,
     experiment_name = "Testing mcool creation",
     remove_existing = TRUE)
@@ -248,8 +264,12 @@ After the _Brick object_ has been created, we will populate the HDF file with va
 
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
 My_BrickContainer <- load_BrickContainer(project_dir = out_dir)
+
+mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+
 Brick_load_data_from_mcool(Brick = My_BrickContainer,
-    mcool = mcoolName,
+    mcool = mcool_path,
     chr1 = "chr1",
     chr2 = "chr1",
     resolution = 10000,
@@ -292,11 +312,8 @@ Each of the _ranges objects_ are stored under a unique id. The bin table always 
 
 ```{r}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Brick_list_rangekeys(Brick = My_BrickContainer, resolution = 100000)
 
@@ -306,6 +323,10 @@ If we want to retrieve the bin table, we can retrieve its content using the `Bri
 
 ```{r}
 
+BrickContainer_file <- file.path(tempdir(), 
+  "HiCBricks_vignette_test", "HiCBricks_builder_config.json")
+My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+
 Brick_get_bintable(My_BrickContainer, resolution = 100000)
 
 ```
@@ -313,6 +334,9 @@ Brick_get_bintable(My_BrickContainer, resolution = 100000)
 Otherwise, you can retrieve the object using `Brick_get_ranges` the method called by `Brick_get_bintable`.
 
 ```{r}
+
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Brick_get_ranges(Brick = My_BrickContainer,
     rangekey = "Bintable", resolution = 100000)
@@ -323,9 +347,14 @@ While fetching the ranges object we can also subset the retrieved _GRanges_ by t
 
 ```{r}
 
+BrickContainer_file <- file.path(tempdir(), "HiCBricks_vignette_test",
+  "HiCBricks_builder_config.json")
+My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+
 Brick_get_ranges(Brick = My_BrickContainer,
     rangekey = "Bintable",
-    chr = "chr3R", resolution = 100000)
+    chr = "chr3R", 
+    resolution = 100000)
 
 ```
 
@@ -334,6 +363,9 @@ Brick_get_ranges(Brick = My_BrickContainer,
 Users may sometimes find it useful to identify the corresponding contact matrix row or column for a particular genomic coordinate.
 
 ```{r}
+
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Brick_return_region_position(Brick = My_BrickContainer,
     region = "chr2L:5000000:10000000", resolution = 100000)
@@ -348,6 +380,9 @@ To have a more fine-grain control, users may choose to use `Brick_fetch_range_in
 > Users, unfamiliar with the `IntegerList` and other classes like it are encouraged to check out the IRanges package on Bioconductor.
 
 ```{r}
+
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Brick_fetch_range_index(Brick = My_BrickContainer,
     chr = "chr2L",
@@ -373,6 +408,9 @@ It is possible to get the interactions between genomic loci separated by a certa
 
 ```{r}
 
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
 Values <- Brick_get_values_by_distance(Brick = My_BrickContainer,
     chr = "chr2L",
     distance = 4, resolution = 100000)
@@ -387,6 +425,9 @@ Failsafe_median_log10 <- function(x){
     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
     return(median(log10(x+1)))
 }
+
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Brick_get_values_by_distance(Brick = My_BrickContainer,
     chr = "chr2L",
@@ -404,10 +445,13 @@ Failsafe_median_log10 <- function(x){
     return(median(log10(x+1)))
 }
 
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
 Brick_get_values_by_distance(Brick = My_BrickContainer,
     chr = "chr2L",
     distance = 4,
-    constrain_region = "chr19:1:5000000",
+    constrain_region = "chr2L:1:5000000",
     resolution = 100000,
     FUN = Failsafe_median_log10)
 
@@ -419,13 +463,13 @@ HiCBricks, by user-specified human readable coordinates, as defined above. Once 
 
 ```{r}
 
-Sub.matrix <- Brick_get_matrix_within_coords(Brick = My_BrickContainer,
-    x_coords="chr19:5000000:10000000",
+Sub_matrix <- Brick_get_matrix_within_coords(Brick = My_BrickContainer,
+    x_coords="chr2L:5000000:10000000",
     force = TRUE,
     resolution = 100000,
-    y_coords = "chr19:5000000:10000000")
+    y_coords = "chr2L:5000000:10000000")
 
-dim(Sub.matrix)
+dim(Sub_matrix)
 
 ```
 
@@ -433,15 +477,15 @@ The range of genomic bins to be fetched can also be provided as rows and columns
 
 ```{r}
 
-x_axis <- 5000000/40000
-y_axis <- 10000000/40000
+x_axis <- 5000000/100000
+y_axis <- 10000000/100000
 
-Sub.matrix <- Brick_get_matrix(Brick = My_BrickContainer,
-    chr1 = "chr2L", chr2 = "chr2L", resolution = 100000,
-    x_vector = seq(from = x_axis, to = y_axis),
-    y_vector = seq(from = x_axis, to = y_axis))
+Sub_matrix <- Brick_get_matrix(Brick = My_BrickContainer,
+    chr1 = "chr3R", chr2 = "chr3R", resolution = 100000,
+    x_coords = seq(from = x_axis, to = y_axis),
+    y_coords = seq(from = x_axis, to = y_axis))
 
-dim(Sub.matrix)
+dim(Sub_matrix)
 
 ```
 
@@ -451,14 +495,14 @@ Finally, it is also possible to fetch entire rows and columns from the contact m
 
 ```{r}
 
-Coordinate <- c("chr2L:1:100000","chr2L:100001:200000")
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+Coordinate <- c("chr3R:1:100000","chr3R:100001:200000")
+
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
 Test_Run <- Brick_fetch_row_vector(Brick = My_BrickContainer,
-    chr1 = "chr2L",
-    chr2 = "chr2L",
+    chr1 = "chr3R",
+    chr2 = "chr3R",
     by = "ranges",
     resolution = 100000,
     vector = Coordinate)
@@ -470,13 +514,13 @@ As an alternative, users can also choose to fetch data by position `by = positio
 ```{r}
 
 Coordinate <- c(1,2)
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
 Test_Run <- Brick_fetch_row_vector(Brick = My_BrickContainer,
-    chr1 = "chr2L",
-    chr2 = "chr2L",
+    chr1 = "chr3R",
+    chr2 = "chr3R",
     by = "position",
     resolution = 100000,
     vector = Coordinate)
@@ -488,17 +532,14 @@ If regions is provided, it will subset the corresponding row/col by the specifie
 ```{r}
 
 Coordinate <- c(1,2)
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
-Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
-    chr1 = "chr2L",
-    chr2 = "chr2L",
+
+Test_Run <- Brick_fetch_row_vector(Brick = My_BrickContainer,
+    chr1 = "chr3R",
+    chr2 = "chr3R",
     by = "position",
     vector = Coordinate,
     resolution = 100000,
-    regions = c("chr2L:1:1000000", "chr2L:100001:2000000"))
+    regions = c("chr3R:1:1000000", "chr3R:100001:2000000"))
 
 ```
 
@@ -522,13 +563,12 @@ And then fetch one such metadata column
 
 ```{r}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
 MCols.dat <- Brick_get_matrix_mcols(Brick = My_BrickContainer,
-    chr1 = "chr2L",
-    chr2 = "chr2L",
+    chr1 = "chr3R",
+    chr2 = "chr3R",
     resolution = 100000,
     what = "row.sums")
 head(MCols.dat, 100)
@@ -543,13 +583,12 @@ There are several utility functions that a user may take advantage of to do vari
 
 ```{r}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
 Brick_matrix_isdone(Brick = My_BrickContainer,
-    chr1 = "chr2L",
-    chr2 = "chr2L",
+    chr1 = "chr3R",
+    chr2 = "chr3R",
     resolution = 100000)
 
 ```
@@ -630,20 +669,19 @@ are identified as the local extreme values in the first derivative of DI compute
 
 ```{r}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
-Chromosome <- "chr2L"
+Chromosome <- c("chr2L", "chr2R", "chr3L", "chr3R", "chrX")
 di_window <- 10
 lookup_window <- 30
 TAD_ranges <- Brick_local_score_differentiator(Brick = My_BrickContainer,
     chrs = Chromosome,
+    resolution = 100000,
     di_window = di_window,
     lookup_window = lookup_window,
     strict = TRUE,
-    fill_gaps=TRUE,
+    fill_gaps = TRUE,
     chunk_size = 500)
 
 ```
@@ -656,11 +694,11 @@ As shown previously, we can store these TAD calls inside the _Brick objects_.
 
 Name <- paste("LSD",
     di_window,
-    lookup_window,
-    Chromosome,sep = "_")
+    lookup_window, sep = "_")
 Brick_add_ranges(Brick = My_BrickContainer,
     ranges = TAD_ranges,
-    rangekey = Name)
+    rangekey = Name,
+    resolution = 100000)
 
 ```
 
@@ -670,9 +708,9 @@ As shown previously, we can list the unique identifiers of the stored ranges (_r
 
 ```{r}
 
-Brick_list_rangekeys(Brick = My_BrickContainer)
-
-TAD_ranges <- Brick_get_ranges(Brick = My_BrickContainer, rangekey = Name)
+Brick_list_rangekeys(Brick = My_BrickContainer, resolution = 100000)
+TAD_ranges <- Brick_get_ranges(Brick = My_BrickContainer, rangekey = Name,
+    resolution = 100000)
 
 ```
 
@@ -684,16 +722,15 @@ Using `HiCBricks` functions, users can generate sophisticated plot to visualize 
 
 ```{r plot, fig.cap = "A normal heatmap without any transformations", fig.small = TRUE}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(), 
-  "chr2L-1-10MB-normal.pdf"),
-    Bricks = My_BrickContainer,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-normal.pdf"),
+    Bricks = list(My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     palette = "Reds",
     width = 10,
     height = 11,
@@ -707,10 +744,8 @@ In the examples above we are plotting the Hi-C signal (normalized read counts) w
 
 ```{r plot2, fig.cap = "A normal heatmap with colours computed in log10 scale", fig.small = TRUE}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Failsafe_log10 <- function(x){
     x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
@@ -718,12 +753,13 @@ Failsafe_log10 <- function(x){
 }
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(), 
-  "chr2L-1-10MB-normal-colours-log10.pdf"),
-    Bricks = My_BrickContainer,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-normal-colours-log10.pdf"),
+    Bricks = list(My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
-    legend.title = "Log10 Hi-C signal",
+    legend_title = "Log10 Hi-C signal",
     palette = "Reds",
     width = 10,
     height = 11,
@@ -738,10 +774,11 @@ Sometimes, the Hi-C signal distribution is biased by outlier values which may st
 ```{r plot3, fig.cap = "A normal heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-normal-colours-log10-valuecap-99.pdf"),
-    Bricks = My_BrickContainer,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-normal-colours-log10-valuecap-99.pdf"),
+    Bricks = list(My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     legend_title = "Log10 Hi-C signal",
@@ -759,10 +796,11 @@ Sometimes, it is desirable to plot the heatmap as a 45 degree rotated heatmap, i
 ```{r plot4, fig.cap = "Same heatmap as before with colours computed in log10 scale after capping values to the 99th percentile with 45 degree rotation", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-normal-colours-log10-rotate.pdf"),
-    Bricks = My_BrickContainer,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-normal-colours-log10-rotate.pdf"),
+    Bricks = list(My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     distance = 60,
@@ -779,10 +817,11 @@ To improve the appearance of the plot shown in the example above, we can modify 
 ```{r plot5, fig.cap = "Same heatmap as previous, but now the heatmaps are wider than they are taller", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-normal-colours-log10-rotate-2.pdf"),
-    Bricks = My_BrickContainer,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-normal-colours-log10-rotate-2.pdf"),
+    Bricks = list(My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     distance = 60,
@@ -800,11 +839,12 @@ We can also add more features to this plot, such as the TADs identified in the p
 ```{r plot6, fig.cap = "Normal rectangular heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-normal-colours-log10-rotate-2-tads.pdf"),
-    Bricks = My_BrickContainer,
+  "chr3R-1-10MB-normal-colours-log10-rotate-2-tads.pdf"),
+    Bricks = list(My_BrickContainer),
     tad_ranges = TAD_ranges,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     colours = "#230C0F",
     FUN = Failsafe_log10,
     value_cap = 0.99,
@@ -823,16 +863,17 @@ Note that by using the `distance` parameter we can limit the maximum distance fr
 ```{r plot7, fig.cap = "Normal rotated heatmap with colours computed in the log scale after capping values to the 99th percentile with TAD calls", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-normal-colours-log10-rotate-3-tads.pdf"),
-    Bricks = My_BrickContainer,
+  "chr3R-1-10MB-normal-colours-log10-rotate-3-tads.pdf"),
+    Bricks = list(My_BrickContainer),
     tad_ranges = TAD_ranges,
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     colours = "#230C0F",
     FUN = Failsafe_log10,
     value_cap = 0.99,
     distance = 60,
-    legend.title = "Log10 Hi-C signal",
+    legend_title = "Log10 Hi-C signal",
     palette = "Reds",
     width = 15,
     height = 5,
@@ -856,10 +897,11 @@ To plot a two sample heatmap, we need only to include an additional Brick file i
 ```{r plot8, fig.cap = "A normal two sample heatmap with colours computed in log10 scale after capping values to the 99th percentile", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-colours-log10-valuecap-99.pdf"),
-    Bricks = c(My_BrickContainer, My_BrickContainer),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-colours-log10-valuecap-99.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     legend_title = "Log10 Hi-C signal",
@@ -875,10 +917,11 @@ Since this Hi-C map is sparse there are few informative data points at larger di
 ```{r plot9, fig.cap = "A normal two sample heatmap with colours computed in log10 scale on values until the 30th diagonal and capping these values to the 99th percentile.", fig.small = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-colours-log10-valuecap-99-2.pdf"),
-    Bricks = c(My_BrickContainer, My_BrickContainer),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-colours-log10-valuecap-99-2.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     legend_title = "Log10 Hi-C signal",
@@ -895,10 +938,11 @@ Finally, we can once again rotate the two sample heatmaps.
 ```{r plot10, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-colours-log10-valuecap-99-rotate.pdf"),
-    Bricks = c(My_BrickContainer, My_BrickContainer),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-colours-log10-valuecap-99-rotate.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     legend_title = "Log10 Hi-C signal",
@@ -919,12 +963,10 @@ As an example we will prepare a set of TAD calls and store them in the Brick obj
 
 ```{r}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
-Chromosome <- "chr2L"
+Chromosome <- "chr3R"
 di_windows <- c(5,10)
 lookup_windows <- c(10, 20)
 for (i in seq_along(di_windows)) {
@@ -934,6 +976,7 @@ for (i in seq_along(di_windows)) {
     
     TAD_ranges <- Brick_local_score_differentiator(Brick = My_BrickContainer,
         chrs = Chromosome,
+        resolution = 100000,
         di_window = di_window,
         lookup_window = lookup_window,
         strict = TRUE,
@@ -946,7 +989,7 @@ for (i in seq_along(di_windows)) {
         Chromosome,sep = "_")
     
     Brick_add_ranges(Brick = My_BrickContainer, ranges = TAD_ranges, 
-      rangekey = Name)
+      resolution = 100000, rangekey = Name)
 }
 
 ```
@@ -955,7 +998,7 @@ To plot these TAD calls, they need to be formatted correctly before plotting. Th
 
 ```{r}
 
-Chromosome <- "chr2L"
+Chromosome <- "chr3R"
 di_windows <- c(5,10)
 lookup_windows <- c(10, 20)
 TADs_list <- list()
@@ -970,7 +1013,7 @@ for (i in seq_along(di_windows)) {
         Chromosome,sep = "_")
 
     TAD_ranges <- Brick_get_ranges(Brick = My_BrickContainer, 
-        rangekey = Name)
+        resolution = 100000, rangekey = Name)
     # Map TADs to their Hi-C maps
     TAD_ranges$group <- i
     # Map TADs to a specific categorical value for the colours
@@ -989,19 +1032,18 @@ Meanwhile, `colours` and `colours_names` are the relevant parameter for the colo
 
 ```{r plot11, fig.cap = "A normal two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with TAD borders", fig.small = TRUE}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Colours <- c("#B4436C", "#F78154")
 Colour_names <- unique(TADs_ranges$colour_group)
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-colours-log10-valuecap-99-tads.pdf"),
-    Bricks = c(My_BrickContainer, My_BrickContainer),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-colours-log10-valuecap-99-tads.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.97,
     legend_title = "Log10 Hi-C signal",
@@ -1020,19 +1062,18 @@ Brick_vizart_plot_heatmap(File = file.path(tempdir(),
 
 ```{r plot12, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with non-truncated TAD borders", fig.wide = TRUE}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Colours <- c("#B4436C", "#F78154")
 Colour_names <- unique(TADs_ranges$colour_group)
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-colours-log10-valuecap-99-rotate-tads.pdf"),
-    Bricks = c(Brick.file, Brick.file),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-colours-log10-valuecap-99-rotate-tads.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.97,
     legend_title = "Log10 Hi-C signal",
@@ -1054,19 +1095,18 @@ Note, that while creating rotated plots with TADs, if the parameter `cut_corners
 
 ```{r plot13, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 97th percentile, with truncated TAD borders", fig.wide = TRUE}
 
-BrickContainer_file <- system.file(file.path("extdata", 
-  "HiCBricks_builder_config.json"), 
-  package = "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = BrickContainer_file)
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
 Colours <- c("#B4436C", "#F78154")
 Colour.names <- unique(TADs_ranges$colour_group)
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-colours-log10-valuecap-99-rotate-tads-2.pdf"),
-    Bricks = c(My_BrickContainer, My_BrickContainer),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-colours-log10-valuecap-99-rotate-tads-2.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.97,
     legend_title = "Log10 Hi-C signal",
@@ -1095,10 +1135,11 @@ There are several features that are not ideal in the above plots that can be fix
 ```{r plot14, fig.cap = "A rotated two sample heatmap with colours computed in log10 scale and capping these values to the 99th percentile.", fig.wide = TRUE}
 
 Brick_vizart_plot_heatmap(File = file.path(tempdir(),
-  "chr2L-1-10MB-bipartite-final.pdf"),
-    Bricks = c(Brick.file, Brick.file),
-    x_coords = "chr2L:1:10000000",
-    y_coords = "chr2L:1:10000000",
+  "chr3R-1-10MB-bipartite-final.pdf"),
+    Bricks = list(My_BrickContainer, My_BrickContainer),
+    x_coords = "chr3R:1:10000000",
+    y_coords = "chr3R:1:10000000",
+    resolution = 100000,
     FUN = Failsafe_log10,
     value_cap = 0.99,
     legend_title = "Log10 Hi-C signal",

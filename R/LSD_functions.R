@@ -1,11 +1,11 @@
-._get_first_nonzero_bin <- function(Brick = NULL, chr = NULL){
+._get_first_nonzero_bin <- function(Brick = NULL, chr = NULL, resolution = NA){
     RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, chr2 = chr, 
-        what = "row.sums")
+        resolution = resolution, what = "row.sums")
     return(min(which(RowSums > 0)))
 }
-._get_sparsity_index <- function(Brick = NULL, chr = NULL){
+._get_sparsity_index <- function(Brick = NULL, chr = NULL, resolution = NA){
     Sparsity.index <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
-        chr2 = chr, what = "sparsity")
+        chr2 = chr, resolution = resolution, what = "sparsity")
     return(Sparsity.index)
 }
 Backwards.Difference <- function(Vector=NULL,sparse=FALSE,sparsity.idx=NULL,
@@ -160,17 +160,19 @@ ComputeDirectionalityIndex <- function(Matrix = NULL, Window.size=NULL,
     DI.Data[Sequence %in% Bins.to.process] <- DI.list
     return(DI.Data)
 }
-get_directionality_index_by_chunks <- function(Brick = NULL, chr = NULL, 
-    di_window = NULL, distance = NULL, chunk_size = 500, sparse = FALSE, 
-    sparsity_threshold = 0.8, min_sum = -1, force = FALSE){
-    Ranges <- Brick_get_bintable(Brick = Brick, chr = chr)
-    First.non.zero.bin <- ._get_first_nonzero_bin(Brick = Brick, chr = chr)
+get_directionality_index_by_chunks <- function(Brick = NULL, chr = NULL,
+    resolution = NA, di_window = NULL, distance = NULL, chunk_size = 500, 
+    sparse = FALSE, sparsity_threshold = 0.8, min_sum = -1, force = FALSE){
+    Ranges <- Brick_get_bintable(Brick = Brick, chr = chr, 
+        resolution = resolution)
+    First.non.zero.bin <- ._get_first_nonzero_bin(Brick = Brick, chr = chr,
+        resolution = resolution)
     chr.length <- length(Ranges)
     RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, chr2 = chr, 
-        what = "row.sums")
+        resolution = resolution, what = "row.sums")
     if(sparse){
         SparsityIndex <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
-            chr2 = chr, what = "sparsity")
+            chr2 = chr, resolution = resolution, what = "sparsity")
     }
     if((chunk_size - (di_window*2))/di_window < 10){
         stop("chunk_size is too small for this di_window\n")
@@ -217,7 +219,8 @@ get_directionality_index_by_chunks <- function(Brick = NULL, chr = NULL,
             extend <- extend + 1
         }
         Matrix <- Brick_get_vector_values(Brick = Brick, chr1 = chr, 
-            chr2 = chr, xaxis=c(Start:End), yaxis=c(Start:End), force = force)
+            resolution = resolution, chr2 = chr, xaxis=c(Start:End), 
+            yaxis=c(Start:End), force = force)
         # cat((Start - 1),"\n")
         # message(Position.start," ",Position.end,"\n")
         # message(Position.start - (Start - 1),Position.end - (Start - 1),"\n")
@@ -285,6 +288,7 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' in a very fast way. 
 #' 
 #' @inheritParams Brick_get_chrominfo
+#' @inheritParams Brick_add_ranges
 #' 
 #' @param chrs \strong{Optional}. Default NULL
 #' If present, only TAD calls for elements in \emph{chrs} will be done.
@@ -360,19 +364,24 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' chrs = "chr2L", di_window = 10, lookup_window = 30, strict = TRUE, 
 #' fill_gaps = TRUE, chunk_size = 500)
 Brick_local_score_differentiator <- function(Brick, chrs = NULL, 
-    min_sum = -1, di_window = 200L, lookup_window = 200L, tukeys_constant=1.5, 
-    strict = TRUE, fill_gaps=TRUE, ignore_sparse=TRUE, sparsity_threshold=0.8,
-    remove_empty = NULL, chunk_size = 500, force_retrieve = TRUE){
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
+    resolution = NA, all_resolutions = FALSE, min_sum = -1, di_window = 200L, 
+    lookup_window = 200L, tukeys_constant=1.5, strict = TRUE, fill_gaps=TRUE, 
+    ignore_sparse=TRUE, sparsity_threshold=0.8, remove_empty = NULL, 
+    chunk_size = 500, force_retrieve = TRUE){
+    BrickContainer_resolution_check(resolution, all_resolutions)
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, 
+        resolution = resolution)
     Chromosomes <- ChromInfo[,'chr']
     if(!is.null(chrs)){
         Chromosomes <- ChromInfo[ChromInfo[,'chr'] %in% chrs,'chr']
     }
     Chrom.domains.ranges.list <- lapply(Chromosomes, function(chr){
-        Ranges <- Brick_get_bintable(Brick = Brick, chr = chr)
-        sparse <- Brick_matrix_issparse(Brick = Brick, chr1 = chr, chr2 = chr)
+        Ranges <- Brick_get_bintable(Brick = Brick, chr = chr, 
+            resolution = resolution)
+        sparse <- Brick_matrix_issparse(Brick = Brick, chr1 = chr, chr2 = chr, 
+            resolution = resolution)
         max.distance <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr, 
-            chr2 = chr)
+            chr2 = chr, resolution = resolution)
         if(ignore_sparse){
             sparse=FALSE
         }
@@ -380,25 +389,34 @@ Brick_local_score_differentiator <- function(Brick, chrs = NULL,
             fill_gaps=FALSE
         }
         message("[1] Computing DI for ",chr,"\n")
-        Ranges <- get_directionality_index_by_chunks(Brick = Brick, chr = chr, 
+        Ranges <- get_directionality_index_by_chunks(Brick = Brick, 
+            chr = chr, 
+            resolution = resolution,
             di_window = di_window, 
-            distance = max.distance, chunk_size = chunk_size, sparse=sparse, 
+            distance = max.distance, 
+            chunk_size = chunk_size, 
+            sparse=sparse, 
             sparsity_threshold=sparsity_threshold,
             min_sum = min_sum, force = force_retrieve)
 
         RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
-            chr2 = chr, what = "row.sums")
+            chr2 = chr, resolution = resolution, what = "row.sums")
         Ranges$row.sums <- RowSums
         message("[2] Computing DI Differences for ",chr,"\n")
         if(sparse){
-            SparsityIndex <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
-                chr2 = chr, what = "sparsity")
+            SparsityIndex <- Brick_get_matrix_mcols(Brick = Brick, 
+                chr1 = chr, 
+                chr2 = chr, 
+                resolution = resolution, 
+                what = "sparsity")
             Backwards.DI.Difference <- Backwards.Difference(
-                Vector = Ranges$DI.Data, sparse = sparse,
+                Vector = Ranges$DI.Data, 
+                sparse = sparse,
                 sparsity.idx = SparsityIndex, 
                 sparsity_threshold = sparsity_threshold)
             Forwards.DI.Difference <- Forwards.Difference(
-                Vector = Ranges$DI.Data, sparse = sparse,
+                Vector = Ranges$DI.Data, 
+                sparse = sparse,
                 sparsity.idx = SparsityIndex, 
                 sparsity_threshold = sparsity_threshold)
         }else{
@@ -413,22 +431,29 @@ Brick_local_score_differentiator <- function(Brick, chrs = NULL,
         message("[3] Fetching Outliers ",chr,"\n")
         if(sparse){
             Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(
-                lookup_window=lookup_window,
-                diff.values=Backwards.DI.Difference, 
-                values=Ranges$DI.Data, sparse=sparse, 
+                lookup_window = lookup_window,
+                diff.values = Backwards.DI.Difference, 
+                values = Ranges$DI.Data, 
+                sparse = sparse, 
                 row.sums = Ranges$row.sums,
-                min_sum = min_sum, sparsity.idx=SparsityIndex, 
-                sparsity_threshold=sparsity_threshold, 
-                tukeys_constant=tukeys_constant, 
-                tail="lower.tail",strict=strict)
+                min_sum = min_sum, 
+                sparsity.idx = SparsityIndex, 
+                sparsity_threshold = sparsity_threshold, 
+                tukeys_constant = tukeys_constant, 
+                tail = "lower.tail",
+                strict = strict)
             Domain.start.candidates <- ComputeOutlierOverIQRInsideWindow(
-                lookup_window=lookup_window,
-                diff.values=Forwards.DI.Difference, values=Ranges$DI.Data, 
-                sparse=sparse, row.sums = Ranges$row.sums,
-                min_sum = min_sum, sparsity.idx=SparsityIndex, 
-                sparsity_threshold=sparsity_threshold,
-                tukeys_constant=tukeys_constant, tail="upper.tail", 
-                strict=strict)
+                lookup_window = lookup_window,
+                diff.values = Forwards.DI.Difference, 
+                values = Ranges$DI.Data, 
+                sparse = sparse, 
+                row.sums = Ranges$row.sums,
+                min_sum = min_sum, 
+                sparsity.idx = SparsityIndex, 
+                sparsity_threshold = sparsity_threshold,
+                tukeys_constant = tukeys_constant, 
+                tail = "upper.tail", 
+                strict = strict)
         }else{
             Domain.end.candidates <- ComputeOutlierOverIQRInsideWindow(
                 lookup_window=lookup_window,
@@ -462,7 +487,7 @@ Brick_local_score_differentiator <- function(Brick, chrs = NULL,
             Domain.end.candidates <- c(Domain.end.candidates,length(Ranges))
         }
         Domain.list <- CreateDomainlist(start.vector=Domain.start.candidates,
-            end.vector=Domain.end.candidates,fill_gaps=fill_gaps)
+            end.vector=Domain.end.candidates, fill_gaps=fill_gaps)
         Domain.Ranges <- Brick_make_ranges(chrom=rep(chr,nrow(Domain.list)),
             start=start(Ranges[Domain.list$startbin]),
             end=end(Ranges[Domain.list$endbin]))

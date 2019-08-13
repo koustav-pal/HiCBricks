@@ -22,6 +22,15 @@ An object of class BrickContainer
 \code{load_BrickContainer} creates a BrickContainer object from a JSON file
 }
 \examples{
-Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-My_brick_container <- load_BrickContainer(Brick.file)
+
+Bintable.path <- system.file("extdata",
+"Bintable_100kb.bins", package = "HiCBricks")
+out_dir <- file.path(tempdir(), "BrickContainer_load_test")
+dir.create(out_dir)
+Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+  remove_existing = TRUE)
+My_BrickContainer <- load_BrickContainer(project_dir = out_dir)
+
 }

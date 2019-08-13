@@ -55,11 +55,21 @@ corresponding indices in the binning table.
 }
 \examples{
 
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "fetch_range_index_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
 Chrom <- c("chr2L","chr2L")
 Start <- c(1,40000)
 End <- c(1000000,2000000)
-Container_file <- system.file(file.path("extdata"), "HiCBricks")
-My_BrickContainer <- load_BrickContainer(project_dir = Container_file)
+ 
 Test_Run <- Brick_fetch_range_index(Brick = My_BrickContainer, 
 chr = Chrom, start = Start, end = End, resolution = 100000)
 Test_Run$Indexes[[1]]

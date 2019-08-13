@@ -30,8 +30,19 @@ associated metadata column name.
 ranges if it is present in the Brick store.
 }
 \examples{
-Container_file <- system.file(file.path("extdata"), "HiCBricks")
-My_BrickContainer <- load_BrickContainer(project_dir = Container_file)
+
+Bintable.path <- system.file("extdata",
+"Bintable_100kb.txt", package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "list_ranges_mcols_test")
+
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
 Brick_list_ranges_mcols(Brick = My_BrickContainer, rangekey = "Bintable",
 resolution = 100000)
 

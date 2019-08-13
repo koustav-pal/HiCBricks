@@ -30,8 +30,17 @@ to passing the argument rangekey = "bintable" in
 }
 \examples{
 
-Container_file <- system.file(file.path("extdata"), "HiCBricks")
-My_BrickContainer <- load_BrickContainer(project_dir = Container_file)
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "list_get_bintable_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
 Brick_get_bintable(Brick = My_BrickContainer, resolution = 100000)
 
 }

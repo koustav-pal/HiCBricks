@@ -63,21 +63,23 @@ the Brick store.
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.bins", package = "HiCBricks")
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
+
 out_dir <- file.path(tempdir(), "matrix_load_dist_test")
 dir.create(out_dir)
-My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, 
-  file_prefix = "Test", exec = "cat", experiment_name = "Vignette Test", 
-  resolution = 100000, remove_existing = TRUE)
 
-Test.mat <- matrix(runif(231*231),nrow = 231, ncol = 231)
-Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
-write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
-row.names = FALSE, col.names = FALSE)
-Brick_load_cis_matrix_till_distance(Brick = Path_to_cached_file, 
-chr = "chr2L", resolution = 100000, matrix_file = Matrix.file, delim = " ", 
-distance = 30, remove_prior = TRUE)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_cis_matrix_till_distance(Brick = My_BrickContainer, 
+chr = "chr2L", resolution = 100000, matrix_file = Matrix_file, 
+delim = " ", distance = 30, remove_prior = TRUE)
 
 }

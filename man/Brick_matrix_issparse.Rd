@@ -31,14 +31,26 @@ loaded as a sparse matrix.
 Check if a matrix for a chromosome pair is sparse.
 }
 \examples{
-Container_file <- system.file(file.path("extdata"))
-Brick_test <- load_BrickContainer(project_dir = Container_file)
-Brick_matrix_issparse(Brick = Brick.file, chr1 = "chr2L", chr2 = "chr2L",
-resolution = 100000)
+Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+package = "HiCBricks")
 
-Container_file <- system.file(file.path("extdata"))
-Brick_test <- load_BrickContainer(project_dir = Container_file)
-Brick_matrix_issparse(Brick = Brick_test, chr1 = "chr2L", chr2 = "chr2L",
-resolution = 100000)
+out_dir <- file.path(tempdir(), "matrix_issparse_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "cat",
+remove_prior = TRUE, resolution = 100000)
+
+Brick_matrix_issparse(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", resolution = 100000)
 
 }

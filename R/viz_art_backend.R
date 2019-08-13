@@ -24,12 +24,12 @@
     return(parsed.string.list)
 }
 
-Get_one_or_two_brick_regions <- function(Bricks = NULL, x_coords = NULL, 
-    y_coords = NULL, distance = NULL, 
-    value_cap = NULL, FUN = NULL){
+Get_one_or_two_brick_regions <- function(Bricks = NULL, resolution = NULL, 
+    x_coords = NULL, y_coords = NULL, distance = NULL, value_cap = NULL, 
+    FUN = NULL){
     Reference.object <- GenomicMatrix$new()
     if(length(Bricks) > 2){
-        stop("Polygonal layouts have not been implemented yet! 
+        stop("Higher order polygon layouts have not been implemented yet! 
             So for now we can only do two matrices at a time.\n")
     }
     if(!is.null(value_cap)){
@@ -41,13 +41,14 @@ Get_one_or_two_brick_regions <- function(Bricks = NULL, x_coords = NULL,
     # require(reshape2)
     Matrix.df.list <- list()
     for(i in seq_along(Bricks)){
-        Brick <- Bricks[i]
+        Brick <- Bricks[[i]]
         Matrix <- Brick_get_matrix_within_coords(Brick = Brick, 
-            x_coords = x_coords, y_coords = y_coords, force = TRUE, FUN = FUN)
-        Region.position.x <- Brick_return_region_position(Brick = Brick, 
-            region = x_coords)
-        Region.position.y <- Brick_return_region_position(Brick = Brick, 
-            region = y_coords)
+            x_coords = x_coords, y_coords = y_coords, 
+            resolution = resolution, force = TRUE, FUN = FUN)
+        Region.position.x <- Brick_return_region_position(Brick = Brick,
+            region = x_coords, resolution = resolution)
+        Region.position.y <- Brick_return_region_position(Brick = Brick,
+            region = y_coords, resolution = resolution)
         if(dim(Matrix)[1] != length(Region.position.x) | 
             dim(Matrix)[2] != length(Region.position.y)){
             stop("Matrix dimensions do not match the expected ",
@@ -86,8 +87,10 @@ Get_one_or_two_brick_regions <- function(Bricks = NULL, x_coords = NULL,
     return(Matrix.df)
 }
 
-Make_axis_labels = function(Brick = NULL, chr = NULL, positions = NULL){
-    Bintable <- Brick_get_bintable(Brick = Brick, chr = chr)
+Make_axis_labels = function(Brick = NULL, chr = NULL, resolution = NULL, 
+    positions = NULL){
+    Bintable <- Brick_get_bintable(Brick = Brick, chr = chr, 
+        resolution = resolution)
     breaks <- end(Bintable[positions])
     breaks[1] <- start(Bintable[positions[1]])
     coord.labs <- ._Figure_out_genomic_scale(breaks)
@@ -338,8 +341,8 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
     return(Group.df)
 }
 
-Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL, 
-    group_col = NULL, cut_corners = FALSE, colour.col = NULL, 
+Format_boundaries_normal_heatmap <- function(Bricks = NULL, resolution, 
+    Ranges = NULL, group_col = NULL, cut_corners = FALSE, colour.col = NULL, 
     colours = NULL, colours_names = NULL, region.chr = NULL, 
     region.start = NULL, region.end = NULL, distance = NULL, 
     rotate = FALSE){
@@ -392,7 +395,8 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
     start(chr.ranges) <= region.end]
     region <- paste(region.chr, region.start, region.end, 
         sep = Reference.object$Ranges.separator)
-    Region.positions <- Brick_return_region_position(Brick = Bricks[1], 
+    Region.positions <- Brick_return_region_position(Brick = Bricks[[1]], 
+        resolution = resolution, 
         region = region)
     Range.to.df.list <- lapply(seq_along(Bricks),function(Brick.x){
         pos.ranges <- chr.ranges[
@@ -400,8 +404,8 @@ Format_boundaries_normal_heatmap <- function(Bricks = NULL, Ranges = NULL,
         chrs <- as.vector(seqnames(pos.ranges))
         start <- start(pos.ranges)
         end <- end(pos.ranges)
-        A.ranges <- Brick_fetch_range_index(Brick = Bricks[Brick.x], 
-            chr = chrs, start = start, end = end)
+        A.ranges <- Brick_fetch_range_index(Brick = Bricks[[Brick.x]], 
+            chr = chrs, start = start, end = end, resolution = resolution)
         Position.list <- A.ranges[seqnames(A.ranges) == region.chr]
         check_if_only_one_ranges <- function(x){
             all(!is.na(Position.list$Indexes[[x]]))
@@ -473,9 +477,9 @@ Get_heatmap_theme <- function(x_axis=TRUE, y_axis=TRUE,
                 axis.ticks.x = x_axis.ticks,
                 axis.ticks.y = y_axis.ticks,
                 legend.position="bottom",
-                legend_key_height = legend_key_height,
-                legend_key_width = legend_key_width,
-                legend_title=element_text(size=legend_title_text_size),
+                legend.key.height = legend_key_height,
+                legend.key.width = legend_key_width,
+                legend.title=element_text(size=legend_title_text_size),
                 legend.text=element_text(size=legend_text_size),
                 plot.title=element_text(size=title_size))
     return(Brick_theme)

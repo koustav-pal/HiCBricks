@@ -32,7 +32,8 @@ exists in an mcool file.
 \dontrun{
 
 require(curl)
-out_dir <- file.path(tempdir(), "mcool_norm_exists")
+out_dir <- file.path(tempdir(), "mcool_test_dir")
+dir.create(path = out_dir)
 curl_download(url = paste("https://data.4dnucleome.org/"
 "files-processed/4DNFI7JNCNFB/"
 "@download/4DNFI7JNCNFB.mcool",sep = ""),

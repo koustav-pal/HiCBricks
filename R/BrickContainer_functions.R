@@ -13,8 +13,17 @@
 #' @return An object of class BrickContainer
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
+#' 
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' out_dir <- file.path(tempdir(), "BrickContainer_load_test")
+#' dir.create(out_dir)
+#' Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' My_BrickContainer <- load_BrickContainer(project_dir = out_dir)
+#' 
 load_BrickContainer <- function(config_file = NULL, project_dir = NULL){
     Reference.object <- GenomicMatrix$new()
     if(is.null(config_file) & is.null(project_dir)){
@@ -57,9 +66,18 @@ load_BrickContainer <- function(config_file = NULL, project_dir = NULL){
 #' the type of Hi-C matrix and the path to a particular Hi-C matrix file.
 #'
 #' @examples
-#' Brick.json = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_list_files(Brick = My_brick_container)
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' out_dir <- file.path(tempdir(), "BrickContainer_list_file_test")
+#' dir.create(out_dir)
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'    exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'    remove_existing = TRUE)
+#' 
+#' BrickContainer_list_files(Brick = My_BrickContainer, chr1 = "chr2L",
+#' chr2 = NA)
+#' 
 BrickContainer_list_files <- function(Brick = NULL,
     chr1 = NA, chr2 = NA, type = NA, resolution = NA){
     BrickContainer_class_check(Brick)
@@ -67,7 +85,13 @@ BrickContainer_list_files <- function(Brick = NULL,
     ChromosomeList <- return_chromosomes(Brick)
     ResolutionList <- return_resolutions(Brick)
     out_dir <- return_output_directory(Brick)
-    resolution <- .format_resolution(resolution)
+    if(!is.na(resolution)){
+        resolution <- .format_resolution(resolution)
+        if(!any(format(resolution, scientific = FALSE) %in% ResolutionList)){
+            stop("all resolutions were not found in resolution list")
+        }
+        Files_tib <- Files_tib[Files_tib$resolution %in% resolution,]
+    }
     if(!is.na(chr1)){
         if(!any(chr1 %in% ChromosomeList)){
             stop("chr1 was not found in chromosome list")
@@ -85,12 +109,6 @@ BrickContainer_list_files <- function(Brick = NULL,
             stop("type must be one of cis or trans")
         }
         Files_tib <- Files_tib[Files_tib$mat_type %in% type,]
-    }    
-    if(!is.na(resolution)){
-        if(!any(format(resolution, scientific = FALSE) %in% ResolutionList)){
-            stop("all resolutions were not found in resolution list")
-        }
-        Files_tib <- Files_tib[Files_tib$resolution %in% resolution,]
     }
     Files_tib$filepaths <- file.path(out_dir, Files_tib$filename)
     message("Found ", nrow(Files_tib), " files...")
@@ -107,9 +125,21 @@ BrickContainer_list_files <- function(Brick = NULL,
 #' @return A vector containing filepaths
 #'
 #' @examples
-#' Brick.json = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_get_path_to_file(Brick = My_brick_container)
+#' 
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_list_filepath_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_get_path_to_file(Brick = My_BrickContainer, chr1 = "chr2L",
+#' chr2 = "chr2L", resolution = 100000)
+#' 
 BrickContainer_get_path_to_file <- function(Brick = NULL,
     chr1 = NA, chr2 = NA, type = NA, resolution = NA){
     File_list <- BrickContainer_list_files(Brick = Brick,
@@ -136,10 +166,20 @@ BrickContainer_get_path_to_file <- function(Brick = NULL,
 #' has been changed
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_change_experiment_name(Brick = My_brick_container, 
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_expt_name_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_change_experiment_name(Brick = My_BrickContainer, 
 #' experiment_name = "I change my mind")
+#' 
 BrickContainer_change_experiment_name <- function(Brick = NULL, 
     experiment_name = NULL) {
     configuration_null_check(Brick, "Brick")
@@ -172,9 +212,18 @@ BrickContainer_change_experiment_name <- function(Brick = NULL,
 #' has been changed
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_change_output_directory(Brick = My_brick_container, 
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_out_dir_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_change_output_directory(Brick = My_BrickContainer, 
 #' output_directory = tempdir())
 BrickContainer_change_output_directory <- function(Brick = NULL, 
     output_directory = NULL) {
@@ -207,14 +256,32 @@ BrickContainer_change_output_directory <- function(Brick = NULL,
 #' and links to its associated files have been removed
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' BrickContainer_unlink_resolution(Brick = Brick.file, resolution = 40000)
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_unlink_res_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 40000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_unlink_resolution(Brick = My_BrickContainer, 
+#' resolution = 40000)
+#' 
 BrickContainer_unlink_resolution <- function(Brick = NULL, resolution = NULL) {
     configuration_null_check(Brick, "Brick")
     BrickContainer_class_check(Brick)
-    Resolutions <- return_resolutions(Brick)
+    Resolutions <- BrickContainer_list_resolutions(Brick)
     configuration_length_check(resolution, "resolution", 1)
     configuration_null_check(value = resolution, name = "resolution")
+    resolution <- .format_resolution(resolution)
     if(!(resolution %in% Resolutions)){
         stop("Provided resolution is not present in the BrickContainer")
     }
@@ -232,11 +299,12 @@ BrickContainer_unlink_resolution <- function(Brick = NULL, resolution = NULL) {
     Config_filepath <- .make_configuration_path(
         return_output_directory(Brick))
     .write_configuration_file(Brick, Config_filepath)
+    Return_Brick <- load_BrickContainer(config_file = Config_filepath)
     message("Removed links to ", original_length - nrow(Files_tib),
         " files under resolution ", resolution)
     warning("Original files are still present at location! ", 
         "Please, remove them manually.")
-    return(Brick)
+    return(Return_Brick)
 }
 
 #' Return the descriptive name of the BrickContainer
@@ -250,9 +318,18 @@ BrickContainer_unlink_resolution <- function(Brick = NULL, resolution = NULL) {
 #' BrickContainer
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_list_experiment_name(My_brick_container)
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_list_expt_name_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_list_experiment_name(My_BrickContainer)
 BrickContainer_list_experiment_name <- function(Brick = NULL) {
     configuration_null_check(Brick, "Brick")
     BrickContainer_class_check(Brick)
@@ -270,9 +347,19 @@ BrickContainer_list_experiment_name <- function(Brick = NULL) {
 #' BrickContainer
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_list_output_directory(My_brick_container)
+#' 
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_list_out_dir_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_list_output_directory(My_BrickContainer)
 BrickContainer_list_output_directory <- function(Brick = NULL) {
     configuration_null_check(Brick, "Brick")
     BrickContainer_class_check(Brick)
@@ -291,9 +378,18 @@ BrickContainer_list_output_directory <- function(Brick = NULL) {
 #' BrickContainer
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_list_resolutions(My_brick_container)
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_list_resolution_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_list_resolutions(My_BrickContainer)
 BrickContainer_list_resolutions <- function(Brick = NULL) {
     configuration_null_check(Brick, "Brick")
     BrickContainer_class_check(Brick)
@@ -315,9 +411,18 @@ BrickContainer_list_resolutions <- function(Brick = NULL) {
 #' lengths is provided.
 #' 
 #' @examples
-#' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
-#' My_brick_container <- load_BrickContainer(Brick.file)
-#' BrickContainer_list_chromosomes(My_brick_container)
+#' Bintable.path <- system.file("extdata",
+#' "Bintable_100kb.bins", package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "BrickContainer_list_chromosome_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' BrickContainer_list_chromosomes(My_BrickContainer)
 BrickContainer_list_chromosomes <- function(Brick = NULL, lengths = FALSE) {
     configuration_null_check(Brick, "Brick")
     BrickContainer_class_check(Brick)

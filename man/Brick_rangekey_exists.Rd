@@ -28,9 +28,17 @@ a certain name.
 }
 \examples{
 
-Container_file <- system.file(file.path("extdata",
-"HiCBricks_builder_config.json"), "HiCBricks")
-My_BrickContainer <- load_BrickContainer(config_file = Container_file)
+Bintable.path <- system.file("extdata",
+"Bintable_100kb.txt", package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "list_rangekeys_exists_test")
+
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
 Brick_rangekey_exists(Brick = My_BrickContainer, rangekey = "Bintable",
 resolution = 100000)
 

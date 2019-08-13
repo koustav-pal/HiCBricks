@@ -26,19 +26,34 @@
     return(Metadata.list)
 }
 
+
+.send_message <- function(message, issue_stop = TRUE, issue_warning = FALSE){
+    if(issue_stop){
+        stop(message)
+    }else if(issue_warning){
+        warning(message)
+    }
+}
+
 .check_if_rangekey_exists_and_do_something <- function(Brick, rangekey, 
+    resolution = NA, all_resolutions = FALSE, issue_stop = TRUE, 
+    issue_warning = FALSE, message){
+    if(Brick_rangekey_exists(Brick = Brick, rangekey = rangekey, 
+        resolution = resolution, all_resolutions = all_resolutions)){
+        .send_message(message = message, issue_stop = issue_stop, 
+            issue_warning = issue_warning)
+    }
+}
+
+.check_if_rangekey_not_exists_and_do_something <- function(Brick, rangekey, 
     resolution = NA, all_resolutions = FALSE, issue_stop = TRUE, 
     issue_warning = FALSE, message){
     if(!Brick_rangekey_exists(Brick = Brick, rangekey = rangekey, 
         resolution = resolution, all_resolutions = all_resolutions)){
-        if(issue_stop){
-            stop(message)
-        }else if(issue_warning){
-            warning(message)
-        }
+        .send_message(message = message, issue_stop = issue_stop, 
+            issue_warning = issue_warning)
     }
 }
-
 
 .prepare_ranges_metadata_mcols <- function(Brick = NULL, rangekeys = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -63,8 +78,3 @@
     }
     return(mcol.df)
 }
-
-
-
-
-

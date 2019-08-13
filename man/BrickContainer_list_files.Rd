@@ -37,7 +37,16 @@ the type of Hi-C matrix and the path to a particular Hi-C matrix file.
 particular BrickContainer
 }
 \examples{
-Brick.json = system.file("extdata", "test.json", package = "HiCBricks")
-My_brick_container <- load_BrickContainer(Brick.file)
-BrickContainer_list_files(Brick = My_brick_container)
+Bintable.path <- system.file("extdata",
+"Bintable_100kb.bins", package = "HiCBricks")
+out_dir <- file.path(tempdir(), "BrickContainer_list_file_test")
+dir.create(out_dir)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+   remove_existing = TRUE)
+
+BrickContainer_list_files(Brick = My_BrickContainer, chr1 = "chr2L",
+chr2 = NA)
+
 }
