@@ -5,12 +5,12 @@ configuration_length_check <- function(value, name, length_threshold){
 }
 
 configuration_null_check <- function(value, name){
-    if(is.null(value)){
+    if(any(is.null(value))){
         stop(name," cannot have null values")
     }
 }
 configuration_na_check <- function(value, name){
-    if(is.na(value)){
+    if(any(is.na(value))){
         stop(name," cannot have na values")
     }
 }

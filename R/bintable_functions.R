@@ -30,9 +30,8 @@ Read_bintable = function(Filename = NULL, read.delim = " ",
     Table <- Filename
     if(is.character(Filename)){
         Command <- paste(exec,Filename,sep=" ")
-        Table <- fread(cmd=Command, sep=read.delim, quote = "",
-            stringsAsFactors=FALSE, verbose=FALSE, showProgress=FALSE, 
-            data.table=FALSE)
+        Table <- fread(cmd=Command, sep=read.delim, stringsAsFactors=FALSE, 
+            verbose=FALSE, showProgress=FALSE, data.table=FALSE)
     }
     colnames(Table) <- Colnames
     Ranges.table <- Table[,col.index]

@@ -51,9 +51,11 @@ value as the chunk size, for all matrices. By default, the ChunkSize is
 set to matrix dimensions/100.}
 
 \item{output_directory}{\strong{Required}
-A string specifying the location and name of the HDF file to create. If path
-is not provided, it will be created in the Bioc File cache. Otherwise, it
-will be created in the specified directory and tracked via Bioc File Cache.}
+A string specifying the location where the HDF files will be created.}
+
+\item{file_prefix}{\strong{Required}
+A string specifying the prefix that is concatenated to the hdf files stored
+in the output_directory.}
 
 \item{exec}{\strong{Optional}. Default cat.
 A string specifying the program or expression to use for reading the file.
@@ -148,16 +150,6 @@ specifying the chromosomes present in this particular Brick file.
 \item other metadata tables.
 }
 }
-}
-\examples{
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.bins", package = "HiCBricks")
-out_dir <- file.path(tempdir(), "Creator_test")
-dir.create(out_dir)
-My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
-  remove_existing = TRUE)
 
 Keep in mind that if the end coordinates and start coordinates of adjacent
 ranges are not separated by at least a value of 1, then
@@ -172,5 +164,15 @@ To load continuous ranges, use impose.discontinuity = FALSE.
 Also note, that col.index determines which columns to use for chr, start
 and end. Therefore, the original binning table may have 10 or 20 columns,
 but it only requires the first three in order of chr, start and end.
+}
+\examples{
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+out_dir <- file.path(tempdir(), "Creator_test")
+dir.create(out_dir)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+  remove_existing = TRUE)
 
 }

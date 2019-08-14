@@ -356,13 +356,28 @@ MakeBoundaries <- function(chr = NULL, Ranges = NULL, Binsize = NULL){
 #' the bintable. 
 #' 
 #' @examples
-#' Container_file <- system.file(file.path("extdata",
-#' "HiCBricks_builder_config.json"), package = "HiCBricks")
-#' Brick_test <- load_BrickContainer(config_file = Container_file)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
 #' 
-#' TAD_ranges <- Brick_local_score_differentiator(Brick = Brick_test, 
-#' chrs = "chr2L", di_window = 10, lookup_window = 30, strict = TRUE, 
-#' fill_gaps = TRUE, chunk_size = 500)
+#' out_dir <- file.path(tempdir(), "lsd_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr3R", 
+#' chr2 = "chr3R", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' TAD_ranges <- Brick_local_score_differentiator(Brick = My_BrickContainer, 
+#' chrs = "chr3R", resolution = 100000, di_window = 10, lookup_window = 30, 
+#' strict = TRUE, fill_gaps = TRUE, chunk_size = 500)
 Brick_local_score_differentiator <- function(Brick, chrs = NULL, 
     resolution = NA, all_resolutions = FALSE, min_sum = -1, di_window = 200L, 
     lookup_window = 200L, tukeys_constant=1.5, strict = TRUE, fill_gaps=TRUE, 

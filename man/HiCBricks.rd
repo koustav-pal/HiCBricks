@@ -32,8 +32,8 @@ types. You can create,
 }
 \section{Brick creation}{
 \itemize{
-\item \code{\link{CreateBrick}} - Create the complete HDF data structure. We 
-refer to the HDF files as Brick
+\item \code{\link{Create_many_Bricks}} - Create the HDF data structures. We 
+refer to the HDF files as Bricks
 \item \code{\link{CreateBrick_from_mcool}} - Create the complete Brick data 
 structure from an mcool file.
 }

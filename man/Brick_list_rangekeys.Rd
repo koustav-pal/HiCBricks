@@ -29,8 +29,8 @@ of all ranges currently present in the file.
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.txt", package = "HiCBricks")
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
 
 out_dir <- file.path(tempdir(), "list_rangekeys_test")
 

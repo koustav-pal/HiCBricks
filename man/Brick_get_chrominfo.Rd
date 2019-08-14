@@ -44,6 +44,6 @@ bin_delim=" ", remove_existing=TRUE, output_directory = out_dir,
 file_prefix = "HiCBricks_vignette_test", resolution = 100000,
 experiment_name = "HiCBricks vignette test")
 
-Brick_get_chrominfo(Brick = Brick_test, resolution = 100000)
+Brick_get_chrominfo(Brick = My_BrickContainer, resolution = 100000)
 
 }

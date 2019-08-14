@@ -111,7 +111,7 @@ BrickContainer_list_files <- function(Brick = NULL,
         Files_tib <- Files_tib[Files_tib$mat_type %in% type,]
     }
     Files_tib$filepaths <- file.path(out_dir, Files_tib$filename)
-    message("Found ", nrow(Files_tib), " files...")
+    # message("Found ", nrow(Files_tib), " files...")
     return(Files_tib)
 }
 

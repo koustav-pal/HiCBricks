@@ -10,9 +10,11 @@ CreateBrick_from_mcool(output_directory = NA, file_prefix = NA,
 }
 \arguments{
 \item{output_directory}{\strong{Required}
-A string specifying the location and name of the HDF file to create. If path
-is not provided, it will be created in the Bioc File cache. Otherwise, it
-will be created in the specified directory and tracked via Bioc File Cache.}
+A string specifying the location where the HDF files will be created.}
+
+\item{file_prefix}{\strong{Required}
+A string specifying the prefix that is concatenated to the hdf files stored
+in the output_directory.}
 
 \item{mcool}{\strong{Required}.
 Path to an mcool file.}
@@ -50,9 +52,9 @@ about the 4D nucleome project \href{https://data.4dnucleome.org/}{here}.
 require(curl)
 out_dir <- file.path(tempdir(),"mcool_test_dir")
 dir.create(path = out_dir)
-curl_download(url = paste("https://data.4dnucleome.org/"
-"files-processed/4DNFI7JNCNFB/"
-"@download/4DNFI7JNCNFB.mcool",sep = ""),
+curl_download(url = paste("https://data.4dnucleome.org/",
+"files-processed/4DNFI7JNCNFB/",
+"@download/4DNFI7JNCNFB.mcool", sep = ""),
 destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
 mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")

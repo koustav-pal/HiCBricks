@@ -189,10 +189,29 @@ FailSafe_log10 <- function(x){
      return(log10(x+1))
 }
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
-Bricks = Brick.file, x_coords = "chr19:5000000:10000000", palette = "Reds",
-y_coords = "chr19:5000000:10000000", FUN = FailSafe_log10, 
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "vizart_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr3R", 
+chr2 = "chr3R", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+remove_prior = TRUE, resolution = 100000)
+
+Brick_vizart_plot_heatmap(File = "./chr3R-1-10000000.pdf", 
+Bricks = list(My_BrickContainer), resolution = 100000, 
+x_coords = "chr3R:1:10000000", palette = "Reds", 
+y_coords = "chr3R:1:10000000", FUN = FailSafe_log10, 
 value_cap = 0.99, width = 10, height = 11, legend_key_width = unit(3,"mm"),
 legend_key_height = unit(0.3,"cm"))
 

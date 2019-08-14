@@ -44,8 +44,8 @@ and sparse
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.txt", package = "HiCBricks")
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
 
 out_dir <- file.path(tempdir(), "list_matrices_test")
 
@@ -56,6 +56,7 @@ My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path,
   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
   remove_existing = TRUE)
 
-Brick_list_matrices(Brick = My_BrickContainer, resolution = 100000)
+Brick_list_matrices(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", resolution = 100000)
 
 }

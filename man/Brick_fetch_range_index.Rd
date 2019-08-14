@@ -55,7 +55,7 @@ corresponding indices in the binning table.
 }
 \examples{
 
-Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
 package = "HiCBricks")
 
 out_dir <- file.path(tempdir(), "fetch_range_index_test")

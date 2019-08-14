@@ -57,7 +57,7 @@ min(yaxis) to max(yaxis) on the columns.
 }
 
 \examples{
-Bintable.path <- system.file("extdata", "Bintable_100kb.txt", 
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
 package = "HiCBricks")
 
 out_dir <- file.path(tempdir(), "get_vector_val_test")
@@ -73,7 +73,7 @@ Matrix_file <- system.file(file.path("extdata",
 package = "HiCBricks")
 
 Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "cat",
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
 remove_prior = TRUE, resolution = 100000)
 
 Brick_get_vector_values(Brick = My_BrickContainer, chr1 = "chr2L",

@@ -12,15 +12,21 @@ A parameter specifying the name of an mcool file}
 }
 \value{
 A named vector listing all possible resolutions in the file.
+}
+\description{
+\code{Brick_list_mcool_resolutions} lists all available resolutions in the mcool
+file.
+}
+\examples{
 
 \dontrun{
 require(curl)
 out_dir <- file.path(tempdir(),"mcool_test_dir")
 dir.create(path = out_dir)
 
-curl_download(url = paste("https://data.4dnucleome.org/"
-"files-processed/4DNFI7JNCNFB/"
-"@download/4DNFI7JNCNFB.mcool",sep = ""),
+curl_download(url = paste("https://data.4dnucleome.org/",
+"files-processed/4DNFI7JNCNFB/",
+"@download/4DNFI7JNCNFB.mcool", sep = ""),
 destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
 mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
@@ -28,8 +34,4 @@ mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 Brick_list_mcool_resolutions(mcool)
 
 }
-}
-\description{
-\code{Brick_list_mcool_resolutions} lists all available resolutions in the mcool
-file.
 }

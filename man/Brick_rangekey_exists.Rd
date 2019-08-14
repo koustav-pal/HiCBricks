@@ -18,6 +18,11 @@ A string specifying the name of the ranges to check for.}
 \item{resolution}{\strong{Optional}. Default NA
 When an object of class BrickContainer is provided, resolution defines the
 resolution on which the function is executed}
+
+\item{all_resolutions}{\strong{Optional}. Default FALSE
+If resolution is not defined and all_resolutions is TRUE, the resolution
+parameter will be ignored and the function is executed on all files listed
+in the Brick container}
 }
 \value{
 A logical vector of length 1 with either TRUE or FALSE values.
@@ -28,8 +33,8 @@ a certain name.
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.txt", package = "HiCBricks")
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
 
 out_dir <- file.path(tempdir(), "list_rangekeys_exists_test")
 

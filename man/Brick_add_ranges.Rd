@@ -30,9 +30,6 @@ in the Brick container}
 \item{num_cpus}{\strong{Optional}. Default 1
 When an object of class BrickContainer is provided, num_cpus defines the
 maximum number of parallel jobs that will be run.}
-
-\item{remove.existing}{\strong{Optional}. TRUE
-Will remove an existing Ranges by the same name and introduce the new one.}
 }
 \value{
 Returns TRUE if completed successfully.
@@ -52,8 +49,8 @@ Users can ignore these columns.
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_100kb.txt", package = "HiCBricks")
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
 
 out_dir <- file.path(tempdir(), "add_ranges_test")
 

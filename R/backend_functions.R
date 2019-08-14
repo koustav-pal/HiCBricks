@@ -552,7 +552,7 @@ humanize_size <- function(x){
         Skip <- Skippity[i]
         Matrix <- as.matrix(fread(cmd=Command, sep=delim, nrows=Iter, 
             na.strings="NA", stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, 
-            dec=".", quote = "", showProgress=TRUE))
+            dec=".", showProgress=TRUE))
         message("Read ",Iter," lines after Skipping ",Skip," lines")
 
         Metrics.list <- ._Compute_various_matrix_metrics(Matrix = Matrix, 
