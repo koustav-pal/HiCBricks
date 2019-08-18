@@ -5,7 +5,7 @@
 \title{Load a NxM dimensional matrix into the Brick store.}
 \usage{
 Brick_load_matrix(Brick = NA, chr1 = NA, chr2 = NA,
-  resolution = NA, matrix_file = NA, delim = " ", exec = NA,
+  resolution = NA, matrix_file = NA, delim = " ",
   remove_prior = FALSE, num_rows = 2000, is_sparse = FALSE,
   sparsity_bins = 100)
 }
@@ -32,10 +32,6 @@ matrix into the Brick store.}
 
 \item{delim}{\strong{Optional}. Default " "
 The delimiter of the matrix file.}
-
-\item{exec}{\strong{Required}.
-A string specifying the program to use for reading the file. Use cat for txt
-files, for bz2 files use bzcat and for gz files zcat.}
 
 \item{remove_prior}{\strong{Optional}. Default FALSE
 If a matrix was loaded before, it will not be replaced. Use remove_prior to
@@ -70,7 +66,7 @@ dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+  experiment_name = "Vignette Test", resolution = 100000,
   remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
@@ -78,7 +74,7 @@ Matrix_file <- system.file(file.path("extdata",
 package = "HiCBricks")
 
 Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 remove_prior = TRUE, resolution = 100000)
 
 }

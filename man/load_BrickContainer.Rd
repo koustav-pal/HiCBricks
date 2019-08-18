@@ -29,7 +29,7 @@ out_dir <- file.path(tempdir(), "BrickContainer_load_test")
 dir.create(out_dir)
 Create_many_Bricks(BinTable = Bintable.path, 
   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+  experiment_name = "Vignette Test", resolution = 100000, 
   remove_existing = TRUE)
 My_BrickContainer <- load_BrickContainer(project_dir = out_dir)
 

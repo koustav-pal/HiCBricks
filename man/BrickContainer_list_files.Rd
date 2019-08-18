@@ -43,7 +43,7 @@ out_dir <- file.path(tempdir(), "BrickContainer_list_file_test")
 dir.create(out_dir)
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+   experiment_name = "Vignette Test", resolution = 100000, 
    remove_existing = TRUE)
 
 BrickContainer_list_files(Brick = My_BrickContainer, chr1 = "chr2L",

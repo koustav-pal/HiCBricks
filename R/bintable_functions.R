@@ -18,19 +18,14 @@
     return(Alist)
 }
 Read_bintable = function(Filename = NULL, read.delim = " ", 
-    exec = "cat", col.index = c(1,2,3), impose.discontinuity=TRUE){
-    if(is.null(exec)) {
-        stop("exec is not allowed to be null")
-    }
-    options(datatable.fread.input.cmd.message=FALSE)
+    col.index = c(1,2,3), impose.discontinuity=TRUE){
     ColMetrics <- ._ColIndexError_(col.index)
     Colnames<-ColMetrics[["Names"]]
     ColClasses<- ColMetrics[["Classes"]]
     
     Table <- Filename
     if(is.character(Filename)){
-        Command <- paste(exec,Filename,sep=" ")
-        Table <- fread(cmd=Command, sep=read.delim, stringsAsFactors=FALSE, 
+        Table <- fread(file = Filename, sep=read.delim, stringsAsFactors=FALSE, 
             verbose=FALSE, showProgress=FALSE, data.table=FALSE)
     }
     colnames(Table) <- Colnames
@@ -45,7 +40,6 @@ Read_bintable = function(Filename = NULL, read.delim = " ",
     Ranges.table <- Table[order(Table[,'chr'],Table[,'start']),]
     Table.list <- list('main.tab' = Ranges.table, 'stranded' = is.stranded, 
         'named' = has.names)
-    options(datatable.fread.input.cmd.message=TRUE)
     return(Table.list)
 }
 Validate_table = function(Table = NULL, colnames = NULL, colClasses = NULL, 

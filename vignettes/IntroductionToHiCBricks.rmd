@@ -111,10 +111,6 @@ Create_many_Bricks(BinTable = Bintable_path,
 
 > **HiCBricks does not overwrite your files without you saying so** Keeping in line with Bioconductor standards and community guidelines, HiCBricks will never replace a user's files without their explicit permission. When a user defines `remove_existing=TRUE`, they are giving their permission to HiCBricks function to remove any _Brick objects_ they may have created previously. Otherwise, without this parameter the `Create_many_Bricks` will not overwrite existing files. You will encounter this parameter in another form, `remove_prior` when populating HDF files with Hi-C data.
 
-> **Technical note**
-> This code chunk is the first place users will encounter the `exec` parameter. The `exec` argument allows users complete flexibility in specifying a call to a system command to manipulate and read the bin table input file. The `exec` parameter takes `cat` as the default value, i.e. a call to the system utility `cat` used for reading text files. Similarly, if the file is compressed, the `exec` parameter can take as values popular compression utilities such as `zcat` or `bzcat` for reading the compressed file.
-> For advanced users, the `exec` parameter can contain full length `awk` or `cut` commands to sort and filter out columns or rows which are not required from the file. Thus, rather than read the same file twice using two different programs, users can provide a system command which will process the file and then pipe the processed output to the R session.
-
 We are now ready to load a 2D matrix data into the _Brick object_. When doing so, we have to pass to the `Brick_load_matrix` function the path to the HDF file (so far containing only the bin table). Then we have to specify which chromosome (for intra-chromosomal _n x n_ contact matrix) or which pair of chromosomes (for inter-chromosomal _n x m_ contact matrix) are contained in the `matrix.file`. In case of intra-chromosomal contacts like in this example, `chr1` and `chr2` arguments will have the same value.
 
 ```{r}
@@ -134,13 +130,12 @@ for (chr in Chromosomes) {
         resolution = 100000,
         matrix_file = Matrix_file,
         delim = " ",
-        exec = "zcat",
         remove_prior = TRUE)
 }
 
 ```
 
-Note that also in this case we specify a column delimiter `(delim= " ")` and an `exec` parameter command for reading the input file. If you have a very large 2D _cis_ matrix, you may want to load data up to a certain diagonal, i.e. up to bin pairs separated by a certain distance on the genome. The rationale in this case is that the contact frequency is rapidly decaying with distance, thus a you may find a very sparse matrix at longer distances.
+Note that also in this case we specify a column delimiter `(delim= " ")` for reading the input file. If you have a very large 2D _cis_ matrix, you may want to load data up to a certain diagonal, i.e. up to bin pairs separated by a certain distance on the genome. The rationale in this case is that the contact frequency is rapidly decaying with distance, thus a you may find a very sparse matrix at longer distances.
 
 In this example we load up to 100 diagonals with `Brick_load_cis_matrix_till_distance`
 

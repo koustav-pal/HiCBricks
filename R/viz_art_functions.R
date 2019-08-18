@@ -172,7 +172,7 @@
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -180,7 +180,7 @@
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr3R", 
-#' chr2 = "chr3R", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr3R", matrix_file = Matrix_file, delim = " ",
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_vizart_plot_heatmap(File = "./chr3R-1-10000000.pdf", 

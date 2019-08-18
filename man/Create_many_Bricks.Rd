@@ -6,10 +6,9 @@
 \usage{
 Create_many_Bricks(BinTable, bin_delim = "\\t", col_index = c(1, 2, 3),
   impose_discontinuity = TRUE, hdf_chunksize = NULL,
-  output_directory = NA, file_prefix = NA, exec = "cat",
-  remove_existing = FALSE, link_existing = FALSE,
-  experiment_name = NA, resolution = NA, type = c("both", "cis",
-  "trans"))
+  output_directory = NA, file_prefix = NA, remove_existing = FALSE,
+  link_existing = FALSE, experiment_name = NA, resolution = NA,
+  type = c("both", "cis", "trans"))
 }
 \arguments{
 \item{BinTable}{\strong{Required}
@@ -56,10 +55,6 @@ A string specifying the location where the HDF files will be created.}
 \item{file_prefix}{\strong{Required}
 A string specifying the prefix that is concatenated to the hdf files stored
 in the output_directory.}
-
-\item{exec}{\strong{Optional}. Default cat.
-A string specifying the program or expression to use for reading the file.
-For bz2 files, use bzcat and for gunzipped files use zcat.}
 
 \item{remove_existing}{\strong{Optional}. Default FALSE.
 If TRUE, will remove the HDF file with the same name and create a new one.
@@ -172,7 +167,7 @@ out_dir <- file.path(tempdir(), "Creator_test")
 dir.create(out_dir)
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-  exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+  experiment_name = "Vignette Test", resolution = 100000, 
   remove_existing = TRUE)
 
 }

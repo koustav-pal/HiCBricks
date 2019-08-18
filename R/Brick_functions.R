@@ -59,10 +59,6 @@
 #' value as the chunk size, for all matrices. By default, the ChunkSize is
 #' set to matrix dimensions/100.
 #'
-#' @param exec \strong{Optional}. Default cat.
-#' A string specifying the program or expression to use for reading the file.
-#' For bz2 files, use bzcat and for gunzipped files use zcat.
-#'
 #' @param remove_existing \strong{Optional}. Default FALSE.
 #' If TRUE, will remove the HDF file with the same name and create a new one.
 #' By default, it will not replace existing files.
@@ -144,7 +140,7 @@
 #' dir.create(out_dir)
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' @details
@@ -164,7 +160,7 @@
 #'
 Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3), 
     impose_discontinuity=TRUE, hdf_chunksize=NULL, output_directory = NA, 
-    file_prefix = NA, exec="cat", remove_existing = FALSE, 
+    file_prefix = NA, remove_existing = FALSE, 
     link_existing = FALSE, experiment_name = NA, resolution = NA, 
     type = c("both", "cis", "trans")){
 
@@ -206,8 +202,8 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
     Configuration_matrix_list <- list()
 
     Bintable.list <- Read_bintable(Filename = BinTable, 
-        read.delim = bin_delim, exec = exec, 
-        col.index = col_index, impose.discontinuity = impose_discontinuity)
+        read.delim = bin_delim, col.index = col_index, 
+        impose.discontinuity = impose_discontinuity)
     bintable_df <- Bintable.list[['main.tab']]
     # Create the 0 level directories in the HDF file
     ChromosomeList <- unique(bintable_df[,'chr'])
@@ -670,7 +666,7 @@ Brick_make_ranges = function(chrom, start, end, strand = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #'
 #' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
@@ -739,7 +735,7 @@ Brick_add_ranges = function(Brick, ranges, rangekey, resolution = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Brick_list_matrices(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -794,7 +790,7 @@ Brick_list_matrices = function(Brick, chr1 = NA, chr2 = NA, resolution = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Brick_list_rangekeys(Brick = My_BrickContainer, resolution = 100000)
@@ -836,7 +832,7 @@ Brick_list_rangekeys = function(Brick, resolution = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' Brick_rangekey_exists(Brick = My_BrickContainer, rangekey = "Bintable",
 #' resolution = 100000)
@@ -876,7 +872,7 @@ Brick_rangekey_exists = function(Brick, rangekey, resolution = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Brick_list_ranges_mcols(Brick = My_BrickContainer, rangekey = "Bintable",
@@ -936,7 +932,7 @@ Brick_list_ranges_mcols = function(Brick, rangekey = NULL, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Brick_get_ranges(Brick = My_BrickContainer, chr = "chr2L", 
@@ -1070,7 +1066,7 @@ Brick_get_ranges = function(Brick = NA, chr = NA, rangekey = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Brick_get_bintable(Brick = My_BrickContainer, resolution = 100000)
@@ -1133,7 +1129,7 @@ Brick_get_bintable = function(Brick, chr = NA, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #'
 #' Chrom <- c("chr2L","chr2L")
@@ -1231,7 +1227,7 @@ Brick_fetch_range_index = function(Brick = NA, chr = NA, start = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Coordinate <- "chr2L:1:1000000"
@@ -1270,10 +1266,6 @@ Brick_return_region_position = function(Brick, region, resolution = NA){
 #' A character vector of length 1 specifying the name of the file to load as a
 #' matrix into the Brick store.
 #'
-#' @param exec \strong{Required}.
-#' A string specifying the program to use for reading the file. Use cat for txt
-#' files, for bz2 files use bzcat and for gz files zcat.
-#'
 #' @param delim \strong{Optional}. Default " "
 #' The delimiter of the matrix file.
 #'
@@ -1306,7 +1298,7 @@ Brick_return_region_position = function(Brick, region, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #'
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1314,17 +1306,17 @@ Brick_return_region_position = function(Brick, region, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #'
 Brick_load_matrix = function(Brick = NA, chr1 = NA, chr2 = NA, resolution = NA,
-    matrix_file = NA, delim = " ", exec = NA, remove_prior = FALSE,
-    num_rows = 2000, is_sparse = FALSE, sparsity_bins = 100){
+    matrix_file = NA, delim = " ", remove_prior = FALSE, num_rows = 2000, 
+    is_sparse = FALSE, sparsity_bins = 100){
     Reference.object <- GenomicMatrix$new()
     BrickContainer_class_check(Brick)
     ListVars <- list(chr1 = chr1, chr2 = chr2, 
         resolution = resolution, matrix_file = matrix_file, 
-        delim = delim, exec = exec, remove_prior = remove_prior, 
+        delim = delim, remove_prior = remove_prior, 
         num_rows = num_rows, is_sparse = is_sparse, 
         sparsity_bins = sparsity_bins)
 
@@ -1363,9 +1355,9 @@ Brick_load_matrix = function(Brick = NA, chr1 = NA, chr2 = NA, resolution = NA,
     }
     RetVar <- ._ProcessMatrix_(Brick = Brick_filepath, 
         Matrix.file = matrix_file, delim = delim, Group.path = Group.path, 
-        exec = exec, chr1.len = chr1.len, chr2.len = chr2.len, 
-        num.rows = num_rows, is.sparse = is_sparse, 
-        compute.sparsity = compute_sparsity, sparsity.bins = sparsity_bins)
+        chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num_rows, 
+        is.sparse = is_sparse, compute.sparsity = compute_sparsity, 
+        sparsity.bins = sparsity_bins)
     return(RetVar)
 }
 
@@ -1403,7 +1395,7 @@ Brick_load_matrix = function(Brick = NA, chr1 = NA, chr2 = NA, resolution = NA,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #'
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1622,7 +1614,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1 = NULL,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1630,7 +1622,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1 = NULL,
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_isdone(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1666,7 +1658,7 @@ Brick_matrix_isdone = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1674,7 +1666,7 @@ Brick_matrix_isdone = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_issparse(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1718,7 +1710,7 @@ Brick_matrix_issparse = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1726,7 +1718,7 @@ Brick_matrix_issparse = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_maxdist(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1773,7 +1765,7 @@ Brick_matrix_maxdist = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1781,7 +1773,7 @@ Brick_matrix_maxdist = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_exists(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1812,7 +1804,7 @@ Brick_matrix_exists = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1820,7 +1812,7 @@ Brick_matrix_exists = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_minmax(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1858,7 +1850,7 @@ Brick_matrix_minmax = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1866,7 +1858,7 @@ Brick_matrix_minmax = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_dimensions(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1907,7 +1899,7 @@ Brick_matrix_dimensions = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1915,7 +1907,7 @@ Brick_matrix_dimensions = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_matrix_filename(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -1973,7 +1965,7 @@ Brick_matrix_filename = function(Brick, chr1, chr2, resolution = NA){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -1981,7 +1973,7 @@ Brick_matrix_filename = function(Brick, chr1, chr2, resolution = NA){
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L",
@@ -2124,7 +2116,7 @@ Brick_get_values_by_distance = function(Brick, chr, distance,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -2132,7 +2124,7 @@ Brick_get_values_by_distance = function(Brick, chr, distance,
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_get_matrix_within_coords(Brick = My_BrickContainer,
@@ -2237,7 +2229,7 @@ Brick_get_matrix_within_coords = function(Brick, x_coords,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -2245,7 +2237,7 @@ Brick_get_matrix_within_coords = function(Brick, x_coords,
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_get_matrix(Brick = My_BrickContainer, chr1 = "chr2L", chr2 = "chr2L",
@@ -2346,7 +2338,7 @@ Brick_get_matrix = function(Brick, chr1, chr2, x_coords,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -2354,7 +2346,7 @@ Brick_get_matrix = function(Brick, chr1, chr2, x_coords,
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Coordinate <- c("chr2L:1:100000","chr2L:100001:200000")
@@ -2500,7 +2492,7 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, resolution,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -2508,7 +2500,7 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, resolution,
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_get_vector_values(Brick = My_BrickContainer, chr1 = "chr2L",
@@ -2586,7 +2578,7 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Matrix_file <- system.file(file.path("extdata", 
@@ -2594,7 +2586,7 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 #' package = "HiCBricks")
 #' 
 #' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", exec = "zcat",
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_get_matrix_mcols(Brick = My_BrickContainer, chr1 = "chr2L", 
@@ -2651,7 +2643,7 @@ Brick_get_matrix_mcols = function(Brick, chr1, chr2, resolution, what){
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000,
+#'   experiment_name = "Vignette Test", resolution = 100000,
 #'   remove_existing = TRUE)
 #' 
 #' Brick_list_matrix_mcols()

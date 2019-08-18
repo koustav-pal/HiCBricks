@@ -502,15 +502,14 @@ humanize_size <- function(x){
     return(TRUE)
 }
 ._ProcessMatrix_ <- function(Brick = NULL, Matrix.file = NULL, delim = NULL, 
-    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, exec = NULL,
-    num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
-    distance = NULL, sparsity.bins = 100){
+    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, num.rows = 2000, 
+    is.sparse = NULL, compute.sparsity = NULL, distance = NULL, 
+    sparsity.bins = 100){
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
     options(datatable.fread.input.cmd.message=FALSE)
-    Command <- paste(exec, Matrix.file)
     Start.row <- 1
     Start.col <- 1
     Set.col <- TRUE
@@ -550,7 +549,7 @@ humanize_size <- function(x){
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
-        Matrix <- as.matrix(fread(cmd=Command, sep=delim, nrows=Iter, 
+        Matrix <- as.matrix(fread(file = Matrix.file, sep=delim, nrows=Iter, 
             na.strings="NA", stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, 
             dec=".", showProgress=TRUE))
         message("Read ",Iter," lines after Skipping ",Skip," lines")

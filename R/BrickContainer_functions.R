@@ -20,7 +20,7 @@
 #' dir.create(out_dir)
 #' Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' My_BrickContainer <- load_BrickContainer(project_dir = out_dir)
 #' 
@@ -72,7 +72,7 @@ load_BrickContainer <- function(config_file = NULL, project_dir = NULL){
 #' dir.create(out_dir)
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'    exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'    experiment_name = "Vignette Test", resolution = 100000, 
 #'    remove_existing = TRUE)
 #' 
 #' BrickContainer_list_files(Brick = My_BrickContainer, chr1 = "chr2L",
@@ -134,7 +134,7 @@ BrickContainer_list_files <- function(Brick = NULL,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_get_path_to_file(Brick = My_BrickContainer, chr1 = "chr2L",
@@ -174,7 +174,7 @@ BrickContainer_get_path_to_file <- function(Brick = NULL,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_change_experiment_name(Brick = My_BrickContainer, 
@@ -220,7 +220,7 @@ BrickContainer_change_experiment_name <- function(Brick = NULL,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_change_output_directory(Brick = My_BrickContainer, 
@@ -264,12 +264,12 @@ BrickContainer_change_output_directory <- function(Brick = NULL,
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 40000, 
+#'   experiment_name = "Vignette Test", resolution = 40000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_unlink_resolution(Brick = My_BrickContainer, 
@@ -326,7 +326,7 @@ BrickContainer_unlink_resolution <- function(Brick = NULL, resolution = NULL) {
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_list_experiment_name(My_BrickContainer)
@@ -356,7 +356,7 @@ BrickContainer_list_experiment_name <- function(Brick = NULL) {
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_list_output_directory(My_BrickContainer)
@@ -386,7 +386,7 @@ BrickContainer_list_output_directory <- function(Brick = NULL) {
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_list_resolutions(My_BrickContainer)
@@ -419,7 +419,7 @@ BrickContainer_list_resolutions <- function(Brick = NULL) {
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-#'   exec = "cat", experiment_name = "Vignette Test", resolution = 100000, 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
 #'   remove_existing = TRUE)
 #' 
 #' BrickContainer_list_chromosomes(My_BrickContainer)
