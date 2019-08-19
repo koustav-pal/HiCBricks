@@ -37,7 +37,7 @@
             chr1_end <- ends[i]
             chr1_filter <- Table_df[,"chr1"] >= chr1_start & 
                                 Table_df[,"chr1"] <= chr1_end
-            if(any(!chr1_filter)){
+            if(all(!chr1_filter)){
                 break
             }
             chr1_min <- min(which(chr1_filter)) + records_read
@@ -50,7 +50,7 @@
                 chr2_filter <- Table_df[,"chr2"] >= chr2_start & 
                                     Table_df[,"chr2"] <= chr2_end
                 chr1_and_chr2 <- (chr1_filter & chr2_filter)
-                if(any(!chr1_and_chr2)){
+                if(all(!chr1_and_chr2)){
                     break
                 }
                 chr1_chr2_min <- min(which(chr1_and_chr2))

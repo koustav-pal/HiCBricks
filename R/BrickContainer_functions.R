@@ -302,7 +302,7 @@ BrickContainer_unlink_resolution <- function(Brick = NULL, resolution = NULL) {
     Return_Brick <- load_BrickContainer(config_file = Config_filepath)
     message("Removed links to ", original_length - nrow(Files_tib),
         " files under resolution ", resolution)
-    warning("Original files are still present at location! ", 
+    message("Original files are still present at location! ", 
         "Please, remove them manually.")
     return(Return_Brick)
 }
