@@ -195,14 +195,17 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Fraction <- LengthOfGTZero/LengthOfRow
     return(Fraction)
 }
+
 ._Do_on_vector_ComputeRowSums_ = function(x){
     x[is.na(x) | is.infinite(x)] <- 0
     return(sum(x))
 }
+
 ._Do_on_vector_ComputeMinMax_ = function(x){
     x[is.na(x) | is.infinite(x)] <- 0
     return(c(min(x),max(x)))
 }
+
 ._Do_on_vector_SparsityIndex_ = function(x=NULL,index=NULL,
     sparsity.bins = NULL){
     x[is.na(x) | is.infinite(x)] <- 0
@@ -211,6 +214,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Rows <- x[Range]
     return(length(Rows[Rows!=0])/length(Rows))
 }
+
 ._Brick_Get_Something_ <- function(Group.path = NULL, Brick = NULL, 
     Name = NULL, Index = NULL, Start = NULL, Stride = NULL, Count = NULL, 
     return.what = "group_handle"){
@@ -235,6 +239,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         return(Dataset)
     }
 }
+
 ._Brick_Put_Something_ <- function(Group.path = NULL, Brick = NULL,
     Name = NULL, data = NULL, Index = NULL, Start = NULL, Stride = NULL, 
     Count = NULL){
@@ -245,6 +250,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         index=Index, start = Start, stride = Stride, count = Count)
     H5Gclose(Group.handler)
 }
+
 ._Brick_do_on_ComplexSelection_ <- function(Group.path = NULL, Brick = NULL, 
     Name = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
     Data = NULL, Brick.list = NULL, do.what = "fetch"){
@@ -260,6 +266,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             "Start, Stride, Count, Brick.\n")
     }
 }
+
 ._Brick_WriteDataFrame_ <- function(Brick = NULL, Path = NULL, name = NULL, 
     object = NULL){
     if(!(length(c(Brick,Path,name,object))>=4)){
@@ -272,6 +279,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         name = name)
     H5Gclose(Brick.handler)
 }
+
 ._Brick_WriteArray_ <- function(Brick = NULL, Path = NULL, name = NULL, 
     object = NULL){
     if(!(length(c(Brick,Path,name,object))>=4)){
@@ -284,6 +292,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             name = name)
     H5Gclose(Brick.handler)
 }
+
+
 ._Brick_Add_Ranges_ = function(Group.path = NULL, Brick = NULL, name = NULL, 
     ranges.df = NULL, mcol.list = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -324,6 +334,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             name = m.name, object = MCol)
     }
 }
+
 ._FindLineNumbers_ = function(Row.len=NULL,Col.len=NULL){
     Reference.object <- GenomicMatrix$new()
     pixel.mem <- 48
@@ -332,6 +343,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Batch.size[Batch.size<1] <- 1
     return(Batch.size)
 }
+
 ._Do_rbind_on_matrices_of_different_sizes_ <- function(Matrix.top = NULL, 
     Matrix.bottom = NULL, row.length = NULL, col.length = NULL, 
     top.coords = NULL, bottom.coords = NULL){
@@ -352,7 +364,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Matrix.return <- rbind(Matrix.top,Matrix.bottom)
     return(Matrix.return)
 }
-._Create_file_connection = function(Filename=NULL,mode="r"){
+
+.create_file_connection = function(Filename=NULL,mode="r"){
     if(grepl('$/.gz',Filename)){
         connection=gzfile(Filename,open=mode)
     }else if(grepl('$/.bz2',Filename)){
@@ -419,7 +432,7 @@ humanize_size <- function(x){
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
-    Handler <- ._Create_file_connection(Filename = Matrix.file, mode = "r")
+    Handler <- .create_file_connection(Filename = Matrix.file, mode = "r")
     Start.row <- 1
     Start.col <- 1
     Row.Offset <- 0

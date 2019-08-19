@@ -170,7 +170,7 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
     if(is.na(output_directory)){
         stop("Parameter output_directory must be provided")
     } else if(output_directory == "."){
-        Err.msg <- paste("Unable to create in directory", Output.directory, 
+        Err.msg <- paste("Unable to create in directory", output_directory, 
             "without an explicit path", "definition!", "If you want to create",
             "files inside the", "current working directory,",
             "please provide", "the complete path. Or, you can",
