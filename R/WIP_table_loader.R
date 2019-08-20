@@ -10,25 +10,48 @@
     return(Table_df)
 }
 
-.create_chr1_indexes <- function(file, delim, big_seek = 1000000,
-    chrs, col_index, starts, ends){
-    i == 1
-    indexes_list <- list()
-    records_read <- 0
-    Test_table_df <- .return_table_df(file = file, delim = sep, num_rows = 10,
-            skip_rows = 0, col_index = col_index)
-    if(!(ncol(Test_table_df) >= 3)){
+.replace_chr1_row_indexes <- function(a_dataframe, end_position_vector, 
+    id_vector){
+    Which <- which(a_dataframe$chr1_row %in% id_vector)
+    a_dataframe$chr1_end[Which] <- vapply(Which, function(x){
+        my_id <- a_dataframe$chr1_row[x]
+        end_position_vector[id_vector == my_id]
+    },1)
+    return(a_dataframe)
+}
+
+.check_column_classes <- function(a_dataframe){
+    if(!(ncol(a_dataframe) >= 3)){
         stop("A table in the upper triangle sparse format is",
             " expected with atleast 3 columns")
     }
-    chr1_class <- class(Test_table_df[,chr1_col])
-    chr2_class <- class(Test_table_df[,chr2_col])
-    value_class <- class(Test_table_df[,value_col])
+    chr1_class <- class(a_dataframe[,1])
+    chr2_class <- class(a_dataframe[,2])
+    value_class <- class(a_dataframe[,3])
     if(!all(c("numeric", "numeric", "numeric") %in% 
             c(chr1_class, chr2_class, value_class))){
         stop("Expected numeric values for chr1, chr2 bins and values.")
+    }    
+}
+
+.check_upper_triangle <- function(a_dataframe){
+    if(any(a_dataframe[,"chr2"] < a_dataframe[,"chr1"])){
+    stop(paste("Provided chr2_col was not larger",
+        "than chr1_col!","This file is not in",
+        "upper.tri sparse format!", sep = " "))
     }
+}
+
+.create_chr1_indexes <- function(file, delim, big_seek = 1000000,
+    chrs, col_index, starts, ends){
+    Test_table_df <- .return_table_df(file = file, delim = sep, num_rows = 10,
+            skip_rows = 0, col_index = col_index)
+    .check_column_classes(a_dataframe = Test_table_df)
     message("Indexing the file...")
+    indexes_list <- list()
+    records_read <- 0
+    chr_start_shift <- 0
+    i == 1
     while(i == 1) {
         Table_df <- .return_table_df(file = file, delim = sep, 
             num_rows = big_seek, skip_rows = records_read, 
@@ -36,35 +59,43 @@
         if(is.na(Table_df)){
             break
         }
-        if(any(Table_df[,"chr2"] < Table_df[,"chr1"])){
-            stop(paste("Provided chr2_col was not larger",
-                "than chr1_col!","This file is not in",
-                "upper.tri sparse format!", sep = " "))
-        }
+        .check_upper_triangle(a_dataframe = Table_df)
         for (i in seq_along(chrs)) {
             chr1 <- chrs[i]
             chr1_start <- starts[i]
             chr1_end <- ends[i]
+            chr1_filter <- Table_df[,"chr1"] >= chr1_start & 
+                Table_df[,"chr1"] <= chr1_end
+            start_pos <- min(which(chr1_filter))
+            Table_df_subset <- Table_df[chr1_filter,]
             chr1_run_lengths <- rle(Table_df[,"chr1"])
-            chr1_end_positions <- cumsum(chr1_run_lengths$lengths)
-
+            chr1_end_positions <- cumsum(chr1_run_lengths$lengths) + 
+                chr_start_shift
+            chr1_start_positions <- c(start_pos + chr_start_shift, 
+                chr1_end_positions[length(chr1_end_positions)] - 1)
             if(all(!chr1_filter)){
                 break
             }
             if(chr1 %in% names(indexes_list)){
                 temp_df <- indexes_list[[chr1]]
-                if(any(chr1_run_lengths$value %in% )){
-                    temp_df$chr1_end <- chr1_max
+                if(any(chr1_run_lengths$values %in% temp_df$chr1_row)){
+                    temp_df <- .replace_chr1_row_indexes(
+                        a_dataframe = temp_df,
+                        end_position_vector = chr1_end_positions,
+                        # start_position_vector = chr1_start_positions,
+                        id_vector = chr1_run_lengths$values)
                 }
             }else{
-
                 temp_df <- data.frame(
                     chr1 = chr1,
-                    chr1_start = chr1_min,
-                    chr1_end = chr1_max)
+                    chr1_row = chr1_run_lengths$values,
+                    chr1_start = chr1_start_positions,
+                    chr1_end = chr1_end_positions)
             }
+            indexes_list[[chr1]] <- temp_df
         }
         records_read <- records_read + nrow(Table_df)
+        chr_start_shift <- chr_start_shift + records_read
     }
     indexes_df <- do.call(rbind, indexes_list)
     row.names(indexes_df) <- NULL
@@ -74,9 +105,7 @@
 .process_tsv <- function(Brick, table_file, delim, resolution, matrix_chunk, 
     batch_size, col_index, remove_prior = TRUE, is_sparse = FALSE, 
     sparsity_bins){
-
     Reference.object <- GenomicMatrix$new()
-
     if(is_sparse){
         sparsity_bins = sparsity_bins
     }
@@ -92,15 +121,15 @@
     start_positions <- c(1, end_positions[-length(end_positions)] + 1)
     position_split_chr <- split(cbind(start_positions, end_positions), 
         Chrominfo_df[,"chr"])
-
     chr_positions_list <- lapply(position_split_chr, function(x){
         make_mcool_iterations(Start.pos = x[1], End.pos = x[2], 
             step = matrix_chunk)
     })
-
     Indexes_df <- .create_read_indexes(file = table_file, delim = delim, 
         big_seek = 5000000, chrs = names(chr_positions_list), 
         col_index = col_index, starts = start_positions, ends = end_positions)
+
+
     names(start_positions) <- Chrominfo_df$chr
 
     skip_rows <- 0
@@ -286,98 +315,3 @@ Brick_load_data_from_table <- function(Brick, table_file, delim = " ",
 # TODO
 #
 # => rewrite this part 
-
-# .process_tsv <- function(Brick, table_file, delim, resolution, matrix_chunk, 
-#     batch_size, col_index, remove_prior = TRUE, is_sparse = FALSE, 
-#     sparsity_bins){
-
-#     Reference.object <- GenomicMatrix$new()
-
-#     if(is_sparse){
-#         sparsity_bins = sparsity_bins
-#     }
-#     if(length(col_index) != 3){
-#         stop("col_index must be of length 3, defining columns",
-#             " from_bin, to_bin, value.")
-#     }
-#     Brick_files_tib <- BrickContainer_list_files(Brick, 
-#         resolution = resolution)
-#     Chrominfo_df <- Brick_get_chrominfo(Brick, resolution = resolution)
-#     end_positions <- cumsum(Chrominfo_df[,"nrow"])
-#     start_positions <- c(1, end_positions[-length(end_positions)] + 1)
-#     chr1_indexes_df <- .create_chr1_indexes(file = table_file, 
-#         delim = delim, 
-#         big_seek = 5000000, 
-#         chrs = Chrominfo_df$chr, 
-#         col_index = col_index, 
-#         starts = start_positions, 
-#         ends = end_positions)
-#     position_split_chr <- split(cbind(start_positions, end_positions), 
-#         Chrominfo_df[,"chr"])
-#     chr_positions_list <- lapply(position_split_chr, function(x){
-#         make_mcool_iterations(Start.pos = x[1], End.pos = x[2], 
-#             step = matrix_chunk)
-#     })
-#     names(start_positions) <- Chrominfo_df$chr
-#     records_read <- 0
-#     for (i in seq_len(nrow(Brick_files_tib))){
-#         chr1 <- Brick_files_tib$chrom1[i]
-#         chr1_starts <- chr_positions_list[[chr1]]$starts
-#         chr1_ends <- chr_positions_list[[chr1]]$ends
-#         chr1_offset <- start_positions[chr1] - 1
-
-#         table_chr1_start <- chr1_indexes_df$chr1_start[
-#             chr1_indexes_df$chr1 == chr1]
-#         table_chr1_end <- chr1_indexes_df$chr1_end[
-#             chr1_indexes_df$chr1 == chr1]
-#         table_iter_list <- make_mcool_iterations(Start.pos = table_chr1_start,
-#             End.pos = table_chr1_end, step = batch_size)
-        
-#         chr2 <- Brick_files_tib$chrom2[i]
-#         chr2_starts <- chr_positions_list[[chr2]]$starts
-#         chr2_ends <- chr_positions_list[[chr2]]$ends
-#         chr2_offset <- start_positions[chr2] - 1
-
-#         chr1_seq <- rep(seq_along(chr1_starts), each = length(chr2_starts))
-#         chr2_seq <- rep(seq_along(chr2_starts), times = length(chr1_starts))
-#         chunk_pairs_matrix <- cbind(chr1_seq, chr2_seq)
-        
-#         records_read <- 0
-#         for(j in seq_len(nrow(chunk_pairs_matrix))){
-#             k == 1
-#             Table_df_list <- list()
-#             chr1_start <- chr1_starts[chunk_pairs_matrix[j,1]]
-#             chr1_end <- chr1_ends[chunk_pairs_matrix[j,1]]
-#             chr2_start <- chr2_starts[chunk_pairs_matrix[j,2]]
-#             chr2_end <- chr2_ends[chunk_pairs_matrix[j,2]]
-
-#             while(k == 1){
-#                 Temp_table_df <- .return_table_df(file = file, 
-#                     delim = delim, 
-#                     num_rows = batch_size, 
-#                     skip_rows = records_read, 
-#                     col_index = col_index)
-
-#                 Filter <- Temp_table_df$from_bin >= chr1_start &
-#                     Temp_table_df$from_bin <= chr1_end &
-#                     Temp_table_df$to_bin >= chr2_start &
-#                     Temp_table_df$to_bin <= chr2_end
-
-#                 records_read <- records_read + nrow(Temp_table_df)
-#                 if(!any(Filter)){
-#                     k = k + 1
-#                     break
-#                 }
-#                 Table_df_list[[j]] <- Temp_table_df[Filter,]
-#             }
-#             Table_df <- do.call(rbind, Table_df_list)
-
-#             if(any(Table_df[,"chr2"] < Table_df[,"chr1"])){
-#                 stop(paste("Provided chr2_col was not larger",
-#                     "than chr1_col!","This file is not in",
-#                     "upper.tri sparse format!", sep = " "))
-#             }
-
-#         }
-#     }
-# }
