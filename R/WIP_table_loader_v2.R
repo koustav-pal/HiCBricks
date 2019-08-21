@@ -101,6 +101,7 @@
     row.names(indexes_df) <- NULL
     return(indexes_df)
 }
+
 # ==========================================================================
 # Process a delimited file and load it into HDF files
 # ==========================================================================
@@ -138,7 +139,7 @@
 #
 .process_tsv <- function(Brick, table_file, delim, resolution, matrix_chunk, 
     batch_size, col_index, remove_prior = TRUE, is_sparse = FALSE, 
-    sparsity_bins){0
+    sparsity_bins){
 
     Reference.object <- GenomicMatrix$new()
 
@@ -168,7 +169,6 @@
             step = matrix_chunk)
     })
     names(start_positions) <- Chrominfo_df$chr
-    records_read <- 0
     for (i in seq_len(nrow(Brick_files_tib))){
 
         chr1 <- Brick_files_tib$chrom1[i]
@@ -176,61 +176,71 @@
         chr1_ends <- chr_positions_list[[chr1]]$end
         chr1_offset <- start_positions[chr1] - 1
 
-        chr2 <- Brick_files_tib$chrom2[i]
-        chr2_starts <- chr_positions_list[[chr2]]$starts
-        chr2_ends <- chr_positions_list[[chr2]]$ends
-        chr2_offset <- start_positions[chr2] - 1
-
-        chr1_seq <- rep(seq_along(chr1_starts), each = length(chr2_starts))
-        chr2_seq <- rep(seq_along(chr2_starts), times = length(chr1_starts))
-        chunk_pairs_matrix <- cbind(chr1_seq, chr2_seq)
-
-        records_read <- 0
-        for(j in seq_len(nrow(chunk_pairs_matrix))){
-            k == 1
-            Table_df_list <- list()
-            chr1_start <- chr1_starts[chunk_pairs_matrix[j,1]]
-            chr1_end <- chr1_ends[chunk_pairs_matrix[j,1]]
-            chr2_start <- chr2_starts[chunk_pairs_matrix[j,2]]
-            chr2_end <- chr2_ends[chunk_pairs_matrix[j,2]]
+        chr2s <- Brick_files_tib$chrom2[Brick_files_tib$chrom1 == chr1]
+        for(j in seq_along(chr1_starts)) {
+            chr1_start <- chr1_starts[j]
+            chr1_end <- chr1_ends[j]
             
             Indexes_chr1_filter <- chr1_indexes_df$chr1 == chr1
             chr1_rows_filter <- chr1_indexes_df$chr1_rows >= chr1_start & 
                 chr1_indexes_df$chr1_rows <= chr1_end
+            chr1_read_rows <- max(chr1_indexes_df$chr1_end[
+                            Indexes_chr1_filter & chr1_rows_filter])
+            chr1_skip_rows <- min(chr1_indexes_df$chr1_start[
+                            Indexes_chr1_filter & chr1_rows_filter]) - 1
+            Table_df <- .return_table_df(
+                file = table_file, 
+                delim = delim, 
+                num_rows = chr1_read_rows, 
+                skip_rows = chr1_skip_rows, 
+                col_index = col_index)
+            for (k in seq_along(chr2s)){
+                chr2 <- chr2s[k]
+                Brick_filepath <- Brick_files_tib[
+                    Brick_files_tib$chrom1 == chr1 &
+                    Brick_files_tib$chrom2 == chr2,
+                    "filepath"]
+                group_path <- Create_Path(c(
+                    Reference.object$hdf.matrices.root,
+                    chr1, chr2))
 
-            chr1_read_rows <- [
-                ]
-            chr1_skip_rows <- chr1_indexes_df$chr1_start[
-                chr1_indexes_df$chr1 == chr1] - 1
-
-            while(k == 1){
-                Temp_table_df <- .return_table_df(
-                    file = table_file, 
-                    delim = delim, 
-                    num_rows = batch_size, 
-                    skip_rows = records_read, 
-                    col_index = col_index)
-
-                Filter <- Temp_table_df$from_bin >= chr1_start &
-                    Temp_table_df$from_bin <= chr1_end &
-                    Temp_table_df$to_bin >= chr2_start &
-                    Temp_table_df$to_bin <= chr2_end
-
-                records_read <- records_read + nrow(Temp_table_df)
-                if(!any(Filter)){
-                    k = k + 1
-                    break
-                }
-                Table_df_list[[j]] <- Temp_table_df[Filter,]
+                chr2_starts <- chr_positions_list[[chr2]]$start
+                chr2_ends <- chr_positions_list[[chr2]]$end
+                
+                chr2_offset <- start_positions[chr2] - 1
+                lapply(seq_along(chr2_starts), function(x){
+                    chr2_start <- chr2_starts[x]
+                    chr2_end <- chr2_ends[x]
+                    Matrix <- matrix(data = 0, 
+                        nrow = (chr1_end - chr1_start) + 1,
+                        ncol = (chr2_end - chr2_start) + 1)
+                    Filter <- Temp_table_df$chr2 >= chr2_start &
+                        Temp_table_df$chr2 <= chr2_end
+                    if(!any(Filter)){
+                        next
+                    }
+                    Temp_table_df <- Table_df[Filter,]
+                    Temp_table_df$chr1 <- Temp_table_df$chr1 - 
+                        chr1_offset - 
+                        ((chr1_start - chr1_offset) - 1)
+                    Temp_table_df$chr2 <- Temp_table_df$chr2 - 
+                        chr2_offset - 
+                        ((chr2_start - chr2_offset) - 1)
+                    Matrix[cbind(Temp_table_df$chr1, 
+                        Temp_table_df$chr2)] <- Temp_table_df$value
+                    Start <- c(chr1_start - chr1_offset, 
+                        chr2_start - chr2_offset)
+                    Stride <- c(1,1)
+                    Count <- dim(Matrix)
+                    ._Brick_Put_Something_(Group.path = group_path, 
+                        Brick = Brick,
+                        Name = Brick_filepath, 
+                        data = Matrix, 
+                        Start = Start,
+                        Stride = Stride, 
+                        Count = Count)
+                })
             }
-            Table_df <- do.call(rbind, Table_df_list)
-
-            if(any(Table_df[,"chr2"] < Table_df[,"chr1"])){
-                stop(paste("Provided chr2_col was not larger",
-                    "than chr1_col!","This file is not in",
-                    "upper.tri sparse format!", sep = " "))
-            }
-
         }
     }
 }
