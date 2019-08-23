@@ -542,8 +542,10 @@ Test_Run <- Brick_fetch_row_vector(Brick = My_BrickContainer,
 
 There are several metrics which are computed at the time of matrix loading into the HDF file. Principally,
 
-- **bin.coverage** quantifies the proportion of non-zero rows/cols
-- **row.sums** quantifies the total signal value of any row
+- **chr1_bin_coverage** quantifies the proportion of non-zero rows
+- **chr2_bin_coverage** quantifies the proportion of non-zero cols
+- **chr1_row_sums** quantifies the total signal value of any row
+- **chr2_col_sums** quantifies the total signal value of any col
 - **sparsity** quantifies the proportion of non-zero values at a certain distance from the diagonal Sparsity is only quantified if a matrix is defined as sparse during matrix loading.
 
 Users can _list_ the names of all the possible matrix metadata columns.
@@ -565,7 +567,7 @@ MCols.dat <- Brick_get_matrix_mcols(Brick = My_BrickContainer,
     chr1 = "chr3R",
     chr2 = "chr3R",
     resolution = 100000,
-    what = "row.sums")
+    what = "chr1_row_sums")
 head(MCols.dat, 100)
 
 ```
