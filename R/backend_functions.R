@@ -8,8 +8,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.metadata.root = "Base.metadata",
         metadata.chrom.dataset = "chrominfo",
         hdf.matrix.name = "matrix",
-        hdf.matrix.coverage = "bin.coverage",
-        hdf.matrix.rowSums = "row.sums",
+        hdf.matrix.coverage = "chr1_bin_coverage",
+        hdf.matrix.coverage.t = "chr2_bin_coverage",
+        hdf.matrix.rowSums = "chr1_row_sums",
+        hdf.matrix.colSums = "chr2_col_sums",
         hdf.matrix.sparsity = "sparsity",
         hdf.bintable.ranges.group = "Bintable",
         hdf.ranges.dataset.name = "ranges",
@@ -46,10 +48,16 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             return(transformlist[[name]])
         },
         hdf.matrix.meta.cols = function(){
-            Temp <- c(self$hdf.matrix.coverage, 
-                self$hdf.matrix.rowSums, 
+            Temp <- c(self$hdf.matrix.coverage,
+                self$hdf.matrix.coverage.t,
+                self$hdf.matrix.rowSums,
+                self$hdf.matrix.colSums, 
                 self$hdf.matrix.sparsity)
-            names(Temp) <- c("bin.cov","row.sums","sparse")
+            names(Temp) <- c("chr1_bin_coverage",
+                "chr2_bin_coverage",
+                "chr1_row_sums",
+                "chr2_col_sums",
+                "sparse")
             return(Temp)
         },
         hdf.ranges.protected.names = function(){
@@ -494,10 +502,22 @@ humanize_size <- function(x){
         i<-i+1
     }
     close(Handler)
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.rowSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.colSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage, 
+        object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage.t, 
+        object = Bin.coverage)
     if(compute.sparsity){
         ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 
@@ -597,10 +617,22 @@ humanize_size <- function(x){
         message("Read ",(Skip+Iter)," records...")
         i<-i+1
     }
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.rowSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.colSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage, 
+        object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage.t, 
+        object = Bin.coverage)
     if(compute.sparsity){
         ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 

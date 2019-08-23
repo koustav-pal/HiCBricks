@@ -165,7 +165,8 @@
     position_split_chr <- split(cbind(start_positions, end_positions), 
         Chrominfo_df[,"chr"])
     chr_positions_list <- lapply(position_split_chr, function(x){
-        make_mcool_iterations(Start.pos = x[1], End.pos = x[2], 
+        make_mcool_iterations(Start.pos = x[1], 
+            End.pos = x[2], 
             step = matrix_chunk)
     })
     names(start_positions) <- Chrominfo_df$chr
@@ -176,12 +177,37 @@
         chr1_ends <- chr_positions_list[[chr1]]$end
         chr1_offset <- start_positions[chr1] - 1
 
-        chr2s <- Brick_files_tib$chrom2[Brick_files_tib$chrom1 == chr1]
-        for(j in seq_along(chr1_starts)) {
-            chr1_start <- chr1_starts[j]
-            chr1_end <- chr1_ends[j]
-            
-            Indexes_chr1_filter <- chr1_indexes_df$chr1 == chr1
+        Indexes_chr1_filter <- chr1_indexes_df$chr1 == chr1
+
+        chr2s <- Brick_files_tib$chrom2[i]
+        chr2_starts <- chr_positions_list[[chr2]]$start
+        chr2_ends <- chr_positions_list[[chr2]]$end
+        chr2_offset <- start_positions[chr2] - 1
+
+        metrics.list <- prepare_empty_metrics_list(
+            starts.1 = chr1_starts,
+            ends.1 = chr1_ends, 
+            starts.2 = chr2_starts, 
+            ends.2 = chr2_ends,
+            chrom1 = chr1, 
+            chrom2 = chr2)
+
+        Brick_filepath <- Brick_files_tib$filepath[i]
+        group_path <- Create_Path(c(
+            Reference.object$hdf.matrices.root,
+            chr1, chr2))
+
+        chunk_pairs <- cbind(rep(seq_along(chr1_starts), 
+                each = seq_along(chr2_starts)),
+            rep(seq_along(chr2_starts), 
+                times = seq_along(chr1_starts)))
+
+        for(j in seq_along(chunk_pairs)) {
+            chr1_start <- chr1_starts[chunk_pairs[j,1]]
+            chr1_end <- chr1_ends[chunk_pairs[j,1]]
+            chr2_start <- chr2_starts[chunk_pairs[j,2]]
+            chr2_end <- chr2_ends[chunk_pairs[j,2]]
+
             chr1_rows_filter <- chr1_indexes_df$chr1_rows >= chr1_start & 
                 chr1_indexes_df$chr1_rows <= chr1_end
             chr1_read_rows <- max(chr1_indexes_df$chr1_end[
@@ -194,53 +220,77 @@
                 num_rows = chr1_read_rows, 
                 skip_rows = chr1_skip_rows, 
                 col_index = col_index)
-            for (k in seq_along(chr2s)){
-                chr2 <- chr2s[k]
-                Brick_filepath <- Brick_files_tib[
-                    Brick_files_tib$chrom1 == chr1 &
-                    Brick_files_tib$chrom2 == chr2,
-                    "filepath"]
-                group_path <- Create_Path(c(
-                    Reference.object$hdf.matrices.root,
-                    chr1, chr2))
 
-                chr2_starts <- chr_positions_list[[chr2]]$start
-                chr2_ends <- chr_positions_list[[chr2]]$end
-                
-                chr2_offset <- start_positions[chr2] - 1
-                lapply(seq_along(chr2_starts), function(x){
-                    chr2_start <- chr2_starts[x]
-                    chr2_end <- chr2_ends[x]
-                    Matrix <- matrix(data = 0, 
-                        nrow = (chr1_end - chr1_start) + 1,
-                        ncol = (chr2_end - chr2_start) + 1)
-                    Filter <- Temp_table_df$chr2 >= chr2_start &
-                        Temp_table_df$chr2 <= chr2_end
-                    if(!any(Filter)){
-                        next
-                    }
-                    Temp_table_df <- Table_df[Filter,]
-                    Temp_table_df$chr1 <- Temp_table_df$chr1 - 
-                        chr1_offset - 
-                        ((chr1_start - chr1_offset) - 1)
-                    Temp_table_df$chr2 <- Temp_table_df$chr2 - 
-                        chr2_offset - 
-                        ((chr2_start - chr2_offset) - 1)
-                    Matrix[cbind(Temp_table_df$chr1, 
-                        Temp_table_df$chr2)] <- Temp_table_df$value
-                    Start <- c(chr1_start - chr1_offset, 
-                        chr2_start - chr2_offset)
-                    Stride <- c(1,1)
-                    Count <- dim(Matrix)
-                    ._Brick_Put_Something_(Group.path = group_path, 
-                        Brick = Brick,
-                        Name = Brick_filepath, 
-                        data = Matrix, 
-                        Start = Start,
-                        Stride = Stride, 
-                        Count = Count)
-                })
+            Matrix <- matrix(data = 0, 
+                nrow = (chr1_end - chr1_start) + 1,
+                ncol = (chr2_end - chr2_start) + 1)
+            Filter <- Table_df$chr2 >= chr2_start & Table_df$chr2 <= chr2_end
+            if(!any(Filter)){
+                next
             }
+            Temp_table_df <- Table_df[Filter,]
+            Temp_table_df$chr1 <- Temp_table_df$chr1 - 
+                chr1_offset - ((chr1_start - chr1_offset) - 1)
+            Temp_table_df$chr2 <- Temp_table_df$chr2 - 
+                chr2_offset - ((chr2_start - chr2_offset) - 1)
+            Matrix[cbind(Temp_table_df$chr1, 
+                Temp_table_df$chr2)] <- Temp_table_df$value
+
+            metrics.list <- insert_data_and_computemetrics_both_matrices(
+                Brick = Brick_filepath,
+                Matrix = Matrix,
+                group.path = group_path, 
+                chrom1 = chr1, 
+                chrom2 = chr2,
+                row.offset = chr1_offset, 
+                col.offset = chr2_offset, 
+                row.pos = chr1_start, 
+                col.pos = chr2_start,
+                metrics.list = metrics.list)
         }
+        distance <- max(chr2_ends) - chr2_offset - 1
+        matrix_range <- metrics.list[["extent"]]
+        attributes <- Reference.object$matrices.chrom.attributes
+        attr_vals <- c(basename(table_file),
+            as.double(matrix_range),
+            as.integer(is_sparse),
+            as.integer(distance),
+            as.integer(TRUE))
+
+        if(is.list(metrics.list[["row.sums"]])){
+            chr1_length <- length(metrics.list[["row.sums"]][[chr1]])
+            chr2_length <- length(metrics.list[["row.sums"]][[chr2]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
+                name = Reference.object$hdf.matrix.rowSums,
+                object = metrics.list[["row.sums"]][[chr1]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
+                name = Reference.object$hdf.matrix.coverage,
+                object = metrics.list[["bin.coverage"]][[chr1]]/chr1.length)
+            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                name = Reference.object$hdf.matrix.colSums,
+                object = metrics.list[["row.sums"]][[chr2]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                name = Reference.object$hdf.matrix.coverage.t,
+                object = metrics.list[["bin.coverage"]][[chr2]]/chr2.length)
+            WriteAttributes(Path = group.path, File = Brick,
+                Attributes = Attributes, values = Attr.vals, on = "group")
+        }else{
+            chr1.length <- length(metrics.list[["row.sums"]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                name = Reference.object$hdf.matrix.rowSums,
+                object = metrics.list[["row.sums"]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                name = Reference.object$hdf.matrix.colSums,
+                object = metrics.list[["row.sums"]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                name = Reference.object$hdf.matrix.coverage,
+                object = metrics.list[["bin.coverage"]]/chr1.length)
+            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                name = Reference.object$hdf.matrix.coverage.t,
+                object = metrics.list[["bin.coverage"]]/chr1.length)
+            WriteAttributes(Path = group.path, File = Brick,
+                Attributes = Attributes, values = Attr.vals, on = "group")
+        }
+        return(TRUE)
     }
 }

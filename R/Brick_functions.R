@@ -1135,7 +1135,7 @@ Brick_get_bintable = function(Brick, chr = NA, resolution = NA){
 #' Chrom <- c("chr2L","chr2L")
 #' Start <- c(1,40000)
 #' End <- c(1000000,2000000)
-#'  
+#'
 #' Test_Run <- Brick_fetch_range_index(Brick = My_BrickContainer, 
 #' chr = Chrom, start = Start, end = End, resolution = 100000)
 #' Test_Run$Indexes[[1]]
@@ -2556,7 +2556,19 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 
 #' Get the matrix metadata columns in the Brick store.
 #'
-#' `Brick_get_matrix_mcols` will get the specified matrix metadata column.
+#' `Brick_get_matrix_mcols` will get the specified matrix metadata column for
+#' a chr1 vs chr2 Hi-C data matrix. Here, chr1 represents the rows and chr2
+#' represents the columns of the matrix. For cis Hi-C matrices, where 
+#' chr1 == chr2, chr2_bin_coverage and chr2_col_sums equals chr1_bin_coverage 
+#' and chr1_row_sums respectively.
+#' 
+#' These metadata columns are: 
+#' - chr1_bin_coverage: Percentage of rows containing non-zero values
+#' - chr2_bin_coverage: Percentage of columns containing non-zero values
+#' - chr1_row_sums: Total signal (if normalised) or number of reads 
+#' (if counts) in each row.
+#' - chr2_col_sums: Total signal (if normalised) or number of reads 
+#' (if counts) in each column.
 #'
 #' @inheritParams Brick_get_chrominfo
 #'
@@ -2592,10 +2604,14 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 #' Brick_get_matrix_mcols(Brick = My_BrickContainer, chr1 = "chr2L", 
 #' chr2 = "chr2L", resolution = 100000, what = "bin.coverage")
 #' 
-Brick_get_matrix_mcols = function(Brick, chr1, chr2, resolution, what){
+Brick_get_matrix_mcols = function(Brick, chr1, chr2, resolution, 
+    what = c("chr1_bin_coverage", "chr2_bin_coverage", 
+        "chr1_row_sums", "chr2_col_sums")){
+    what = match.arg(what)
     Reference.object <- GenomicMatrix$new()
     Meta.cols <- Reference.object$hdf.matrix.meta.cols()
-    if(any(is.null(c(Brick,chr1,chr2,what)))){
+    BrickContainer_class_check(Brick)
+    if(any(is.null(c(chr1,chr2,what)))){
         stop("Brick, chr1, chr2, what cannot be NULL.\n")
     }
     if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2, 
@@ -2651,4 +2667,87 @@ Brick_list_matrix_mcols = function(){
     Reference.object <- GenomicMatrix$new()
     Meta.cols <- Reference.object$hdf.matrix.meta.cols()
     return(Meta.cols)
+}
+
+
+#' Export an entire resolution from a given BrickContainer as a 
+#' upper triangle sparse matrix
+#'
+#' `Brick_export_to_sparse` will accept as input an object of class 
+#' BrickContainer, a string of length 1 as resolution and a path specifying
+#' the output file to write. It writes the content of the all loaded Brick
+#' objects as a upper triangle sparse matrix (col > row) containing 
+#' non-zero values.
+#'
+#' @inheritParams Brick_get_chrominfo
+#'
+#' @param out_file Path to the output file to write.
+#' 
+#' @param remove_file Default FALSE. If a file by the same name is present
+#' that file will be removed.
+#'
+#' @examples
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "write_file")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_export_to_sparse(Brick = My_BrickContainer, 
+#' out_file = file.path(out_dir, "example_out.txt"), 
+#' resolution = 100000)
+#' 
+Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE, 
+    resolution, sep = " "){
+    Reference.object <- GenomicMatrix$new()
+    Chrominfo_df <- Brick_get_chrominfo(Brick, resolution = resolution)
+
+    end_positions <- cumsum(Chrominfo_df[,"nrow"])
+    start_positions <- c(1, end_positions[-length(end_positions)] + 1)
+    names(start_positions) <- Chrominfo_df$chr
+    chromosome_coord_pairs <- .make_coords_list(Brick, resolution)
+    if(file.exists(out_file) & !remove_file){
+        stop(out_file, " already exists at path")
+    }
+    open_connection <- file(out_file, open = "w")
+    lapply(seq_len(nrow(chromosome_coord_pairs)), function(x){
+        a_row <- chromosome_coord_pairs[x,]
+        a_vector <- .fetch_upper_tri_value_by_row(
+            Brick_filepath = a_row$filepath,
+            chr1 = a_row$chr1, 
+            chr2 = a_row$chr2, 
+            row = a_row$chr1_start,
+            col = a_row$chr2_start, 
+            chr2_length = a_row$chr2_length)
+        a_vector <- a_vector[1,]
+        non_zero_filter <- a_vector != 0
+        row_seq <- rep(a_row$chr1_start, times = length(a_vector))
+        row_seq <- row_seq[non_zero_filter] + (start_positions[a_row$chr1] - 1)
+        col_seq <- seq(from = a_row$chr2_start, by = 1, 
+            length.out = a_row$chr2_length)
+        col_seq <- col_seq[non_zero_filter] + (start_positions[a_row$chr2] - 1)
+        temp_df <- data.frame(chr1 = a_row$chr1, 
+            chr2 = a_row$chr2, 
+            row_coord = row_seq,
+            col_coord = col_seq,
+            value = a_vector[non_zero_filter],
+            stringsAsFactors = FALSE)
+        write.table(x = temp_df, file = open_connection, sep = sep, 
+            row.names = FALSE, col.names = FALSE, quote = FALSE)
+    })
+    close(open_connection)
 }

@@ -69,7 +69,7 @@ My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path,
 Chrom <- c("chr2L","chr2L")
 Start <- c(1,40000)
 End <- c(1000000,2000000)
- 
+
 Test_Run <- Brick_fetch_range_index(Brick = My_BrickContainer, 
 chr = Chrom, start = Start, end = End, resolution = 100000)
 Test_Run$Indexes[[1]]

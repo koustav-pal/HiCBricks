@@ -308,7 +308,7 @@ Brick_load_data_from_table <- function(Brick, table_file, delim = " ",
         delim = delim, col_index = col_index, remove_prior = remove_prior,
         is_sparse = is_sparse, resolution = resolution, 
         sparsity_bins = sparsity_bins, matrix_chunk = matrix_chunk, 
-        batch_size = batch_size, has_header = has_header)
+        batch_size = batch_size)
 }
 
 #
