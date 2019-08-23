@@ -1,6 +1,6 @@
 ._get_first_nonzero_bin <- function(Brick = NULL, chr = NULL, resolution = NA){
     RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, chr2 = chr, 
-        resolution = resolution, what = "row.sums")
+        resolution = resolution, what = "chr1_row_sums")
     return(min(which(RowSums > 0)))
 }
 ._get_sparsity_index <- function(Brick = NULL, chr = NULL, resolution = NA){
@@ -169,7 +169,7 @@ get_directionality_index_by_chunks <- function(Brick = NULL, chr = NULL,
         resolution = resolution)
     chr.length <- length(Ranges)
     RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, chr2 = chr, 
-        resolution = resolution, what = "row.sums")
+        resolution = resolution, what = "chr1_row_sums")
     if(sparse){
         SparsityIndex <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
             chr2 = chr, resolution = resolution, what = "sparsity")
@@ -415,7 +415,7 @@ Brick_local_score_differentiator <- function(Brick, chrs = NULL,
             min_sum = min_sum, force = force_retrieve)
 
         RowSums <- Brick_get_matrix_mcols(Brick = Brick, chr1 = chr, 
-            chr2 = chr, resolution = resolution, what = "row.sums")
+            chr2 = chr, resolution = resolution, what = "chr1_row_sums")
         Ranges$row.sums <- RowSums
         message("[2] Computing DI Differences for ",chr,"\n")
         if(sparse){

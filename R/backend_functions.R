@@ -417,6 +417,15 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         "sparsity" = Sparsity.Index, "extent" = range)
     return(A.list)
 }
+._Compute_various_col_matrix_metrics <- function(Matrix = NULL, 
+    metrics.list){
+    Matrix[is.na(Matrix) | is.infinite(Matrix)] <- 0
+    metrics.list[["bin.coverage"]] <- 
+        metrics.list[["bin.coverage"]] + colSums(Matrix > 0)
+    metrics.list[["col.sums"]] <- metrics.list[["col.sums"]] +
+    colSums(Matrix)
+    return(metrics.list)
+}
 humanize_size <- function(x){
     Size <- x/1024
     if(Size < 1){
@@ -559,9 +568,13 @@ humanize_size <- function(x){
     }
     Bin.coverage <- NULL
     Row.sums <- NULL
+    Col.sums <- NULL
+    Col.bin.coverage <- NULL
     Sparsity.Index <- NULL
     Iterations.number <- chr1.len / NumLines
     Iterations <- rep(NumLines,floor(Iterations.number))
+    Col.metrics.list <- list("bin.coverage" = rep(0,chr2.len),
+        "col.sums" = rep(0,chr2.len))
     if(is.null(distance)){
         distance <- chr2.len
     }
@@ -591,6 +604,9 @@ humanize_size <- function(x){
             compute.sparsity = compute.sparsity, sparsity.bins = sparsity.bins, 
             range = Matrix.range, distance = distance, 
             diag.position.start = Skip + 1)
+        Col.metrics.list <- ._Compute_various_col_matrix_metrics(
+            Matrix = Matrix, 
+            metrics.list = Col.metrics.list)
         Matrix.range <- Metrics.list[["extent"]]
         Bin.coverage <- c(Bin.coverage,Metrics.list[["bin.cov"]])
         Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
@@ -624,7 +640,7 @@ humanize_size <- function(x){
     ._Brick_WriteArray_(Brick = Brick, 
         Path = Group.path, 
         name = Reference.object$hdf.matrix.colSums, 
-        object = Row.sums)
+        object = Col.metrics.list[["col.sums"]])
     ._Brick_WriteArray_(Brick = Brick, 
         Path = Group.path, 
         name = Reference.object$hdf.matrix.coverage, 
@@ -632,7 +648,7 @@ humanize_size <- function(x){
     ._Brick_WriteArray_(Brick = Brick, 
         Path = Group.path, 
         name = Reference.object$hdf.matrix.coverage.t, 
-        object = Bin.coverage)
+        object = Col.metrics.list[["bin.coverage"]]/chr1.len)
     if(compute.sparsity){
         ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 

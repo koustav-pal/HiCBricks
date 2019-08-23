@@ -44,8 +44,8 @@
 
 .create_chr1_indexes <- function(file, delim, big_seek = 1000000,
     chrs, col_index, starts, ends){
-    Test_table_df <- .return_table_df(file = file, delim = sep, num_rows = 10,
-            skip_rows = 0, col_index = col_index)
+    Test_table_df <- .return_table_df(file = file, delim = delim, 
+        num_rows = 10, skip_rows = 0, col_index = col_index)
     .check_column_classes(a_dataframe = Test_table_df)
     message("Indexing the file...")
     indexes_list <- list()
@@ -53,7 +53,7 @@
     chr_start_shift <- 0
     i == 1
     while(i == 1) {
-        Table_df <- .return_table_df(file = file, delim = sep, 
+        Table_df <- .return_table_df(file = file, delim = delim, 
             num_rows = big_seek, skip_rows = records_read, 
             col_index = col_index)
         if(is.na(Table_df)){
@@ -179,7 +179,7 @@
 
         Indexes_chr1_filter <- chr1_indexes_df$chr1 == chr1
 
-        chr2s <- Brick_files_tib$chrom2[i]
+        chr2 <- Brick_files_tib$chrom2[i]
         chr2_starts <- chr_positions_list[[chr2]]$start
         chr2_ends <- chr_positions_list[[chr2]]$end
         chr2_offset <- start_positions[chr2] - 1
@@ -250,7 +250,7 @@
         }
         distance <- max(chr2_ends) - chr2_offset - 1
         matrix_range <- metrics.list[["extent"]]
-        attributes <- Reference.object$matrices.chrom.attributes
+        Attributes <- Reference.object$matrices.chrom.attributes
         attr_vals <- c(basename(table_file),
             as.double(matrix_range),
             as.integer(is_sparse),
@@ -265,31 +265,31 @@
                 object = metrics.list[["row.sums"]][[chr1]])
             ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.coverage,
-                object = metrics.list[["bin.coverage"]][[chr1]]/chr1.length)
-            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                object = metrics.list[["bin.coverage"]][[chr1]]/chr1_length)
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.colSums,
                 object = metrics.list[["row.sums"]][[chr2]])
-            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.coverage.t,
-                object = metrics.list[["bin.coverage"]][[chr2]]/chr2.length)
-            WriteAttributes(Path = group.path, File = Brick,
-                Attributes = Attributes, values = Attr.vals, on = "group")
+                object = metrics.list[["bin.coverage"]][[chr2]]/chr2_length)
+            WriteAttributes(Path = group_path, File = Brick,
+                Attributes = Attributes, values = attr_vals, on = "group")
         }else{
-            chr1.length <- length(metrics.list[["row.sums"]])
-            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+            chr1_length <- length(metrics.list[["row.sums"]])
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.rowSums,
                 object = metrics.list[["row.sums"]])
-            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.colSums,
                 object = metrics.list[["row.sums"]])
-            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.coverage,
-                object = metrics.list[["bin.coverage"]]/chr1.length)
-            ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+                object = metrics.list[["bin.coverage"]]/chr1_length)
+            ._Brick_WriteArray_(Brick = Brick, Path = group_path,
                 name = Reference.object$hdf.matrix.coverage.t,
-                object = metrics.list[["bin.coverage"]]/chr1.length)
-            WriteAttributes(Path = group.path, File = Brick,
-                Attributes = Attributes, values = Attr.vals, on = "group")
+                object = metrics.list[["bin.coverage"]]/chr1_length)
+            WriteAttributes(Path = group_path, File = Brick,
+                Attributes = Attributes, values = attr_vals, on = "group")
         }
         return(TRUE)
     }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/Brick_functions.R
 \name{Brick_export_to_sparse}
 \alias{Brick_export_to_sparse}
-\title{Export an entire resolution from a given BrickContainer}
+\title{Export an entire resolution from a given BrickContainer as a
+upper triangle sparse matrix}
 \usage{
 Brick_export_to_sparse(Brick, out_file, remove_file = FALSE, resolution,
   sep = " ")
@@ -20,22 +21,15 @@ that file will be removed.}
 \item{resolution}{\strong{Optional}. Default NA
 When an object of class BrickContainer is provided, resolution defines the
 resolution on which the function is executed}
+
+\item{sep}{column delimiter in output file. Default single space.}
 }
 \description{
 \code{Brick_export_to_sparse} will accept as input an object of class
 BrickContainer, a string of length 1 as resolution and a path specifying
-the output file to write.
-}
-\details{
-These metadata columns are:
-\itemize{
-\item chr1_bin_coverage: Percentage of rows containing non-zero values
-\item chr2_bin_coverage: Percentage of columns containing non-zero values
-\item chr1_row_sums: Total signal (if normalised) or number of reads
-(if counts) in each row.
-\item chr2_col_sums: Total signal (if normalised) or number of reads
-(if counts) in each column.
-}
+the output file to write. It writes the content of the all loaded Brick
+objects as a upper triangle sparse matrix (col > row) containing
+non-zero values.
 }
 \examples{
 

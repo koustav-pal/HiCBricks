@@ -99,10 +99,14 @@
 #'                \item Done - specifies if a matrix has been loaded
 #'            }
 #'            \item matrix - \strong{dataset} - contains the matrix
-#'            \item bin.coverage - \strong{dataset} - proportion of cells with
-#' values greater than 0
-#'            \item row.sums - \strong{dataset} - total sum of all values in a
-#' row
+#'            \item chr1_bin_coverage - \strong{dataset} - proportion of row 
+#' cells with values greater than 0
+#'            \item chr1_row_sums - \strong{dataset} - total sum of all values
+#' in a row
+#'            \item chr2_col_sums - \strong{dataset} - total sum of all values
+#' in a col
+#'            \item chr2_bin_coverage - \strong{dataset} - proportion of col 
+#' cells with values greater than 0
 #'            \item sparsity - \strong{dataset} - proportion of non-zero cells
 #' near the diagonal
 #'        }
@@ -2602,7 +2606,7 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 #' remove_prior = TRUE, resolution = 100000)
 #' 
 #' Brick_get_matrix_mcols(Brick = My_BrickContainer, chr1 = "chr2L", 
-#' chr2 = "chr2L", resolution = 100000, what = "bin.coverage")
+#' chr2 = "chr2L", resolution = 100000, what = "chr1_bin_coverage")
 #' 
 Brick_get_matrix_mcols = function(Brick, chr1, chr2, resolution, 
     what = c("chr1_bin_coverage", "chr2_bin_coverage", 
@@ -2682,6 +2686,8 @@ Brick_list_matrix_mcols = function(){
 #' @inheritParams Brick_get_chrominfo
 #'
 #' @param out_file Path to the output file to write.
+#' 
+#' @param sep column delimiter in output file. Default single space.
 #' 
 #' @param remove_file Default FALSE. If a file by the same name is present
 #' that file will be removed.

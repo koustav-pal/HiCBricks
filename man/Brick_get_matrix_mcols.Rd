@@ -72,6 +72,6 @@ chr2 = "chr2L", matrix_file = Matrix_file, delim = " ",
 remove_prior = TRUE, resolution = 100000)
 
 Brick_get_matrix_mcols(Brick = My_BrickContainer, chr1 = "chr2L", 
-chr2 = "chr2L", resolution = 100000, what = "bin.coverage")
+chr2 = "chr2L", resolution = 100000, what = "chr1_bin_coverage")
 
 }

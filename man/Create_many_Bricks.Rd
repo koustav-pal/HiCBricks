@@ -114,10 +114,14 @@ nested with other groups to finally lead to the corresponding datasets.
 \item Done - specifies if a matrix has been loaded
 }
 \item matrix - \strong{dataset} - contains the matrix
-\item bin.coverage - \strong{dataset} - proportion of cells with
-values greater than 0
-\item row.sums - \strong{dataset} - total sum of all values in a
-row
+\item chr1_bin_coverage - \strong{dataset} - proportion of row
+cells with values greater than 0
+\item chr1_row_sums - \strong{dataset} - total sum of all values
+in a row
+\item chr2_col_sums - \strong{dataset} - total sum of all values
+in a col
+\item chr2_bin_coverage - \strong{dataset} - proportion of col
+cells with values greater than 0
 \item sparsity - \strong{dataset} - proportion of non-zero cells
 near the diagonal
 }
