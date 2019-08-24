@@ -2737,6 +2737,7 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
             row_coord = "row_coord",
             col_coord = "col_coord",
             value = "value")
+    return(chromosome_coord_pairs)
     write.table(x = temp_df, file = open_connection, sep = sep, 
         row.names = FALSE, col.names = FALSE, quote = FALSE)
     lapply(seq_len(nrow(chromosome_coord_pairs)), function(x){
@@ -2765,6 +2766,6 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
             row.names = FALSE, col.names = FALSE, quote = FALSE)
     })
     close(open_connection)
-    return(read.table(file = out_file, header = TRUE, sep = sep, 
-            stringsAsFactors = FALSE, nrows = 100))
+    # return(read.table(file = out_file, header = TRUE, sep = sep, 
+    #         stringsAsFactors = FALSE, nrows = 100))
 }

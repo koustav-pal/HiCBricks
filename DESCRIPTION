@@ -8,7 +8,7 @@ Author: Koustav Pal [aut, cre], Carmen Livi [ctb], Ilario Tagliaferri [ctb]
 Maintainer: Koustav Pal <koustav.pal@ifom.eu>
 License: MIT + file LICENSE
 Depends: R (>= 3.6), utils, curl, rhdf5, R6, grid
-Imports: ggplot2, viridis, RColorBrewer, scales, reshape2, stringr, data.table, GenomeInfoDb, GenomicRanges, stats, IRanges, grDevices, S4Vectors, digest, tibble, jsonlite, BiocParallel, R.utils, readr, methods, dplyr
+Imports: ggplot2, viridis, RColorBrewer, scales, reshape2, stringr, data.table, GenomeInfoDb, GenomicRanges, stats, IRanges, grDevices, S4Vectors, digest, tibble, jsonlite, BiocParallel, R.utils, readr, methods
 Suggests: BiocStyle, knitr, rmarkdown
 VignetteBuilder: knitr
 Encoding: UTF-8

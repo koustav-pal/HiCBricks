@@ -53,9 +53,9 @@
         })
 
         chr1_chr2_pairs_df <- do.call(rbind, chr1_chr2_pairs_df_list)
-        chr1_chr2_pairs_df <- arrange(chr1_chr2_pairs_df, "chr1_start")
+        chr1_chr2_pairs_df <- chr1_chr2_pairs_df[
+            order(chr1_chr2_pairs_df$row_coords),]
         return(chr1_chr2_pairs_df)
-
     })
 
     Coords_df <- do.call(rbind, Coords_df_list)
