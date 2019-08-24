@@ -5,7 +5,7 @@
 \title{Return a matrix subset between two regions.}
 \usage{
 Brick_get_matrix_within_coords(Brick, x_coords, y_coords, resolution,
-  force = FALSE, FUN = NULL)
+    force = FALSE, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -53,28 +53,28 @@ out_dir <- file.path(tempdir(), "get_matrix_coords_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
-"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
-package = "HiCBricks")
+    "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+    package = "HiCBricks")
 
 Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
-chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
-remove_prior = TRUE, resolution = 100000)
+    chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+    remove_prior = TRUE, resolution = 100000)
 
 Brick_get_matrix_within_coords(Brick = My_BrickContainer,
-x_coords = "chr2L:1:1000000",
-y_coords = "chr2L:1:1000000",
-resolution = 100000)
+    x_coords = "chr2L:1:1000000",
+    y_coords = "chr2L:1:1000000",
+    resolution = 100000)
 
 Brick_get_matrix_within_coords(Brick = My_BrickContainer,
-x_coords = "chr2L:1:1000000",
-y_coords = "chr2L:1:1000000",
-resolution = 100000,
-FUN = mean)
+    x_coords = "chr2L:1:1000000",
+    y_coords = "chr2L:1:1000000",
+    resolution = 100000,
+    FUN = mean)
 
 
 }

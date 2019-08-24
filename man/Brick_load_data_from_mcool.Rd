@@ -5,9 +5,9 @@
 \title{Load a NxN dimensional matrix into the Brick store from an mcool file.}
 \usage{
 Brick_load_data_from_mcool(Brick, mcool, chr1 = NULL, chr2 = NULL,
-  resolution = NULL, cooler_batch_size = 1e+06, matrix_chunk = 2000,
-  dont_look_for_chr2 = FALSE, remove_prior = FALSE,
-  norm_factor = "Iterative-Correction")
+    resolution = NULL, cooler_batch_size = 1e+06, matrix_chunk = 2000,
+    dont_look_for_chr2 = FALSE, remove_prior = FALSE,
+    norm_factor = "Iterative-Correction")
 }
 \arguments{
 \item{Brick}{\strong{Required}.

@@ -87,8 +87,8 @@ There must be a one to one match between elements in the bin table and in the co
 
 library(knitr)
 kable(data.frame(chr = c("chr2L", "chr2R", "chr3L", "chr3R", "chrX"),
-  num_rows = c(231, 212, 246, 280, 225)), 
-  caption = "Number of rows in the bintable corresponding to each chromosome")
+    num_rows = c(231, 212, 246, 280, 225)), 
+    caption = "Number of rows in the bintable corresponding to each chromosome")
 
 ```
 
@@ -119,7 +119,7 @@ BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
 My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 Example_dataset_dir <- system.file("extdata", package = "HiCBricks")
 
-Chromosomes <- c("chr2L", "chr2R", "chr3L", "chr3R", "chrX")
+Chromosomes <- c("chr2L", "chr3L", "chr3R", "chrX")
 for (chr in Chromosomes) {
     Matrix_file <- file.path(Example_dataset_dir,
         paste(paste("Sexton2012_yaffetanay_CisTrans_100000_corrected", 
@@ -669,7 +669,7 @@ are identified as the local extreme values in the first derivative of DI compute
 BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
 My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
 
-Chromosome <- c("chr2L", "chr2R", "chr3L", "chr3R", "chrX")
+Chromosome <- c("chr2L", "chr3L", "chr3R", "chrX")
 di_window <- 10
 lookup_window <- 30
 TAD_ranges <- Brick_local_score_differentiator(Brick = My_BrickContainer,

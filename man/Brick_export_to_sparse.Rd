@@ -6,7 +6,7 @@
 upper triangle sparse matrix}
 \usage{
 Brick_export_to_sparse(Brick, out_file, remove_file = FALSE, resolution,
-  sep = " ")
+    sep = " ")
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -24,6 +24,9 @@ resolution on which the function is executed}
 
 \item{sep}{column delimiter in output file. Default single space.}
 }
+\value{
+Returns a data.frame corresponding to the head of the output file
+}
 \description{
 \code{Brick_export_to_sparse} will accept as input an object of class
 BrickContainer, a string of length 1 as resolution and a path specifying
@@ -40,9 +43,9 @@ out_dir <- file.path(tempdir(), "write_file")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
 "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 

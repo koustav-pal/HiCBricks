@@ -5,7 +5,7 @@
 \title{Get the list of HDF files present in the Brick container.}
 \usage{
 BrickContainer_list_files(Brick = NULL, chr1 = NA, chr2 = NA,
-  type = NA, resolution = NA)
+    type = NA, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -42,9 +42,9 @@ Bintable.path <- system.file("extdata",
 out_dir <- file.path(tempdir(), "BrickContainer_list_file_test")
 dir.create(out_dir)
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-   experiment_name = "Vignette Test", resolution = 100000, 
-   remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+    experiment_name = "Vignette Test", resolution = 100000, 
+    remove_existing = TRUE)
 
 BrickContainer_list_files(Brick = My_BrickContainer, chr1 = "chr2L",
 chr2 = NA)

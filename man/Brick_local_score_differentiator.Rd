@@ -5,10 +5,10 @@
 \title{Do TAD Calls with Local Score Differentiator on a Hi-C matrix}
 \usage{
 Brick_local_score_differentiator(Brick, chrs = NULL, resolution = NA,
-  all_resolutions = FALSE, min_sum = -1, di_window = 200L,
-  lookup_window = 200L, tukeys_constant = 1.5, strict = TRUE,
-  fill_gaps = TRUE, ignore_sparse = TRUE, sparsity_threshold = 0.8,
-  remove_empty = NULL, chunk_size = 500, force_retrieve = TRUE)
+    all_resolutions = FALSE, min_sum = -1, di_window = 200L,
+    lookup_window = 200L, tukeys_constant = 1.5, strict = TRUE,
+    fill_gaps = TRUE, ignore_sparse = TRUE, sparsity_threshold = 0.8,
+    remove_empty = NULL, chunk_size = 500, force_retrieve = TRUE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -138,9 +138,9 @@ out_dir <- file.path(tempdir(), "lsd_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
 "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 

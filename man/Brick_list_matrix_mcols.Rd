@@ -22,9 +22,9 @@ out_dir <- file.path(tempdir(), "list_matrix_mcols_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
 Brick_list_matrix_mcols()
 }

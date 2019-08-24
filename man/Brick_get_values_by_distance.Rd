@@ -5,7 +5,7 @@
 \title{Return values separated by a certain distance.}
 \usage{
 Brick_get_values_by_distance(Brick, chr, distance, resolution,
-  constrain_region = NULL, batch_size = 500, FUN = NULL)
+    constrain_region = NULL, batch_size = 500, FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -52,9 +52,9 @@ out_dir <- file.path(tempdir(), "val_by_dist_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
 "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
@@ -68,8 +68,8 @@ Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L",
 distance = 0, resolution = 100000)
 
 Failsafe_median <- function(x){
-     x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
-     return(median(x))
+    x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
+    return(median(x))
 }
 
 Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L", 

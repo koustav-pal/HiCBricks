@@ -5,7 +5,7 @@
 \title{Store a ranges object in the Brick store.}
 \usage{
 Brick_add_ranges(Brick, ranges, rangekey, resolution = NA,
-  all_resolutions = FALSE, num_cpus = 1)
+    all_resolutions = FALSE, num_cpus = 1)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -57,9 +57,9 @@ out_dir <- file.path(tempdir(), "add_ranges_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
 Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 Start <- c(10000,20000,40000,50000,60000)

@@ -5,7 +5,7 @@
 \title{Check to see if the Brick contains a ranges with a certain name.}
 \usage{
 Brick_rangekey_exists(Brick, rangekey, resolution = NA,
-  all_resolutions = FALSE)
+    all_resolutions = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -41,9 +41,9 @@ out_dir <- file.path(tempdir(), "list_rangekeys_exists_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-  experiment_name = "Vignette Test", resolution = 100000,
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 Brick_rangekey_exists(Brick = My_BrickContainer, rangekey = "Bintable",
 resolution = 100000)
 

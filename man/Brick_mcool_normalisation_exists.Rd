@@ -5,7 +5,7 @@
 \title{Check if a normalisation exists in an mcool file.}
 \usage{
 Brick_mcool_normalisation_exists(mcool, norm_factor = NULL,
-  resolution = NULL)
+    resolution = NULL)
 }
 \arguments{
 \item{mcool}{\strong{Required}.

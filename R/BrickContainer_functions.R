@@ -516,9 +516,9 @@ BrickContainer_list_chromosomes <- function(Brick = NULL, lengths = FALSE) {
 # #' @inheritparam Brick_get_values_by_distance
 # #' @inheritparam BrickContainer_list_files
 # #'  
-# #' @return A named ordered list of submatrices or submatrices with FUN applied 
-# #' with names x.coords:y.coords. The order provided is that of the x.coords 
-# #' and y.coords vector provided.
+# #' @return A named ordered list of submatrices or submatrices with FUN 
+# #' applied with names x.coords:y.coords. The order provided is that of the 
+# #' x.coords and y.coords vector provided.
 # #' 
 # #' @examples
 # #' Brick.file = system.file("extdata", "test.json", package = "HiCBricks")
@@ -548,7 +548,7 @@ BrickContainer_list_chromosomes <- function(Brick = NULL, lengths = FALSE) {
 #         }
 #         if(any(is.na(chr2_positions))){
 #             Message_2 <- paste("Problem in y.coords position",
-#                 paste(which(is.na(chr2_positions)), collapse = ", "))            
+#                 paste(which(is.na(chr2_positions)), collapse = ", "))
 #         }
 #         stop("Not all chromosomes were found in the chromosome list.",
 #             Message_1, Message_2)

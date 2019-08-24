@@ -2692,6 +2692,8 @@ Brick_list_matrix_mcols = function(){
 #' @param remove_file Default FALSE. If a file by the same name is present
 #' that file will be removed.
 #'
+#' @return Returns a data.frame corresponding to the head of the output file
+#' 
 #' @examples
 #' 
 #' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
@@ -2730,6 +2732,13 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
         stop(out_file, " already exists at path")
     }
     open_connection <- file(out_file, open = "w")
+    temp_df <- data.frame(chr1 = "chr1", 
+            chr2 = "chr2", 
+            row_coord = "row_coord",
+            col_coord = "col_coord",
+            value = "value")
+    write.table(x = temp_df, file = open_connection, sep = sep, 
+        row.names = FALSE, col.names = FALSE, quote = FALSE)
     lapply(seq_len(nrow(chromosome_coord_pairs)), function(x){
         a_row <- chromosome_coord_pairs[x,]
         a_vector <- .fetch_upper_tri_value_by_row(
@@ -2756,4 +2765,6 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
             row.names = FALSE, col.names = FALSE, quote = FALSE)
     })
     close(open_connection)
+    return(read.table(file = out_file, header = TRUE, sep = sep, 
+            stringsAsFactors = FALSE, nrows = 100))
 }

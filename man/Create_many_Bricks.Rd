@@ -5,10 +5,10 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 Create_many_Bricks(BinTable, bin_delim = "\\t", col_index = c(1, 2, 3),
-  impose_discontinuity = TRUE, hdf_chunksize = NULL,
-  output_directory = NA, file_prefix = NA, remove_existing = FALSE,
-  link_existing = FALSE, experiment_name = NA, resolution = NA,
-  type = c("both", "cis", "trans"))
+    impose_discontinuity = TRUE, hdf_chunksize = NULL,
+    output_directory = NA, file_prefix = NA, remove_existing = FALSE,
+    link_existing = FALSE, experiment_name = NA, resolution = NA,
+    type = c("both", "cis", "trans"))
 }
 \arguments{
 \item{BinTable}{\strong{Required}
@@ -170,8 +170,8 @@ package = "HiCBricks")
 out_dir <- file.path(tempdir(), "Creator_test")
 dir.create(out_dir)
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-  experiment_name = "Vignette Test", resolution = 100000, 
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+    experiment_name = "Vignette Test", resolution = 100000, 
+    remove_existing = TRUE)
 
 }

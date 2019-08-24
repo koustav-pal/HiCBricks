@@ -5,8 +5,8 @@
 \title{Create the entire HDF5 structure and load the bintable from a mcool file}
 \usage{
 CreateBrick_from_mcool(output_directory = NA, file_prefix = NA,
-  mcool = NULL, resolution = NULL, experiment_name = NA,
-  chrs = NULL, remove_existing = FALSE)
+    mcool = NULL, resolution = NULL, experiment_name = NA,
+    chrs = NULL, remove_existing = FALSE)
 }
 \arguments{
 \item{output_directory}{\strong{Required}
