@@ -2766,6 +2766,6 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
             row.names = FALSE, col.names = FALSE, quote = FALSE)
     })
     close(open_connection)
-    # return(read.table(file = out_file, header = TRUE, sep = sep, 
-    #         stringsAsFactors = FALSE, nrows = 100))
+    return(read.table(file = out_file, header = TRUE, sep = sep, 
+            stringsAsFactors = FALSE, nrows = 100))
 }
