@@ -4,24 +4,33 @@
 \alias{CreateBrick_from_mcool}
 \title{Create the entire HDF5 structure and load the bintable from a mcool file}
 \usage{
-CreateBrick_from_mcool(Brick, mcool, binsize = NULL, chrs = NULL,
-    remove.existing = FALSE)
+CreateBrick_from_mcool(output_directory = NA, file_prefix = NA,
+    mcool = NULL, resolution = NULL, experiment_name = NA,
+    chrs = NULL, remove_existing = FALSE)
 }
 \arguments{
-\item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+\item{output_directory}{\strong{Required}
+A string specifying the location where the HDF files will be created.}
+
+\item{file_prefix}{\strong{Required}
+A string specifying the prefix that is concatenated to the hdf files stored
+in the output_directory.}
 
 \item{mcool}{\strong{Required}.
 Path to an mcool file.}
 
-\item{binsize}{\strong{Optional}.
-The binsize to select from an mcool file.}
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{experiment_name}{\strong{Optional}.
+If provided, this will be the experiment name for the BrickContainer.}
 
 \item{chrs}{\strong{Optional}.
 If provided will only create a Brick for these
 chromosomes (both cis & trans).}
 
-\item{remove.existing}{\strong{Optional}. Default FALSE.
+\item{remove_existing}{\strong{Optional}. Default FALSE.
 If TRUE, will remove the HDF file with the same name and create a new one.
 By default, it will not replace existing files.}
 }
@@ -30,8 +39,8 @@ This function will generate the target Brick file. Upon completion,
 the function will provide the path to the created/tracked HDF file.
 }
 \description{
-\code{CreateBrick_from_mcool} is a wrapper on CreateBrick which creates the
-Brick data structure from an mcool file.
+\code{CreateBrick_from_mcool} is a wrapper on Create_many_Bricks which creates
+the Brick data structure from an mcool file.
 }
 \details{
 mcool are a standard 4D nucleome data structure for Hi-C data. Read more
@@ -41,18 +50,20 @@ about the 4D nucleome project \href{https://data.4dnucleome.org/}{here}.
 
 \dontrun{
 require(curl)
-curl_download(url = paste("https://data.4dnucleome.org/"
-"files-processed/4DNFI7JNCNFB/"
-"@download/4DNFI7JNCNFB.mcool",sep = ""),
-destfile = file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
+out_dir <- file.path(tempdir(),"mcool_test_dir")
+dir.create(path = out_dir)
+curl_download(url = paste("https://data.4dnucleome.org/",
+"files-processed/4DNFI7JNCNFB/",
+"@download/4DNFI7JNCNFB.mcool", sep = ""),
+destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
-Output.brick <- file.path(tempdir(), 
-"H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
-mcool <- file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
-CreateBrick_from_mcool(Brick = Output.brick,
+CreateBrick_from_mcool(output_directory = out_dir,
+file_prefix = "Test",
 mcool = mcool,
-binsize = 10000,
+resolution = 10000,
+experiment_name = "A random 4DN dataset",
 chrs = "chr1")
 
 }

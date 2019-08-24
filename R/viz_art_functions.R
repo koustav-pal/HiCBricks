@@ -13,19 +13,21 @@
 #'  \item All of the above with TADs/TAD borders plotted on top.
 #' }
 #' 
+#' @inheritParams Brick_add_ranges
+#' 
 #' @param File \strong{Required}
 #' A character vector containing the output filename to write.
 #' 
 #' @param Bricks \strong{Required}
-#' A character vector of length 1 (in case of one sample heatmaps) or 2 (in case
-#' of two sample heatmaps) specifying the names of the Brick stores from where
+#' A list of length 1 (in case of one sample heatmaps) or 2 (in case
+#' of two sample heatmaps) specifying the BrickContainers from where
 #' to fetch the data.
 #' 
-#' @param x.coords \strong{Required}
+#' @param x_coords \strong{Required}
 #' A character vector of length 1 specifying the coordinates from where to fetch
 #' the data.
 #' 
-#' @param y.coords \strong{Required}
+#' @param y_coords \strong{Required}
 #' A character vector of length 1 specifying the coordinates from where to fetch
 #' the data.
 #' 
@@ -33,7 +35,7 @@
 #' If any sort of transformations should be applied to the data before plotting.
 #' Such as, log10 or log2 transformations. 
 #' 
-#' @param value.cap \strong{Optional}. Default NULL
+#' @param value_cap \strong{Optional}. Default NULL
 #' If present, values beyond a certain quantile will be capped to that quantile.
 #' In Hi-C this helps to emphasize structural information. Please note, if this
 #' parameter is present the greatest value will have a greater than sign append-
@@ -47,94 +49,94 @@
 #' @param rotate \strong{Optional}. Default FALSE
 #' If TRUE, will rotate the heatmap by 90 degrees.
 #' 
-#' @param x.axis \strong{Optional}. Default TRUE
+#' @param x_axis \strong{Optional}. Default TRUE
 #' If FALSE, the x-axis will be removed (ticks, x-axis labels and title).
 #'  
-#' @param x.axis.title \strong{Optional}. Default NULL
+#' @param x_axis_title \strong{Optional}. Default NULL
 #' If present, will be the \emph{x-axis} title. Else defaults to the provided
-#' x.coords
+#' x_coords
 #' 
-#' @param y.axis \strong{Optional}. Default TRUE
+#' @param y_axis \strong{Optional}. Default TRUE
 #' If FALSE, the y-axis will be removed (ticks, y-axis labels and title).
 #' 
-#' @param y.axis.title \strong{Optional}. Default NULL
+#' @param y_axis_title \strong{Optional}. Default NULL
 #' If present, will be the \emph{y-axis} title. Else defaults to the provided
-#' y.coords
+#' y_coords
 #' 
 #' @param title \strong{Optional}. Default NULL
 #' If present, will be the \emph{plot} title. Else defaults to the provided
-#' x.coords vs y.coords
+#' x_coords vs y_coords
 #' 
-#' @param legend.title \strong{Optional}. Default NULL
+#' @param legend_title \strong{Optional}. Default NULL
 #' If present will be the title of the legend. Else defaults to "Signal".
 #' 
-#' @param return.object \strong{Optional}. Default FALSE
+#' @param return_object \strong{Optional}. Default FALSE
 #' If present the ggplot object will be returned
 #' 
-#' @param x.axis.num.breaks \strong{Optional}. Default 5
+#' @param x_axis_num_breaks \strong{Optional}. Default 5
 #' Number of ticks on the x axis
 #' 
-#' @param y.axis.num.breaks \strong{Optional}. Default 5
+#' @param y_axis_num_breaks \strong{Optional}. Default 5
 #' Number of ticks on the y axis
 #' 
-#' @param x.axis.text.size \strong{Optional}. Default 10
+#' @param x_axis_text_size \strong{Optional}. Default 10
 #' x-axis text size
 #' 
-#' @param y.axis.text.size \strong{Optional}. Default 10
+#' @param y_axis_text_size \strong{Optional}. Default 10
 #' y-axis text size
 #' 
-#' @param text.size \strong{Optional}. Default 10
+#' @param text_size \strong{Optional}. Default 10
 #' text size of text elements in the plot.
 #' 
-#' @param legend.title.text.size \strong{Optional}. Default 8
+#' @param legend_title_text_size \strong{Optional}. Default 8
 #' text size of the legend title
 #' 
-#' @param legend.text.size \strong{Optional}. Default 8
+#' @param legend_text_size \strong{Optional}. Default 8
 #' text size of the legend text
 #' 
-#' @param title.size \strong{Optional}. Default 10
+#' @param title_size \strong{Optional}. Default 10
 #' text size of the title
 #' 
-#' @param tad.ranges \strong{Optional}. Default NULL
+#' @param tad_ranges \strong{Optional}. Default NULL
 #' A GenomicRanges object specifying the start and end coordinates of TADs to be
 #' plotted on the heatmap.
 #' 
-#' @param group.col \strong{Optional}. Default NULL
+#' @param group_col \strong{Optional}. Default NULL
 #' Name of the column which will be used to categorize TADs as belonging to 
 #' either the first or the second Brick stores. This must be a numeric value
 #' ranging from 1 to 2. If NULL, TADs will be plotted on both Hi-C maps.
 #' 
-#' @param tad.colour.col \strong{Optional}. Default NULL
-#' tad.colour.col takes as value the column name in the tad.ranges object 
+#' @param tad_colour_col \strong{Optional}. Default NULL
+#' tad_colour_col takes as value the column name in the tad_ranges object 
 #' corresponding to the column which should be used to define different TAD
 #' categories.
 #' 
-#' @param line.width \strong{Optional}. Default 0.5
+#' @param line_width \strong{Optional}. Default 0.5
 #' When plotting TADs set the width of the plotted lines
 #' 
-#' @param cut.corners \strong{Optional}. Default FALSE
-#' if cut.corners is TRUE, TAD borders will not be truncated, and they will
+#' @param cut_corners \strong{Optional}. Default FALSE
+#' if cut_corners is TRUE, TAD borders will not be truncated, and they will
 #' span until the end of visible heatmap.
 #' 
-#' @param highlight.points \strong{Optional}. Not yet implemented.
+#' @param highlight_points \strong{Optional}. Not yet implemented.
 #' 
 #' @param colours \strong{Optional}. Default NULL
-#' If tad.ranges is present, colours expects a hexcode value of length 1. But,
-#' if tad.colour.col is specified, it expects colours of the same length as 
-#' unique tad.ranges$tad.colour.col. 
+#' If tad_ranges is present, colours expects a hexcode value of length 1. But,
+#' if tad_colour_col is specified, it expects colours of the same length as 
+#' unique tad_ranges$tad_colour_col. 
 #' 
-#' @param colours.names \strong{Optional}. Default NULL
+#' @param colours_names \strong{Optional}. Default NULL
 #' If present, will be assigned to colours. Else, will inherit unique 
-#' tad.colour.col. If tad.colour.col is also absent, will revert to a placehold 
+#' tad_colour_col. If tad_colour_col is also absent, will revert to a placehold 
 #' column name.
 #' 
 #' @param palette \strong{Required}. Default NULL
 #' One of the RColorbrewer or viridis colour palettes
 #' 
-#' @param col.direction \strong{Optional}. Default 1
+#' @param col_direction \strong{Optional}. Default 1
 #' If -1, the colour scale will be reversed.
 #' 
-#' @param extrapolate.on \strong{Optional}. Default NULL
+#' @param extrapolate_on \strong{Optional}. Default NULL
 #' If present, colours from the palette will be extrapolated between lightest
 #' and darkest to create the gradient. This value cannot be more than 100.
 #' 
@@ -147,13 +149,13 @@
 #' @param units \strong{Optional}. Default cm
 #' Defines the units of the output file width and height.
 #' 
-#' @param legend.key.width \strong{Optional}. Default unit(3,"cm")
+#' @param legend_key_width \strong{Optional}. Default unit(3,"cm")
 #' Defines the legend key width.
 #' 
-#' @param legend.key.height \strong{Optional}. Default unit(0.5,"cm")
+#' @param legend_key_height \strong{Optional}. Default unit(0.5,"cm")
 #' Defines the legend key height.
 #' 
-#' @return If return.object is set to TRUE, the constructed ggplot2 
+#' @return If return_object is set to TRUE, the constructed ggplot2 
 #' object will be returned. Else TRUE.
 #' 
 #' @examples
@@ -162,52 +164,78 @@
 #'      return(log10(x+1))
 #' }
 #' 
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
-#' Bricks = Brick.file, x.coords = "chr19:5000000:10000000", palette = "Reds",
-#' y.coords = "chr19:5000000:10000000", FUN = FailSafe_log10, 
-#' value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
-#' legend.key.height = unit(0.3,"cm"))
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
 #' 
-Brick_vizart_plot_heatmap = function(File, Bricks, 
-    x.coords, y.coords, FUN = NULL, value.cap = NULL, 
-    distance = NULL, rotate = FALSE, x.axis = TRUE, x.axis.title = NULL, 
-    y.axis = TRUE, y.axis.title = NULL, title = NULL, legend.title = NULL, 
-    return.object=FALSE, x.axis.num.breaks = 5, y.axis.num.breaks = 5, 
-    palette, col.direction = 1, extrapolate.on = NULL, 
-    x.axis.text.size = 10, y.axis.text.size = 10, text.size = 10,
-    legend.title.text.size = 8, legend.text.size = 8, title.size = 10,
-    tad.ranges = NULL, group.col = NULL, tad.colour.col = NULL, colours = NULL,
-    colours.names = NULL, cut.corners = FALSE, highlight.points = NULL, 
-    width = 10, height = 6, line.width = 0.5, units = "cm", 
-    legend.key.width = unit(3,"cm"), legend.key.height = unit(0.5,"cm")){
+#' out_dir <- file.path(tempdir(), "vizart_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr3R", 
+#' chr2 = "chr3R", matrix_file = Matrix_file, delim = " ",
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_vizart_plot_heatmap(File = "./chr3R-1-10000000.pdf", 
+#' Bricks = list(My_BrickContainer), resolution = 100000, 
+#' x_coords = "chr3R:1:10000000", palette = "Reds", 
+#' y_coords = "chr3R:1:10000000", FUN = FailSafe_log10, 
+#' value_cap = 0.99, width = 10, height = 11, legend_key_width = unit(3,"mm"),
+#' legend_key_height = unit(0.3,"cm"))
+#' 
+Brick_vizart_plot_heatmap = function(File, Bricks, resolution,
+    x_coords, y_coords, FUN = NULL, value_cap = NULL, 
+    distance = NULL, rotate = FALSE, x_axis = TRUE, x_axis_title = NULL, 
+    y_axis = TRUE, y_axis_title = NULL, title = NULL, legend_title = NULL, 
+    return_object=FALSE, x_axis_num_breaks = 5, y_axis_num_breaks = 5, 
+    palette, col_direction = 1, extrapolate_on = NULL, 
+    x_axis_text_size = 10, y_axis_text_size = 10, text_size = 10,
+    legend_title_text_size = 8, legend_text_size = 8, title_size = 10,
+    tad_ranges = NULL, group_col = NULL, tad_colour_col = NULL, colours = NULL,
+    colours_names = NULL, cut_corners = FALSE, highlight_points = NULL, 
+    width = 10, height = 6, line_width = 0.5, units = "cm", 
+    legend_key_width = unit(3,"cm"), legend_key_height = unit(0.5,"cm")){
 
+    if(!is.list(Bricks)){
+        stop("Bricks expects an argument of type list.",
+            " Please refer to the vignette to understand the parameter.")
+    }
     Matrix.df <- Get_one_or_two_brick_regions(Bricks = Bricks, 
-        x.coords = x.coords, y.coords = y.coords, distance = distance,
-        value.cap = value.cap, FUN = FUN)
+        resolution = resolution, x_coords = x_coords, 
+        y_coords = y_coords, distance = distance,
+        value_cap = value_cap, FUN = FUN)
     if(nrow(Matrix.df)==0){
         stop("The matrix was empty!")
     }
-    list_of_coords <- list("x.coords" = x.coords, "y.coords" = y.coords)
+    list_of_coords <- list("x_coords" = x_coords, "y_coords" = y_coords)
 
     Parsed_string <- ._Parse_genomic_coordinates(list_of_coords)
-    x.coord.parsed <- Parsed_string[["x.coords"]]
-    y.coord.parsed <- Parsed_string[["y.coords"]]
+    x.coord.parsed <- Parsed_string[["x_coords"]]
+    y.coord.parsed <- Parsed_string[["y_coords"]]
     x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
-        to = max(Matrix.df$row), how.many = x.axis.num.breaks, 
+        to = max(Matrix.df$row), how.many = x_axis_num_breaks, 
         two.sample = FALSE)
-    x.axis.coord.labs <- Make_axis_labels(Brick = Bricks[1], 
-        chr = x.coord.parsed['chr'], positions = x.coord.breaks)
+    x_axis.coord.labs <- Make_axis_labels(Brick = Bricks[[1]], 
+        resolution = resolution, chr = x.coord.parsed['chr'], 
+        positions = x.coord.breaks)
 
     two.sample <- (rotate & length(Bricks)==2)
     y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row), 
-        to = max(Matrix.df$row), how.many = x.axis.num.breaks, 
+        to = max(Matrix.df$row), how.many = x_axis_num_breaks, 
         two.sample = two.sample)
-    y.axis.coord.labs <- Make_axis_labels(Brick = Bricks[1], 
-        chr = y.coord.parsed['chr'], positions = abs(y.coord.breaks))
+    y_axis.coord.labs <- Make_axis_labels(Brick = Bricks[[1]], 
+        resolution = resolution, chr = y.coord.parsed['chr'], 
+        positions = abs(y.coord.breaks))
 
     Colours <- Make_colours(palette = palette, 
-        extrapolate.on = extrapolate.on, direction = col.direction)
+        extrapolate_on = extrapolate_on, direction = col_direction)
     # go from min val to mid to max val
     two.sample <- (length(Bricks)==2)
     Matrix.df$rescale <- rescale_values_for_colours(
@@ -216,7 +244,7 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
         how.many = length(Colours), two.sample = two.sample)
     
     Legend.breaks.list <- get_legend_breaks(Object = Matrix.df, 
-        how.many = 5, value.cap = value.cap, colours = Colours,
+        how.many = 5, value_cap = value_cap, colours = Colours,
         two.sample = two.sample)
     Colour.breaks <- Legend.breaks.list[["col.breaks"]]
     Colour.labs <- Legend.breaks.list[["col.labs"]]
@@ -235,7 +263,7 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
             Entire.rotated.map <- rbind(Upper.rotated.map,Lower.rotated.map)
             y.coord.breaks <- y.coord.breaks/2
             y.coord.breaks <- c(rev(y.coord.breaks)*-1,y.coord.breaks)
-            y.axis.coord.labs <- c(rev(y.axis.coord.labs),y.axis.coord.labs)
+            y_axis.coord.labs <- c(rev(y_axis.coord.labs),y_axis.coord.labs)
         }else{
             Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0,]
             Entire.rotated.map <- RotateHeatmap(Matrix=Upper.tri.map, 
@@ -245,26 +273,26 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
     }
 
     # require(ggplot2)
-    Brick_theme <- Get_heatmap_theme(x.axis=x.axis, y.axis=y.axis, 
-        text.size = text.size, x.axis.text.size = x.axis.text.size, 
-        y.axis.text.size = y.axis.text.size, 
-        legend.title.text.size = legend.title.text.size, 
-        legend.text.size = legend.text.size, 
-        title.size = title.size, legend.key.width = legend.key.width, 
-        legend.key.height =legend.key.height)
-    Labels <- Get_heatmap_titles(title = title, x.axis.title = x.axis.title, 
-        y.axis.title = y.axis.title, legend.title = legend.title, 
-        x.coords = x.coords, y.coords = y.coords, rotate = rotate)
+    Brick_theme <- Get_heatmap_theme(x_axis=x_axis, y_axis=y_axis, 
+        text_size = text_size, x_axis_text_size = x_axis_text_size, 
+        y_axis_text_size = y_axis_text_size, 
+        legend_title_text_size = legend_title_text_size, 
+        legend_text_size = legend_text_size, 
+        title_size = title_size, legend_key_width = legend_key_width, 
+        legend_key_height =legend_key_height)
+    Labels <- Get_heatmap_titles(title = title, x_axis_title = x_axis_title, 
+        y_axis_title = y_axis_title, legend_title = legend_title, 
+        x_coords = x_coords, y_coords = y_coords, rotate = rotate)
     Boundaries.obj <- NULL
-    if(!is.null(tad.ranges)){
+    if(!is.null(tad_ranges)){
         Boundaries.obj <- Format_boundaries_normal_heatmap(Bricks = Bricks, 
-            Ranges = tad.ranges, group.col = group.col, 
-        cut.corners = cut.corners, colour.col = tad.colour.col, 
-        colours = colours, colours.names = colours.names, 
-        region.chr = x.coord.parsed['chr'], 
-        region.start = as.numeric(x.coord.parsed['start']), 
-        region.end = as.numeric(x.coord.parsed['end']), distance = distance,
-        rotate = rotate)
+            resolution = resolution, Ranges = tad_ranges, 
+            group_col = group_col, cut_corners = cut_corners, 
+            colour.col = tad_colour_col, colours = colours, 
+            colours_names = colours_names, region.chr = x.coord.parsed['chr'], 
+            region.start = as.numeric(x.coord.parsed['start']), 
+            region.end = as.numeric(x.coord.parsed['end']), distance = distance,
+            rotate = rotate)
     }
 
     if(rotate){
@@ -276,8 +304,8 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
             max(Entire.rotated.map[,"ycoords"]))
         y.coord.breaks <- seq(ceiling(min(Entire.rotated.map[,"ycoords"])),
             ceiling(max(Entire.rotated.map[,"ycoords"])),
-            length.out = y.axis.num.breaks)
-        y.axis.coord.labs <- y.coord.breaks*2
+            length.out = y_axis_num_breaks)
+        y_axis.coord.labs <- y.coord.breaks*2
     }else{
         Matrix.df$row <- Matrix.df$row - 0.5
         Matrix.df$col <- Matrix.df$col - 0.5
@@ -286,26 +314,26 @@ Brick_vizart_plot_heatmap = function(File, Bricks,
         xlims <- c(min(Matrix.df$row) - 0.5,max(Matrix.df$row) + 0.5)
         ylims <- c(min(Matrix.df$col) - 0.5,max(Matrix.df$col) + 0.5)
     }
-    if(!is.null(tad.ranges)){
+    if(!is.null(tad_ranges)){
         line.group <- x <- y <- NULL
         ThePlot <- ThePlot + geom_line(data = Boundaries.obj, 
             aes(x = x, y = y, group = line.group, colour = colours), 
-            size = line.width) 
+            size = line_width) 
         ThePlot <- ThePlot + scale_colour_manual(values = colours)
     }
     ThePlot <- ThePlot + scale_x_continuous(limits = xlims, expand = c(0,0),
-        breaks = x.coord.breaks, labels = x.axis.coord.labs)
+        breaks = x.coord.breaks, labels = x_axis.coord.labs)
     ThePlot <- ThePlot + scale_y_continuous(limits = ylims, expand = c(0,0),
-        breaks = y.coord.breaks, labels = y.axis.coord.labs)
-    ThePlot <- ThePlot + scale_fill_gradientn(legend.title,values = Value.dist, 
+        breaks = y.coord.breaks, labels = y_axis.coord.labs)
+    ThePlot <- ThePlot + scale_fill_gradientn(legend_title,values = Value.dist, 
         breaks = Colour.breaks, labels = Colour.labs, colors = Colours)
     ThePlot<-ThePlot+ Brick_theme
     # return(Entire.rotated.map)
-    ThePlot<-ThePlot+labs(title = Labels['title'], x = Labels['x.axis'], 
-        y = Labels['y.axis'])
+    ThePlot<-ThePlot+labs(title = Labels['title'], x = Labels['x_axis'], 
+        y = Labels['y_axis'])
     ggsave(filename = File, plot = ThePlot, width = width, height = height, 
         units = units)
-    if(return.object){
+    if(return_object){
         return(ThePlot)
     }else{
         return(TRUE)

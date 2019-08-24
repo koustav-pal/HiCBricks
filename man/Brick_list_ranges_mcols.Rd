@@ -5,15 +5,20 @@
 \title{Find out what metadata columns are associated to a ranges with a certain
 name}
 \usage{
-Brick_list_ranges_mcols(Brick, rangekey = NULL)
+Brick_list_ranges_mcols(Brick, rangekey = NULL, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{rangekey}{\strong{Optional}.
 A string specifying the name of the ranges. If not present, the metadata
 columns of all ranges will be listed.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 if no metadata columns are present, NA. If metadata columns are
@@ -25,7 +30,20 @@ associated metadata column name.
 ranges if it is present in the Brick store.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_list_ranges_mcols(Brick = Brick.file, rangekey = "test_ranges")
+
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "list_ranges_mcols_test")
+
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Brick_list_ranges_mcols(Brick = My_BrickContainer, rangekey = "Bintable",
+resolution = 100000)
 
 }

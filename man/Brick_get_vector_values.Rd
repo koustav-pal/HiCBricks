@@ -4,12 +4,13 @@
 \alias{Brick_get_vector_values}
 \title{Return a N dimensional vector selection.}
 \usage{
-Brick_get_vector_values(Brick, chr1, chr2, xaxis, yaxis, FUN = NULL,
-    force = FALSE)
+Brick_get_vector_values(Brick, chr1, chr2, resolution, xaxis, yaxis,
+    FUN = NULL, force = FALSE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -18,6 +19,10 @@ the rows of the matrix}
 \item{chr2}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{xaxis}{\strong{Required}.
 A 1 dimensional vector containing the rows to retrieve. Gaps in this vector
@@ -52,8 +57,26 @@ min(yaxis) to max(yaxis) on the columns.
 }
 
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_vector_values(Brick = Brick.file, chr1 = "chr19",
-chr2 = "chr19", xaxis = c(1:10), yaxis = c(1:10))
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "get_vector_val_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+remove_prior = TRUE, resolution = 100000)
+
+Brick_get_vector_values(Brick = My_BrickContainer, chr1 = "chr2L",
+chr2 = "chr2L", resolution = 100000, xaxis = c(1:10), yaxis = c(1:10))
 
 }

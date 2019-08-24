@@ -2,21 +2,17 @@
 
 #' Create the entire HDF5 structure and load the bintable
 #'
-#' `CreateBrick` creates the complete HDF5 on-disk data structure
+#' `Create_many_Bricks` creates the HDF file and returns a BrickContainer
 #'
 #' This function creates the complete HDF data structure, loads the binning
-#' table associated to the Hi-C experiment and creates (for now) a 2D matrix
-#' layout for all chromosome pairs. **Please note**, the binning table must
-#' be a discontinuous one (first range end != secode range start), as ranges
-#' overlaps using the "any" form will routinely identify adjacent ranges with
-#' the same end and start to be in the overlap. Therefore, this criteria is
-#' enforced as default behaviour.
-#'
-#'
-#' @param ChromNames \strong{Required}
-#' A character vector containing the chromosomes to be considered for the
-#' dataset. This string is used to verify the presence of all chromosomes in
-#' the provided bitable.
+#' table associated to the Hi-C experiment, creates a 2D matrix
+#' layout for all specified chromosome pairs and creates a json file for the
+#' project. At the end, this function will return a S4 object of class 
+#' BrickContainer.  **Please note**, the binning table must be a 
+#' discontinuous one (first range end != secode range start), 
+#' as ranges overlaps using the "any" form will routinely identify adjacent 
+#' ranges with the same end and start to be in the overlap. Therefore, this 
+#' criteria is enforced as default behaviour.
 #'
 #' @param BinTable \strong{Required}
 #' A string containing the path to the file to load as the binning table for
@@ -37,38 +33,53 @@
 #' \strong{unexpected behaviour} when using the GenomicRanges "any" overlap
 #' function.
 #'
-#' @param Output.Filename \strong{Required}
-#' A string specifying the location and name of the HDF file to create. If path
-#' is not provided, it will be created in the Bioc File cache. Otherwise, it
-#' will be created in the specified directory and tracked via Bioc File Cache.
+#' @param output_directory \strong{Required}
+#' A string specifying the location where the HDF files will be created.
 #'
-#' @param bin.delim \strong{Optional}. Defaults to tabs.
+#' @param file_prefix \strong{Required}
+#' A string specifying the prefix that is concatenated to the hdf files stored
+#' in the output_directory.
+#' 
+#' @param bin_delim \strong{Optional}. Defaults to tabs.
 #' A character vector of length 1 specifying the delimiter used in the file
 #' containing the binning table.
 #'
-#' @param col.index \strong{Optional}. Default "c(1,2,3)".
+#' @param col_index \strong{Optional}. Default "c(1,2,3)".
 #' A character vector of length 3 containing the indexes of the required
 #' columns in the binning table. the first index, corresponds to the chr
 #' column, the second to the start column and the third to the end column.
 #'
-#' @param impose.discontinuity \strong{Optional}. Default TRUE.
+#' @param impose_discontinuity \strong{Optional}. Default TRUE.
 #' If TRUE, this parameter ensures a check to make sure that required the end
 #' and start coordinates of consecutive entries are not the same per
 #' chromosome.
 #'
-#' @param ChunkSize \strong{Optional}.
+#' @param hdf_chunksize \strong{Optional}.
 #' A numeric vector of length 1. If provided, the HDF dataset will use this
 #' value as the chunk size, for all matrices. By default, the ChunkSize is
 #' set to matrix dimensions/100.
 #'
-#' @param exec \strong{Optional}. Default cat.
-#' A string specifying the program or expression to use for reading the file.
-#' For bz2 files, use bzcat and for gunzipped files use zcat.
-#'
-#' @param remove.existing \strong{Optional}. Default FALSE.
+#' @param remove_existing \strong{Optional}. Default FALSE.
 #' If TRUE, will remove the HDF file with the same name and create a new one.
 #' By default, it will not replace existing files.
+#' 
+#' @param link_existing \strong{Optional}. Default FALSE.
+#' If TRUE, will re-add the HDF file with the same name.
+#' By default, this parameter is set to FALSE.
 #'
+#' @param experiment_name \strong{Optional}.
+#' If provided, this will be the experiment name for the BrickContainer.
+#' 
+#' @param resolution \strong{required}.
+#' A value of length 1 of class character or numeric specifying the resolution 
+#' of the Hi-C data loaded.
+#' 
+#' @param type \strong{optional}. Default any
+#' A value from one of any, cis, trans specifying the type of matrices to load.
+#' Any will load both cis (intra-choromosomal, e.g. chr1 vs chr1) and trans (
+#' inter-chromosomal, e.g. chr1 vs chr2) Hi-C matrices. Whereas cis and trans 
+#' will load either cis or trans Hi-C matrices.
+#' 
 #' @details The structure of the HDF file is as follows:
 #' The structure contains three major groups which are then hierarchically
 #' nested with other groups to finally lead to the corresponding datasets. 
@@ -88,10 +99,14 @@
 #'                \item Done - specifies if a matrix has been loaded
 #'            }
 #'            \item matrix - \strong{dataset} - contains the matrix
-#'            \item bin.coverage - \strong{dataset} - proportion of cells with
-#' values greater than 0
-#'            \item row.sums - \strong{dataset} - total sum of all values in a
-#' row
+#'            \item chr1_bin_coverage - \strong{dataset} - proportion of row 
+#' cells with values greater than 0
+#'            \item chr1_row_sums - \strong{dataset} - total sum of all values
+#' in a row
+#'            \item chr2_col_sums - \strong{dataset} - total sum of all values
+#' in a col
+#'            \item chr2_bin_coverage - \strong{dataset} - proportion of col 
+#' cells with values greater than 0
 #'            \item sparsity - \strong{dataset} - proportion of non-zero cells
 #' near the diagonal
 #'        }
@@ -120,35 +135,19 @@
 #'    }
 #'}
 #' @return This function will generate the target Brick file. Upon completion,
-#' the function will provide the path to the created/tracked HDF file.
+#' the function will return an object of class BrickContainer.
 #'
 #' @examples
-#' Bintable.path <- system.file("extdata",
-#' "Bintable_40kb.txt", package = "HiCBricks")
-#' Chromosomes <- "chr19"
-#' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#'   BinTable = Bintable.path, bin.delim = " ",
-#'   Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-#'   remove.existing = TRUE)
-#'
-#' \dontrun{
-#' Bintable.path <- system.file("extdata",
-#' "Bintable_40kb.txt", package = "HiCBricks")
-#' Chromosomes <- c("chr19", "chr20", "chr22", "chr21")
-#' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#' BinTable = Bintable.path, impose.discontinuity=TRUE,
-#' col.index = c(1,2,3), Output.Filename = file.path(tempdir(),"test.hdf"),
-#' exec = "cat", remove.existing = TRUE)
-#'
-#' This will cause an error as the file located at Bintable.path,
-#' contains coordinates for only chromosome 19. For this code to work, either
-#' all other chromosomes need to be removed from the Chromosomes variable or
-#' coordinate information for the other chromosomes need to be provided.
-#'
-#' Similarly vice-versa is also true. If the Bintable contains data for other
-#' chromosomes, but they were not listed in ChromNames, this will cause an
-#' error.
-#'
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' out_dir <- file.path(tempdir(), "Creator_test")
+#' dir.create(out_dir)
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+#'   experiment_name = "Vignette Test", resolution = 100000, 
+#'   remove_existing = TRUE)
+#' 
+#' @details
 #' Keep in mind that if the end coordinates and start coordinates of adjacent
 #' ranges are not separated by at least a value of 1, then
 #' impose.discontinuity = TRUE will likely cause an error to occur.
@@ -162,109 +161,133 @@
 #' Also note, that col.index determines which columns to use for chr, start
 #' and end. Therefore, the original binning table may have 10 or 20 columns,
 #' but it only requires the first three in order of chr, start and end.
-#' }
 #'
-CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
-    col.index=c(1,2,3), impose.discontinuity=TRUE, ChunkSize=NULL,
-    Output.Filename, exec="cat", remove.existing=FALSE){
-    H5close()
+Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3), 
+    impose_discontinuity=TRUE, hdf_chunksize=NULL, output_directory = NA, 
+    file_prefix = NA, remove_existing = FALSE, 
+    link_existing = FALSE, experiment_name = NA, resolution = NA, 
+    type = c("both", "cis", "trans")){
 
-    Dir.path <- dirname(Output.Filename)
-    if(Dir.path == "."){
-        Err.msg <- paste("Unable to create", Output.Filename, 
+    H5close()
+    type = match.arg(type)
+    Reference.object <- GenomicMatrix$new()
+    if(is.na(output_directory)){
+        stop("Parameter output_directory must be provided")
+    } else if(output_directory == "."){
+        Err.msg <- paste("Unable to create in directory", output_directory, 
             "without an explicit path", "definition!", "If you want to create",
-            Output.Filename, "inside the", "current working directory,",
-            "please provide", "the complete path to", "the file. Or, you can",
+            "files inside the", "current working directory,",
+            "please provide", "the complete path. Or, you can",
             "provide as an", "argument,", 
-            paste("file.path(getwd(),\"", Output.Filename, "\")", sep = ""), 
+            paste("file.path(getwd())", sep = ""), 
         sep = " ")
         stop(._format_by_charlen(string = Err.msg))
+    } else if(!dir.exists(output_directory)){
+        stop("output_directory does not exist")
     }
-    Filename <- basename(Output.Filename)
-    Output.Filename <- file.path(normalizePath(Dir.path),Filename)
-    Reference.object <- GenomicMatrix$new()
-
-    Root.folders <- Reference.object$GetRootFolders()
-    if(is.null(ChromNames) | length(ChromNames) == 0){
-        stop("Variable ChromNames cannot be empty")
+    output_directory <- normalizePath(output_directory)
+    if(is.na(resolution)){
+        stop("Parameter resolution must be provided")
     }
-
-    HDF.File <- as.character(Output.Filename)
-
-    if(file.exists(HDF.File)){
-        if(!remove.existing){
-            stop("Provided HDF file already exists. Please provide ",
-                "remove.existing = TRUE to overwrite it\n")
-        }
-        file.remove(HDF.File)
+    if(is.na(file_prefix)){
+        stop("Parameter file_prefix must be provided")
     }
-    ChromosomeList<-ChromNames
     if(is.null(BinTable)){
         stop("Variable Bintable cannot be empty. Binning information must be ",
             "provided at startup\n")
     }
-    # Read in the binning table
-    Bintable.list <- Read_bintable(Filename = BinTable, read.delim = bin.delim,
-        exec = exec, col.index = col.index, chromosomes = ChromosomeList,
-        impose.discontinuity = impose.discontinuity)
-    Bintable <- Bintable.list[['main.tab']]
-    # Create the 0 level directories in the HDF file
-    h5createFile(HDF.File)
+    if(is.na(experiment_name)){
+        Dated <- format(Sys.Date(),"%Y-%m-%d")
+        experiment_name = paste("A HiCBricks object created on",Dated)
+    }
 
-    for (Folder in Root.folders) {
-        CreateGroups(Group.path = Create_Path(Folder), File = HDF.File)
-    }
-    # Add the chromosome information into the metadata column
-    if(!all(ChromosomeList %in% Bintable[,'chr'])){
-        stop("All Chromosomes were not listed in the binning table!\n")
-    }
-    Chrom.lengths <- get_chrom_info(bin.table = Bintable,
-        chrom = ChromosomeList, FUN = length, col.name = 'chr')
-    Chrom.sizes <- get_chrom_info(bin.table = Bintable,
-        chrom = ChromosomeList, FUN = max, col.name = 'end')
-    Chrom.info.df <- data.frame(chr = names(Chrom.lengths),
-        nrow = as.vector(Chrom.lengths),
-        size = as.vector(Chrom.sizes),stringsAsFactors = FALSE)
-    # Create metadata chromosome groups
-    ._Brick_WriteDataFrame_(Brick = HDF.File, 
-        Path = c(Root.folders['metadata']), 
-        name = Reference.object$metadata.chrom.dataset, 
-        object = Chrom.info.df)
-    ._Brick_Add_Ranges_(Group.path = Create_Path(c(Root.folders['ranges'],
-        Reference.object$hdf.bintable.ranges.group)), Brick = HDF.File,
-        ranges.df = Bintable, name = Reference.object$hdf.ranges.dataset.name,
-        mcol.list = NULL)
-    # Create matrices groups
-    for (chrom1 in ChromosomeList) {
-        CreateGroups(Group.path = Create_Path(c(Root.folders['matrices'],
-            chrom1)), File = HDF.File)
-        for (chrom2 in ChromosomeList) {
-            chr2.path <- Create_Path(c(Root.folders['matrices'],chrom1,chrom2))
-            # cat(Chrom.info.df$chr,chrom1,chrom2,"\n")
-            CreateGroups(Group.path = chr2.path, File = HDF.File)
-            CreateAttributes(Path = chr2.path, File = HDF.File,
-                Attributes = Reference.object$matrices.chrom.attributes,
-                data_types = Reference.object$matrices.chrom.attributes.dtype,
-                dims = Reference.object$matrices.chrom.attributes.dims,
-                maxdims = NULL,
-                on = "group")
-            Dims <- c(Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"],
-                Chrom.info.df[Chrom.info.df$chr == chrom2,"nrow"])
-            if(is.null(ChunkSize)){
-                ChunkSize <- ceiling(Dims/100)
+    resolution <- .format_resolution(resolution)
+    Config_filepath <- .make_configuration_path(output_directory)
+    Configuration_matrix_list <- list()
+
+    Bintable.list <- Read_bintable(Filename = BinTable, 
+        read.delim = bin_delim, col.index = col_index, 
+        impose.discontinuity = impose_discontinuity)
+    bintable_df <- Bintable.list[['main.tab']]
+    # Create the 0 level directories in the HDF file
+    ChromosomeList <- unique(bintable_df[,'chr'])
+    Chrom_info_df <- return_chrominfo_df(bintable_df = bintable_df, 
+        chromosomes = ChromosomeList)
+    chromosome_lengths <- Chrom_info_df$size
+    Resolutions <- resolution
+
+    if(file.exists(Config_filepath)){
+        message("Sourcing Container parameters from existing json ",
+            "at location ", output_directory)
+        message("Ignoring new parameters")
+        Container <- load_BrickContainer(Config_filepath)
+        Configuration_header <- return_configuration_header(Container)
+
+        file_prefix <- Configuration_header$file_prefix
+        output_directory <- Configuration_header$project_directory
+        experiment_name <- BrickContainer_list_experiment_name(Container)
+        Resolutions <- BrickContainer_list_resolutions(Container)
+        chromosome_df <- BrickContainer_list_chromosomes(Container, 
+            lengths = TRUE)
+        ChromosomeList <- chromosome_df$chrom
+        chromosome_lengths <- chromosome_df$lengths
+        # Files_list <- BrickContainer_list_files(Container)
+        Configuration_matrix_list <- return_configuration_matrix_info(
+            Container)
+        if(!remove_existing){
+            if(any(grepl(pattern = resolution, 
+                    x = Resolutions, 
+                    ignore.case = TRUE))){
+                stop("Resolution ",resolution,
+                    " is already present.")
             }
-            Array.dim <-Chrom.info.df[Chrom.info.df$chr == chrom1,"nrow"]
-            CreateDataset(Path = c(Root.folders['matrices'],chrom1,chrom2),
-                File = HDF.File, name = Reference.object$hdf.matrix.name,
-                dims = Dims, maxdims = Dims)
+        }
+        Resolutions <- unique(c(Resolutions, resolution))
+    }
+    
+    Configuration_header <- .create_configuration_header(
+        file_prefix = file_prefix, 
+        output_directory = output_directory, 
+        experiment_name = experiment_name, 
+        resolution = Resolutions, 
+        chromosomes = ChromosomeList, 
+        chromosome_lengths = chromosome_lengths)
+
+    Chromosome.pairs.list <- return_chromosome_pairs(
+        chromosomes = ChromosomeList,
+        type = type)
+    Root.folders <- Reference.object$GetRootFolders()
+
+    for (chrom1 in names(Chromosome.pairs.list)) {
+        for (chrom2 in Chromosome.pairs.list[[chrom1]]) {
+            hdf_filename <- paste(paste(file_prefix, 
+                resolution,
+                chrom1, "vs", chrom2, sep = "_"), 
+            Reference.object$brick.extension, sep = ".")
+            Configuration_matrix_list[[paste(chrom1, chrom2, 
+                resolution, sep = "_")]] <- 
+                .create_brick(output_directory = output_directory, 
+                    filename = hdf_filename, 
+                    chrom1 = chrom1, 
+                    chrom2 = chrom2, 
+                    resolution = resolution, 
+                    bintable_df = bintable_df, 
+                    hdf_chunksize = hdf_chunksize, 
+                    remove_existing = remove_existing,
+                    link_existing = link_existing)
         }
     }
-    return(HDF.File)
+    Container <- .prepare_BrickContainer(Configuration_header, 
+        Configuration_matrix_list, 
+        Config_filepath)
+    .write_configuration_file(Container, Config_filepath)
+    return(Container)
 }
+
 #' Create the entire HDF5 structure and load the bintable from a mcool file
 #'
-#' `CreateBrick_from_mcool` is a wrapper on CreateBrick which creates the 
-#' Brick data structure from an mcool file.
+#' `CreateBrick_from_mcool` is a wrapper on Create_many_Bricks which creates 
+#' the Brick data structure from an mcool file.
 #'
 #' mcool are a standard 4D nucleome data structure for Hi-C data. Read more
 #' about the 4D nucleome project \href{https://data.4dnucleome.org/}{here}.
@@ -273,12 +296,9 @@ CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
 #' If provided will only create a Brick for these
 #' chromosomes (both cis & trans).
 #'
-#' @param binsize \strong{Optional}.
-#' The binsize to select from an mcool file.
-#'
 #' @inheritParams Brick_load_data_from_mcool
 #'
-#' @inheritParams CreateBrick
+#' @inheritParams Create_many_Bricks
 #'
 #' @return This function will generate the target Brick file. Upon completion,
 #' the function will provide the path to the created/tracked HDF file.
@@ -287,18 +307,20 @@ CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
 #'
 #' \dontrun{
 #' require(curl)
-#' curl_download(url = paste("https://data.4dnucleome.org/"
-#' "files-processed/4DNFI7JNCNFB/"
-#' "@@download/4DNFI7JNCNFB.mcool",sep = ""),
-#' destfile = file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
+#' out_dir <- file.path(tempdir(),"mcool_test_dir")
+#' dir.create(path = out_dir)
+#' curl_download(url = paste("https://data.4dnucleome.org/",
+#' "files-processed/4DNFI7JNCNFB/",
+#' "@@download/4DNFI7JNCNFB.mcool", sep = ""),
+#' destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 #'
-#' Output.brick <- file.path(tempdir(), 
-#' "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
-#' mcool <- file.path(temp.dir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-#'
-#' CreateBrick_from_mcool(Brick = Output.brick,
+#' mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+#' 
+#' CreateBrick_from_mcool(output_directory = out_dir,
+#' file_prefix = "Test",
 #' mcool = mcool,
-#' binsize = 10000,
+#' resolution = 10000,
+#' experiment_name = "A random 4DN dataset",
 #' chrs = "chr1")
 #'
 #' }
@@ -306,8 +328,10 @@ CreateBrick <- function(ChromNames, BinTable, bin.delim="\t",
 #' @seealso \code{\link{Brick_load_data_from_mcool}} to load data from
 #' the mcool to a Brick store.
 #'
-CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
-    chrs = NULL, remove.existing = FALSE){
+CreateBrick_from_mcool <- function(output_directory = NA, 
+    file_prefix = NA, mcool = NULL, resolution = NULL, 
+    experiment_name = NA, chrs = NULL, remove_existing = FALSE){
+
     Reference.object <- GenomicMatrix$new()
     if(is.null(mcool)){
         stop("mcool must be provided as mcool= /path/to/something")
@@ -321,14 +345,15 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
             c(Reference.object$mcool.resolutions.name, resolutions[1])), 
             File=mcool, Attributes="format-version", on = "group",
             ignore.fun.cast = TRUE)[,"format-version"]
-        if(is.null(binsize)){
-            stop("binsize cannot be NULL when resolutions are present..\n")
+        if(is.null(resolution)){
+            stop("resolution cannot be NULL when resolutions are present..\n")
         }
-        if(length(binsize) > 1){
-            stop("binsize cannot have more than one value\n")
+        if(length(resolution) > 1){
+            stop("resolution cannot have more than one value\n")
         }
-        if(!(as.character(as.integer(binsize)) %in% resolutions)){
-            stop("all binsizes were not found in this mcool file. See all",
+        resolution <- .format_resolution(resolution)
+        if(!(resolution %in% resolutions)){
+            stop("all resolutions were not found in this mcool file. See all",
                 " resolutions available with Brick_list_mcool_resolutions\n")
         }
     }else{
@@ -340,7 +365,7 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
     message("Provided mcool is a version ", mcool.version," file.")
     cooler.remap.chrom <- ._mcool_remap_chromosomes(File = mcool,
         mcool.version = mcool.version, resolution = !is.null(resolutions),
-        binsize = as.character(as.integer(binsize)))
+        binsize = resolution)
     ChromNames <- cooler.remap.chrom[,"chr.name"]
     if(!is.null(chrs)){
         if(any(!(chrs %in% ChromNames))){
@@ -351,13 +376,15 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
     mcool_bintable_ranges <- ._mcool_bintable_ranges(mcool.file = mcool,
         resolution = !is.null(resolutions),
         mcool.remap.chrom = cooler.remap.chrom, 
-        binsize = as.character(as.integer(binsize)),
+        binsize = resolution,
         mcool.version = mcool.version)
     mcool_bintable_ranges <- mcool_bintable_ranges[
     mcool_bintable_ranges[,"chr"] %in% ChromNames,]
-    RetVar <- CreateBrick(ChromNames=ChromNames,
-        BinTable=mcool_bintable_ranges, Output.Filename=Brick,
-        remove.existing = remove.existing)
+
+    RetVar <- Create_many_Bricks(BinTable = mcool_bintable_ranges, 
+        output_directory = output_directory, file_prefix = file_prefix, 
+        resolution = resolution, experiment_name = experiment_name, 
+        remove_existing = remove_existing)
     return(RetVar)
 }
 
@@ -370,7 +397,24 @@ CreateBrick_from_mcool <- function(Brick, mcool, binsize = NULL,
 #' A parameter specifying the name of an mcool file
 #'
 #' @return A named vector listing all possible resolutions in the file.
+#' 
+#' @examples
+#' 
+#' \dontrun{
+#' require(curl)
+#' out_dir <- file.path(tempdir(),"mcool_test_dir")
+#' dir.create(path = out_dir)
+#' 
+#' curl_download(url = paste("https://data.4dnucleome.org/",
+#' "files-processed/4DNFI7JNCNFB/",
+#' "@@download/4DNFI7JNCNFB.mcool", sep = ""),
+#' destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 #'
+#' mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+#' 
+#' Brick_list_mcool_resolutions(mcool)
+#'
+#' }
 Brick_list_mcool_resolutions <- function(mcool){
     return(mcool_list_resolutions(mcool = mcool))
 }
@@ -407,9 +451,9 @@ Brick_list_mcool_normalisations <- function(names.only = FALSE){
 #'
 #' @inheritParams Brick_load_data_from_mcool
 #'
-#' @param norm.factor \strong{Required}.
+#' @param norm_factor \strong{Required}.
 #' The normalization factor to use for normalization from an mcool file.
-#' norm.factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+#' norm_factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
 #' "Vanilla-coverage", "Vanilla-coverage-square-root".
 #' 
 #' @return A boolean vector of length 1
@@ -419,23 +463,25 @@ Brick_list_mcool_normalisations <- function(names.only = FALSE){
 #' \dontrun{
 #'
 #' require(curl)
-#' curl_download(url = paste("https://data.4dnucleome.org/"
-#' "files-processed/4DNFI7JNCNFB/"
-#' "@@download/4DNFI7JNCNFB.mcool",sep = ""),
-#' destfile = "./H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+#' out_dir <- file.path(tempdir(), "mcool_test_dir")
+#' dir.create(path = out_dir)
+#' curl_download(url = paste("https://data.4dnucleome.org/",
+#' "files-processed/4DNFI7JNCNFB/",
+#' "@@download/4DNFI7JNCNFB.mcool", sep = ""),
+#' destfile = file.path(out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 #'
-#' mcool <- "./H1-hESC-HiC-4DNFI7JNCNFB.mcool"
+#' mcool <- file.path(out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 #' Brick_mcool_normalisation_exists(mcool = mcool,
-#' norm.factor = "Iterative-Correction",
-#' binsize = 10000)
+#' norm_factor = "Iterative-Correction",
+#' resolution = 10000)
 #'
 #' }
 #'
-Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
-    binsize = NULL){
+Brick_mcool_normalisation_exists <- function(mcool, norm_factor = NULL,
+    resolution = NULL){
     Reference.object <- GenomicMatrix$new()
     Norm.factors <- Brick_list_mcool_normalisations()
-    Norm.factor <- Norm.factors[norm.factor]
+    Norm.factor <- Norm.factors[norm_factor]
     if(length(Norm.factor)!= 1){
         stop("Please check the available norm factors with ",
             "Brick_list_mcool_normalisations.\n")
@@ -449,21 +495,23 @@ Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
         version = mcool.version)
     Bintable.group <- Bintable.keys[1]
     resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
-    if(!is.null(resolutions) & is.null(binsize)){
-        stop("binsize must be provided when different resolutions are present",
+    if(!is.null(resolutions) & is.null(resolution)){
+        stop("resolution must be provided when",
+            " different resolutions are present",
             " in an mcool file.\n")
     }
-    if(!is.null(resolutions) & !is.null(binsize)){
-        if(!(as.character(as.integer(binsize)) %in% resolutions)){
-            stop("binsize not found in mcool file. ",
-                "Please check available binsizes ",
-                "with Brick_list_mcool_resolutions.\n")            
+    resolution <- .format_resolution(resolution)
+    if(!is.null(resolutions) & !is.null(resolution)){
+        if(!(resolution %in% resolutions)){
+            stop("resolution not found in mcool file.",
+                " Please check available resolutions",
+                " with Brick_list_mcool_resolutions.\n")
         }
     }
     if(!is.null(resolutions)){
         Bintable.group.path <- Create_Path(
             c(Reference.object$mcool.resolutions.name,
-                as.character(as.integer(binsize)),Bintable.group)) 
+                resolution,Bintable.group)) 
     }else{
         Bintable.group.path <- Create_Path(Bintable.group)
     }
@@ -480,8 +528,11 @@ Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
 #' Brick it is associated to.
 #'
 #' @param Brick \strong{Required}.
-#' A string specifying the path to the Brick store created with CreateBrick.
+#' A string specifying the path to the Brick store created with 
+#' Create_many_Brick.
 #'
+#' @inheritParams Brick_add_ranges
+#' 
 #' @return A three column data.frame containing chromosomes, nrows and length.
 #'
 #' chromosomes corresponds to all chromosomes in the provided bintable.
@@ -493,13 +544,31 @@ Brick_mcool_normalisation_exists <- function(mcool, norm.factor = NULL,
 #' chromosome (max value for that chromosome in the bintable).
 #'
 #' @examples
-#' Brick.file = system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_chrominfo(Brick = Brick.file)
-Brick_get_chrominfo <- function(Brick){
+#' 
+#' Bintable_path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "HiCBricks_chrominfo_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable_path, 
+#' bin_delim=" ", remove_existing=TRUE, output_directory = out_dir, 
+#' file_prefix = "HiCBricks_vignette_test", resolution = 100000,
+#' experiment_name = "HiCBricks vignette test")
+#' 
+#' Brick_get_chrominfo(Brick = My_BrickContainer, resolution = 100000)
+#' 
+Brick_get_chrominfo <- function(Brick, resolution = NA){
     Reference.object <- GenomicMatrix$new()
+    configuration_null_check(resolution, "resolution")
+    configuration_na_check(resolution, "resolution")
+    configuration_length_check(resolution, "resolution", 1)
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
+        resolution = resolution)[1]
     Dataset <- ._Brick_Get_Something_(
         Group.path = Reference.object$hdf.metadata.root,
-        Brick = Brick, Name = Reference.object$metadata.chrom.dataset,
+        Brick = Brick_filepath, Name = Reference.object$metadata.chrom.dataset,
         return.what = "data")
     return(Dataset)
 }
@@ -508,23 +577,23 @@ Brick_get_chrominfo <- function(Brick){
 #'
 #' `Brick_make_ranges` creates a GRanges object from the provided arguments
 #' 
-#' @param Chrom \strong{Required}.
+#' @param chrom \strong{Required}.
 #' A 1 dimensional character vector of size N specifying the chromosomes in the
 #' ranges.
 #'
-#' @param Start \strong{Required}.
+#' @param start \strong{Required}.
 #' A 1 dimensional numeric vector of size N specifying the start positions in
 #' the ranges.
 #'
-#' @param End \strong{Required}.
+#' @param end \strong{Required}.
 #' A 1 dimensional numeric vector of size N specifying the end positions in
 #' the ranges. Must be less than Start.
 #'
-#' @param Strand \strong{Optional}.
+#' @param strand \strong{Optional}.
 #' A 1 dimensional character vector of size N specifying the strand of the
 #' ranges. If not provided, this will be set to the default *.
 #'
-#' @param Names \strong{Optional}.
+#' @param names \strong{Optional}.
 #' A 1 dimensional character vector of size N specifying the names of the
 #' ranges. If not provided, this will be set to the default chr:start:end.
 #'
@@ -535,23 +604,22 @@ Brick_get_chrominfo <- function(Brick){
 #' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 #' Start <- c(10000,20000,40000,50000,60000)
 #' End <- c(10001,20001,40001,50001,60001)
-#' Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
+#' Test_ranges <- Brick_make_ranges(chrom = Chrom, start = Start, end = End)
 #'
-Brick_make_ranges = function(Chrom, Start, End, Strand=NULL,
-    Names=NULL){
+Brick_make_ranges = function(chrom, start, end, strand = NA,
+    names = NA){
     Reference.object <- GenomicMatrix$new()
-
-    if(is.null(Names)){
-        Names<-paste(Chrom,as.integer(Start),as.integer(End),
-            sep=Reference.object$Ranges.separator)
+    if(length(names) == 0 | any(is.na(names)) | any(is.null(names))){
+        names <- paste(chrom, as.integer(start), as.integer(end),
+            sep = Reference.object$Ranges.separator)
     }
-    if(is.null(Strand)){
-        Strand<-rep("*",length(Chrom))
+    if(is.na(strand)){
+        strand<-rep("*", length(chrom))
     }
     Object<-GenomicRanges::GRanges(
-        seqnames=Rle(Chrom),
-        ranges=IRanges(Start,end=End,names=Names),
-        strand=Rle(strand( Strand )))
+        seqnames=Rle(chrom),
+        ranges=IRanges(start,end= end,names= names),
+        strand=Rle(strand(strand)))
     return(Object)
 }
 
@@ -574,76 +642,136 @@ Brick_make_ranges = function(Chrom, Start, End, Strand=NULL,
 #' @param rangekey \strong{Required}.
 #' The name to use for the ranges within the Brick store.
 #'
-#' @param remove.existing \strong{Optional}. TRUE
-#' Will remove an existing Ranges by the same name and introduce the new one.
-#'
+#' @param resolution \strong{Optional}. Default NA
+#' When an object of class BrickContainer is provided, resolution defines the 
+#' resolution on which the function is executed
+#' 
+#' @param all_resolutions \strong{Optional}. Default FALSE
+#' If resolution is not defined and all_resolutions is TRUE, the resolution 
+#' parameter will be ignored and the function is executed on all files listed 
+#' in the Brick container
+#' 
+#' @param num_cpus \strong{Optional}. Default 1
+#' When an object of class BrickContainer is provided, num_cpus defines the
+#' maximum number of parallel jobs that will be run.
+#' 
 #' @inheritParams Brick_get_chrominfo
 #'
 #' @return Returns TRUE if completed successfully.
 #'
 #' @examples
-#' Bintable.path <- system.file("extdata",
-#' "Bintable_40kb.txt", package = "HiCBricks")
-#' Chromosomes <- "chr19"
-#' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-#' remove.existing = TRUE)
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "add_ranges_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
 #'
 #' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
 #' Start <- c(10000,20000,40000,50000,60000)
 #' End <- c(10001,20001,40001,50001,60001)
-#' Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
-#' Brick_add_ranges(Brick = Path_to_cached_file, ranges = Test_ranges,
-#' rangekey = "test_ranges")
+#' Test_ranges <- Brick_make_ranges(chrom = Chrom, start = Start, end = End)
+#' Brick_add_ranges(Brick = My_BrickContainer, ranges = Test_ranges,
+#' rangekey = "test_ranges", all_resolutions = TRUE)
 #'
-#' \dontrun{
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Chrom <- c("chrS","chrS","chrS","chrS","chrS")
-#' Start <- c(10000,20000,40000,50000,60000)
-#' End <- c(10001,20001,40001,50001,60001)
-#' Test_ranges <- Brick_make_ranges(Chrom = Chrom, Start = Start, End = End)
-#' Brick_add_ranges(Brick = Brick.file, ranges = Test_ranges,
-#' rangekey = "test_ranges", remove.existing = TRUE)
-#'
-#' }
-#'
-Brick_add_ranges = function(Brick, ranges, rangekey,
-    remove.existing = TRUE){
+Brick_add_ranges = function(Brick, ranges, rangekey, resolution = NA,
+    all_resolutions = FALSE, num_cpus = 1){
     Reference.object <- GenomicMatrix$new()
     if(!(class(ranges) %in% "GRanges") | ("list" %in% class(ranges))){
         stop("Object of class Ranges expected")
     }
-    Ranges.df <- as.data.frame(ranges)
-    Which.factor <- which(vapply(seq_len(ncol(Ranges.df)), function(x){
-            is.factor(Ranges.df[,x])
-        }, TRUE))
-    Ranges.df[,Which.factor] <- vapply(Which.factor,function(x){
-        as.character(Ranges.df[,x])
-    },rep("a",nrow(Ranges.df)))
-    if(Brick_rangekey_exists(Brick = Brick, rangekey = rangekey)){
-        # if(!remove.existing){
-            stop("rangekey already exists! Cannot proceed further! ",
-                "Please read the documentation to understand Why.\n")
-        # }
-    }
-    Metadata.Cols <- names(Ranges.df)[c(4:ncol(Ranges.df))]
-    Metadata.list <- lapply(Metadata.Cols,function(x){
-        if(is.factor(Ranges.df[,x])){
-            as.character(Ranges.df[,x])
-        }else{
-            Ranges.df[,x]
-        }
-    })
-    names(Metadata.list) <- Metadata.Cols
-    Ranges.df.coords <- Ranges.df[,c(1,2,3)]
-    colnames(Ranges.df.coords) <- Reference.object$NonStrandedColNames
-    ._Brick_Add_Ranges_(
-        Group.path = Create_Path(c(Reference.object$hdf.ranges.root,rangekey)),
-        Brick = Brick, ranges.df = Ranges.df.coords, name = rangekey,
+    BrickContainer_resolution_check(resolution, all_resolutions)
+    configuration_length_check(rangekey, "rangekey", 1)
+    .check_if_rangekey_exists_and_do_something(Brick, rangekey, 
+        issue_stop = TRUE, 
+        resolution = resolution,
+        all_resolutions = all_resolutions,
+        message = paste("rangekey already exists!",
+            "Unable to overwrite existing rangekeys!"))
+    Brick_paths <- BrickContainer_get_path_to_file(Brick = Brick,
+        resolution = resolution)
+    ranges_list <- .prepare_ranges_df_for_add(ranges)
+    Ranges.df.coords <- ranges_list[["ranges"]]
+    Metadata.list <- ranges_list[["metadata"]]
+    Param <- .get_instance_biocparallel(workers = num_cpus)
+    bplapply(Brick_paths, function(Brick_path){
+        ._Brick_Add_Ranges_(Brick = Brick_path,
+        Group.path = Create_Path(c(Reference.object$hdf.ranges.root,
+            rangekey)),
+        ranges.df = Ranges.df.coords,
+        name = rangekey,
         mcol.list = Metadata.list)
+    }, BPPARAM = Param)
     return(TRUE)
 }
+
+#' List the matrix pairs present in the Brick store.
+#'
+#' `Brick_list_matrices` will list all chromosomal pair matrices from the 
+#' Brick store, with their associated filename, value range, done status 
+#' and sparse
+#'
+#' @inheritParams Brick_get_chrominfo
+#' @inheritParams Brick_load_matrix
+#' @inheritParams Brick_add_ranges
+#'
+#' @return Returns a data.frame object with columns chr1, chr2 corresponding
+#' to chromosome pairs, and the associated attributes. filename corresponds to
+#' the name of the file that was loaded for the pair. min and max specify the
+#' minimum and maximum values in the matrix, done is a logical value
+#' specifying if a matrix has been loaded and sparsity specifies if a matrix
+#' is defined as a sparse matrix.
+#'
+#' @examples
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_matrices_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Brick_list_matrices(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
+#'
+Brick_list_matrices = function(Brick, chr1 = NA, chr2 = NA, resolution = NA, 
+    all_resolutions = FALSE){
+    Reference.object <- GenomicMatrix$new()
+    configuration_na_check(chr1, "chr1")
+    configuration_na_check(chr2, "chr2")
+    BrickContainer_resolution_check(resolution, all_resolutions)
+    Brick_filepaths <- BrickContainer_list_files(Brick = Brick, 
+    chr1 = chr1, chr2 = chr2, resolution = resolution)
+    Colnames <- Reference.object$matrices.chrom.attributes
+    chr1.list <- lapply(seq_len(nrow(Brick_filepaths)), function(i){
+        Row <- Brick_filepaths[i,]
+        Values <- GetAttributes(
+            Path = Create_Path(
+                c(Reference.object$hdf.matrices.root,
+                    Row$chrom1,
+                    Row$chrom2)),
+            File = Row$filepaths,
+            Attributes = Colnames,
+            on = "group")
+        temp.df <- cbind(data.frame("chr1" = Row$chrom1, 
+            "chr2" = Row$chrom2, resolution = Row$resolution), Values)
+    })
+    Matrix.list.df <- do.call(rbind,chr1.list)
+    rownames(Matrix.list.df) <- NULL
+    return(Matrix.list.df)
+}
+
 
 #' List the ranges tables stored within the Brick.
 #'
@@ -653,17 +781,33 @@ Brick_add_ranges = function(Brick, ranges, rangekey,
 #' of all ranges currently present in the file.
 #'
 #' @inheritParams Brick_get_chrominfo
+#' @inheritParams Brick_add_ranges
 #'
 #' @examples
 #'
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_list_rangekeys(Brick = Brick.file)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_rangekeys_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Brick_list_rangekeys(Brick = My_BrickContainer, resolution = 100000)
 #'
-Brick_list_rangekeys = function(Brick){
+Brick_list_rangekeys = function(Brick, resolution = NA, 
+    all_resolutions = FALSE){
     Reference.object <- GenomicMatrix$new()
+    BrickContainer_resolution_check(resolution, all_resolutions)
+    Brick_filepaths <- BrickContainer_get_path_to_file(Brick,
+    resolution = resolution)
     Handler <- ._Brick_Get_Something_(
         Group.path = Create_Path(Reference.object$hdf.ranges.root),
-        Brick = Brick, return.what = "group_handle")
+        Brick = Brick_filepaths[1], return.what = "group_handle")
     GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)[,"name"]
     return(GroupList)
 }
@@ -677,16 +821,31 @@ Brick_list_rangekeys = function(Brick){
 #' A string specifying the name of the ranges to check for.
 #'
 #' @inheritParams Brick_get_chrominfo
+#' @inheritParams Brick_list_rangekeys
 #'
 #' @return A logical vector of length 1 with either TRUE or FALSE values.
 #'
 #' @examples
 #'
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_rangekey_exists(Brick = Brick.file, rangekey = "Bintable")
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_rangekeys_exists_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' Brick_rangekey_exists(Brick = My_BrickContainer, rangekey = "Bintable",
+#' resolution = 100000)
 #'
-Brick_rangekey_exists = function(Brick, rangekey){
-    Keys <- Brick_list_rangekeys(Brick = Brick)
+Brick_rangekey_exists = function(Brick, rangekey, resolution = NA, 
+    all_resolutions = FALSE){
+    Keys <- Brick_list_rangekeys(Brick = Brick, 
+        resolution = resolution, 
+        all_resolutions = all_resolutions)
     return(rangekey %in% Keys)
 }
 
@@ -707,80 +866,41 @@ Brick_rangekey_exists = function(Brick, rangekey){
 #' associated metadata column name.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_list_ranges_mcols(Brick = Brick.file, rangekey = "test_ranges")
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_ranges_mcols_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Brick_list_ranges_mcols(Brick = My_BrickContainer, rangekey = "Bintable",
+#' resolution = 100000)
 #'
-Brick_list_ranges_mcols = function(Brick, rangekey = NULL){
+Brick_list_ranges_mcols = function(Brick, rangekey = NULL, resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    RangeKeys <- Brick_list_rangekeys(Brick = Brick)
+    configuration_na_check(resolution, "resolution")
+    configuration_length_check(resolution, "resolution", 1)
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick,
+        resolution = resolution)[1]
+    RangeKeys <- Brick_list_rangekeys(Brick = Brick, resolution = resolution)
     if(!is.null(rangekey)){
-        if(!Brick_rangekey_exists(Brick = Brick, rangekey = rangekey)){
-            stop("rangekey not found!")
-        }
+        .check_if_rangekey_not_exists_and_do_something(Brick = Brick, 
+            rangekey = rangekey,
+            issue_stop = TRUE,
+            resolution = resolution,
+            message = paste(rangekey,"does not exist! Unable to retrieve",
+                "metadata information for non-existent rangekey"))
         RangeKeys <- RangeKeys[RangeKeys %in% rangekey]
     }
-    mcol.list <- lapply(RangeKeys,function(x){
-        Handler <- ._Brick_Get_Something_(
-            Group.path = Create_Path(c(Reference.object$hdf.ranges.root, x)),
-            Brick = Brick, return.what = "group_handle")
-        GroupList <- h5ls(Handler,
-            datasetinfo = FALSE,
-            recursive = FALSE)[,"name"]
-        H5Gclose(Handler)
-        data.frame(rangekey = x,
-            m.col = GroupList)
-    })
-    mcol.df <- do.call(rbind,mcol.list)
-    hdf.ranges.protected.names <- Reference.object$hdf.ranges.protected.names()
-    mcol.df.filter <- !(mcol.df$m.col %in% hdf.ranges.protected.names)
-    mcol.df <- mcol.df[mcol.df.filter,]
-    if(nrow(mcol.df)==0){
-        mcol.df <- NA
-    }
+    mcol.df <- .prepare_ranges_metadata_mcols(Brick = Brick_filepath, 
+        rangekeys = RangeKeys)
     return(mcol.df)
-}
-
-#' List the matrix pairs present in the Brick store.
-#'
-#' `Brick_list_matrices` will list all chromosomal pair matrices from the 
-#' Brick store, with their associated filename, value range, done status 
-#' and sparse
-#'
-#' @inheritParams Brick_get_chrominfo
-#'
-#' @return Returns a data.frame object with columns chr1, chr2 corresponding
-#' to chromosome pairs, and the associated attributes. filename corresponds to
-#' the name of the file that was loaded for the pair. min and max specify the
-#' minimum and maximum values in the matrix, done is a logical value
-#' specifying if a matrix has been loaded and sparsity specifies if a matrix
-#' is defined as a sparse matrix.
-#'
-#' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_list_matrices(Brick = Brick.file)
-#'
-Brick_list_matrices = function(Brick){
-    Reference.object <- GenomicMatrix$new()
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
-    chr1.list <- lapply(ChromInfo[,"chr"], function(chr1){
-        chr2.list <- lapply(ChromInfo[,"chr"], function(chr2){
-            Colnames <- Reference.object$matrices.chrom.attributes
-            Values <- GetAttributes(
-                Path = Create_Path(
-                    c(Reference.object$hdf.matrices.root,
-                        chr1,
-                        chr2)
-                    ),
-                File = Brick,
-                Attributes = Colnames,
-                on = "group")
-            temp.df <- cbind(data.frame("chr1" = chr1,"chr2" = chr2),Values)
-        })
-        chr2.df <- do.call(rbind,chr2.list)
-    })
-    Matrix.list.df <- do.call(rbind,chr1.list)
-    rownames(Matrix.list.df) <- NULL
-    return(Matrix.list.df)
 }
 
 #' Fetch the ranges associated to a rangekey or chromosome.
@@ -806,30 +926,45 @@ Brick_list_matrices = function(Brick){
 #' may have been present in the Ranges object.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_ranges(Brick = Brick.file, chr = "chr19", rangekey = "Bintable")
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_get_ranges_test")
+#' 
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Brick_get_ranges(Brick = My_BrickContainer, chr = "chr2L", 
+#' rangekey = "Bintable", resolution = 100000)
 #'
-Brick_get_ranges = function(Brick, chr = NULL, rangekey){
+Brick_get_ranges = function(Brick = NA, chr = NA, rangekey = NA, 
+    resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    transformlist <- list("strand" = strand, "seqlevels" = seqlevels,
-        "seqlengths" = seqlengths, "width" = width)
-    if(is.null(rangekey) | is.null(Brick)){
-        stop("rangekey and Brick cannot remain empty!\n")
-    }
-    if(!Brick_rangekey_exists(Brick = Brick, rangekey = rangekey)){
+    BrickContainer_class_check(Brick)
+    configuration_na_check(resolution, "resolution")
+    configuration_length_check(resolution, "resolution", 1)
+    configuration_length_check(chr, "chr", 1)
+    configuration_na_check(rangekey, "rangekey")
+    configuration_length_check(rangekey, "rangekey", 1)
+    if(!Brick_rangekey_exists(Brick = Brick, rangekey = rangekey,
+        resolution = resolution)){
         stop("rangekey not found!")
     }
-    if(length(chr)  > 1){
-        stop("chr is expected to be of length 1!\n")  
-    }
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick, 
+        resolution = resolution)[1]
     Start <- NULL
     Stride <- NULL
     Count <- NULL
     Index <- NULL
-    if(!is.null(chr)){
+    if(!is.na(chr)){
         chromosomes <- ._Brick_Get_Something_(Group.path = Create_Path(
             c(Reference.object$hdf.ranges.root, rangekey)),
-        Brick = Brick,
+        Brick = Brick_filepath,
         Name = Reference.object$hdf.ranges.chr.name,
         return.what = "data")
         if(any(!(chr %in% chromosomes))){
@@ -837,17 +972,13 @@ Brick_get_ranges = function(Brick, chr = NULL, rangekey){
         }
         Starts <- ._Brick_Get_Something_(
             Group.path = Create_Path(
-                c(Reference.object$hdf.ranges.root,
-                    rangekey)
-                ),
-        Brick = Brick,
-        Name = Reference.object$hdf.ranges.offset.name,
-        return.what = "data")
+                c(Reference.object$hdf.ranges.root, rangekey)),
+            Brick = Brick_filepath,
+            Name = Reference.object$hdf.ranges.offset.name,
+            return.what = "data")
         Lengths <- ._Brick_Get_Something_(Group.path = Create_Path(
-            c(Reference.object$hdf.ranges.root,
-                rangekey)
-            ),
-        Brick = Brick,
+            c(Reference.object$hdf.ranges.root, rangekey)),
+        Brick = Brick_filepath,
         Name = Reference.object$hdf.ranges.lengths.name,
         return.what = "data")
         Which.one <- chromosomes == chr
@@ -857,30 +988,42 @@ Brick_get_ranges = function(Brick, chr = NULL, rangekey){
     }
     Dataset <- ._Brick_Get_Something_(Group.path = Create_Path(
         c(Reference.object$hdf.ranges.root, rangekey)),
-        Brick = Brick, Name = Reference.object$hdf.ranges.dataset.name,
+        Brick = Brick_filepath, 
+        Name = Reference.object$hdf.ranges.dataset.name,
         Start = Start, Stride = Stride,
         Count = Count, return.what = "data")
-    Dataset <- Brick_make_ranges(Chrom = Dataset[,'chr'],
-        Start = Dataset[,'start'], End = Dataset[,'end'])
-    MCols <- Brick_list_ranges_mcols(Brick = Brick, rangekey = rangekey)
+    Dataset <- Brick_make_ranges(chrom = Dataset[,'chr'],
+        start = Dataset[,'start'], end = Dataset[,'end'])
+    MCols <- Brick_list_ranges_mcols(Brick = Brick, rangekey = rangekey,
+        resolution = resolution)
     if(is.data.frame(MCols)){
         Fltr <- MCols$m.col %in%
         Reference.object$genomic.ranges.protected.names
-        GRangesCols <- MCols[Fltr,]
-        MCols.col <- as.character(MCols[!Fltr,"m.col"])
+        GRangesCols <- MCols$m.col[Fltr]
+        MCols.col <- MCols$m.col[!Fltr]
         m.start <- Start[1]
         m.stride <- Stride[1]
         m.count <- Count[1]
         if(length(GRangesCols) > 0){
-            genomic.ranges.FUN.names <- names(transformlist)
+            genomic.ranges.FUN.names <- c("strand", "seqlevels", 
+                "seqlengths", "width")
             FUN.names <- genomic.ranges.FUN.names[genomic.ranges.FUN.names
             %in% GRangesCols]
-            for(x in FUN.names){
-                FUN <- transformlist[[x]]
-                FUN(Dataset) <- ._Brick_Get_Something_(Group.path = Create_Path(
+            for(FUN_name in FUN.names){
+                a_value <- ._Brick_Get_Something_(
+                    Group.path = Create_Path(
                     c(Reference.object$hdf.ranges.root, rangekey)),
-                Brick = Brick, Name = x, Start = m.start, Stride = m.stride,
-                Count = m.count, return.what = "data")
+                Brick = Brick_filepath, Name = FUN_name, Start = m.start, 
+                Stride = m.stride, Count = m.count, return.what = "data")
+                if(FUN_name == "strand"){
+                    strand(Dataset) <- a_value
+                }else if(FUN_name == "seqlevels"){
+                    seqlevels(Dataset) <- a_value
+                }else if(FUN_name == "seqlengths"){
+                    seqlengths(Dataset) <- a_value
+                }else if(FUN_name == "width"){
+                    width(Dataset) <- a_value
+                }
             }
         }
         if(length(MCols.col) > 0){
@@ -888,8 +1031,8 @@ Brick_get_ranges = function(Brick, chr = NULL, rangekey){
                 Dataset <- ._Brick_Get_Something_(
                     Group.path = Create_Path(c(
                         Reference.object$hdf.ranges.root,
-                        rangekey)), Brick = Brick, Name = x,
-                    Start = m.start, Stride = m.stride,
+                        rangekey)), Brick = Brick_filepath,
+                    Name = x, Start = m.start, Stride = m.stride,
                     Count = m.count, return.what = "data")
                 DF <- DataFrame(Temp = Dataset)
                 colnames(DF) <- x
@@ -919,14 +1062,25 @@ Brick_get_ranges = function(Brick, chr = NULL, rangekey){
 #'
 #' @examples
 #'
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_bintable(Brick = Brick.file)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_get_bintable_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Brick_get_bintable(Brick = My_BrickContainer, resolution = 100000)
 #'
 #' @seealso Brick_get_ranges
-Brick_get_bintable = function(Brick, chr = NULL){
+Brick_get_bintable = function(Brick, chr = NA, resolution = NA){
     Reference.object <- GenomicMatrix$new()
     Table <- Brick_get_ranges(Brick = Brick, chr = chr,
-        rangekey = Reference.object$hdf.bintable.ranges.group)
+        rangekey = Reference.object$hdf.bintable.ranges.group,
+        resolution = resolution)
     return(Table)
 }
 
@@ -970,25 +1124,37 @@ Brick_get_bintable = function(Brick, chr = NULL){
 #' additional list accessor [[]] in place of the normal vector accessor [].
 #'
 #' @examples
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "fetch_range_index_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
 #'
-#' Chrom <- c("chr19","chr19")
+#' Chrom <- c("chr2L","chr2L")
 #' Start <- c(1,40000)
 #' End <- c(1000000,2000000)
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Test_Run <- Brick_fetch_range_index(Brick = Brick.file, chr = Chrom,
-#' start = Start, end = End)
+#'
+#' Test_Run <- Brick_fetch_range_index(Brick = My_BrickContainer, 
+#' chr = Chrom, start = Start, end = End, resolution = 100000)
 #' Test_Run$Indexes[[1]]
 #'
-Brick_fetch_range_index = function(Brick, chr, start,
-    end, names = NULL, type = "any"){
+Brick_fetch_range_index = function(Brick = NA, chr = NA, start = NA, 
+    end = NA, names = NA, resolution = NA, type = "any"){
     AllTypes<-c("any","within")
+    configuration_na_check(chr, "chr")
+    configuration_na_check(start, "start")
+    configuration_na_check(end, "end")
+    configuration_na_check(chr, "Brick")
     if( any(!(type %in% AllTypes)) ){
         stop("type takes one of two arguments: c(\"any\",\"within\")")
     }
-    if(is.null(chr) | is.null(start) | is.null(end) | is.null(Brick)){
-        stop("Chrom, start, end and Brick cannot be empty\n")
-    }
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
     if(any(!(chr %in% ChromInfo[,'chr']))){
         stop("Provided chr does not exist in chromosome list.\n")
     }
@@ -998,19 +1164,20 @@ Brick_fetch_range_index = function(Brick, chr, start,
             "definitions of character, numeric, numeric\n")
     }
     Unique.chromosomes <- unique(chr)
-    OverlapByChromosome.list <- lapply(Unique.chromosomes,function(cur.chr){
+    OverlapByChromosome.list <- lapply(Unique.chromosomes, function(cur.chr){
         Filter <- chr==cur.chr
         Cur.Chrom <- chr[Filter]
         Cur.Start <- start[Filter]
         Cur.end <- end[Filter]
         Cur.Names <- names[Filter]
-        SubjectRanges <- Brick_get_bintable(Brick = Brick, chr = cur.chr)
+        SubjectRanges <- Brick_get_bintable(Brick = Brick, chr = cur.chr,
+            resolution = resolution)
         if( any(!(Cur.end <= max(end(SubjectRanges)) &
             Cur.Start >= min(start(SubjectRanges)))) ){
             stop("Start or end is out of ranges for Bintable\n")
         }
-        QueryRanges <- Brick_make_ranges(Chrom=Cur.Chrom, Start=Cur.Start,
-            End=Cur.end, Names=Cur.Names)
+        QueryRanges <- Brick_make_ranges(chrom=Cur.Chrom, start=Cur.Start,
+            end=Cur.end, names=Cur.Names)
         elementMetadata(QueryRanges)[["Indexes"]] <- IntegerList(NA)
         HitsObject <- findOverlaps(SubjectRanges,QueryRanges,type=type)
         UniqueQueries <- seq_along(QueryRanges)
@@ -1056,23 +1223,23 @@ Brick_fetch_range_index = function(Brick, chr, start,
 #'
 #' @examples
 #'
-#' Coordinate <- "chr19:1:1000000"
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Test_Run <- Brick_return_region_position(Brick = Brick.file,
-#' region = Coordinate)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"),
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "region_position_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Coordinate <- "chr2L:1:1000000"
+#' 
+#' Test_Run <- Brick_return_region_position(Brick = My_BrickContainer,
+#' region = Coordinate, resolution = 100000)
 #'
-#' \dontrun{
-#'
-#' Coordinate <- c("chr19:1:1000000","chr19:40000:2000000")
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Test_Run <- Brick_return_region_position(Brick = Brick.file,
-#' region = Coordinate)
-#'
-#' This will generate an error because the module itself expects as input a
-#' vector of length 1.
-#'
-#' }
-Brick_return_region_position = function(Brick, region){
+Brick_return_region_position = function(Brick, region, resolution = NA){
     if(!is.character(region) | length(region) > 1){
         stop("region must be a character vector of length 1")
     }
@@ -1081,7 +1248,8 @@ Brick_return_region_position = function(Brick, region){
     region.start<-as.numeric(Coord.Split[[1]][2])
     region.stop<-as.numeric(Coord.Split[[1]][3])
     region.ranges<-Brick_fetch_range_index(Brick = Brick, chr=region.chr,
-        start=region.start, end=region.stop, type="within")
+        start=region.start, end=region.stop, resolution = resolution,
+        type="within")
     Vector.coordinates <- region.ranges$Indexes[[1]]
     return(Vector.coordinates)
 }
@@ -1098,31 +1266,27 @@ Brick_return_region_position = function(Brick, region){
 #' A character vector of length 1 specifying the chromosome corresponding to
 #' the columns of the matrix
 #'
-#' @param matrix.file \strong{Required}.
+#' @param matrix_file \strong{Required}.
 #' A character vector of length 1 specifying the name of the file to load as a
 #' matrix into the Brick store.
-#'
-#' @param exec \strong{Required}.
-#' A string specifying the program to use for reading the file. Use cat for txt
-#' files, for bz2 files use bzcat and for gz files zcat.
 #'
 #' @param delim \strong{Optional}. Default " "
 #' The delimiter of the matrix file.
 #'
-#' @param remove.prior \strong{Optional}. Default FALSE
-#' If a matrix was loaded before, it will not be replaced. Use remove.prior to
+#' @param remove_prior \strong{Optional}. Default FALSE
+#' If a matrix was loaded before, it will not be replaced. Use remove_prior to
 #' override and replace the existing matrix.
 #'
-#' @param num.rows \strong{Optional}. Default 2000
+#' @param num_rows \strong{Optional}. Default 2000
 #' Number of rows to read, in each chunk.
 #'
-#' @param is.sparse \strong{Optional}. Default FALSE
+#' @param is_sparse \strong{Optional}. Default FALSE
 #' If true, designates the matrix as being a sparse matrix, and computes the
 #' sparsity.index. The sparsity index measures the proportion of non-zero rows
 #' or columns at a certain distance from the diagonal (100) in cis interaction
 #' matrices.
 #'
-#' @param sparsity.bins \strong{Optional}. Default 100
+#' @param sparsity_bins \strong{Optional}. Default 100
 #' With regards to computing the sparsity.index, this parameter decides the
 #' number of bins to scan from the diagonal.
 #'
@@ -1130,63 +1294,74 @@ Brick_return_region_position = function(Brick, region){
 #'
 #' @examples
 #'
-#' Bintable.path <- system.file("extdata",
-#' "Bintable_40kb.txt", package = "HiCBricks")
-#' Chromosomes <- "chr19"
-#' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-#' remove.existing = TRUE)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_load_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
 #'
-#' Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
-#' Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
-#' write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
-#' row.names = FALSE, col.names = FALSE)
-#' Brick_load_matrix(Brick = Path_to_cached_file, chr1 = "chr19", 
-#' chr2 = "chr19", matrix.file = Matrix.file, delim = " ", exec = "cat",
-#' remove.prior = TRUE)
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
 #'
-Brick_load_matrix = function(Brick, chr1, chr2,
-    matrix.file, delim = " ", exec, remove.prior = FALSE,
-    num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
-
+Brick_load_matrix = function(Brick = NA, chr1 = NA, chr2 = NA, resolution = NA,
+    matrix_file = NA, delim = " ", remove_prior = FALSE, num_rows = 2000, 
+    is_sparse = FALSE, sparsity_bins = 100){
     Reference.object <- GenomicMatrix$new()
-    ListVars <- list(Brick = Brick, chr1 = chr1, chr2 = chr2,
-        matrix.file = matrix.file, is.sparse = is.sparse,
-        sparsity.bins = sparsity.bins, exec = exec, delim = delim,
-        distance = distance, remove.prior = remove.prior)
-    lapply(seq_along(ListVars),function(x){
-        if(length(ListVars[[x]]) > 1){
-            stop(names(ListVars[x]),"had length greater than 1.\n")
-        }
+    BrickContainer_class_check(Brick)
+    ListVars <- list(chr1 = chr1, chr2 = chr2, 
+        resolution = resolution, matrix_file = matrix_file, 
+        delim = delim, remove_prior = remove_prior, 
+        num_rows = num_rows, is_sparse = is_sparse, 
+        sparsity_bins = sparsity_bins)
+
+    lapply(seq_along(ListVars), function(x){
+        configuration_length_check(ListVars[[x]], names(ListVars[x]), 1)
     })
-    lapply(seq_along(ListVars[c("Brick","chr1","chr2","matrix.file","exec")]),
-        function(x){
-        if(is.null(ListVars[[x]])){
-            stop(names(ListVars[x]),"has no value.\n")
-        }
+    lapply(seq_along(ListVars), function(x){
+        configuration_na_check(ListVars[[x]], names(ListVars[x]))
     })
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
+    if(length(Brick_filepath) == 0){
+        stop("Did not find a Brick file corresponding to", chr1, chr2, 
+            " pair. Note that, chr2 position is expected to be greater",
+            " than or equal to than chr1 position in the chromosome list.",
+            " Please check the chromosome list using",
+            " BrickContainer_list_chromosomes")
+    }
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop("Provided chromosomes do not exist in the chrom table\n")
     }
     if(Brick_matrix_isdone(Brick = Brick, chr1 = chr1,
-        chr2 = chr2) && !remove.prior){
+        chr2 = chr2, resolution = resolution) && !remove_prior){
         stop("A matrix was preloaded before. ",
-            "Use remove.prior = TRUE to force value replacement\n")
+            "Use remove_prior = TRUE to force value replacement\n")
     }
-    Chrom.info.df <- Brick_get_chrominfo(Brick = Brick)
+    Chrom.info.df <- Brick_get_chrominfo(Brick = Brick, 
+        resolution = resolution)
     chr1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr1,"nrow"]
     chr2.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr2,"nrow"]
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root,chr1,chr2))
-    compute.sparsity <- FALSE
-    if(is.sparse && chr1 == chr2){
-        compute.sparsity <- TRUE
+    compute_sparsity <- FALSE
+    if(is_sparse && chr1 == chr2){
+        compute_sparsity <- TRUE
     }
-    RetVar <- ._ProcessMatrix_(Brick = Brick, Matrix.file = matrix.file,
-        delim = delim, Group.path = Group.path, exec = exec,
-        chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num.rows, 
-        is.sparse = is.sparse, compute.sparsity = compute.sparsity, 
-        sparsity.bins = sparsity.bins)
+    RetVar <- ._ProcessMatrix_(Brick = Brick_filepath, 
+        Matrix.file = matrix_file, delim = delim, Group.path = Group.path, 
+        chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num_rows, 
+        is.sparse = is_sparse, compute.sparsity = compute_sparsity, 
+        sparsity.bins = sparsity_bins)
     return(RetVar)
 }
 
@@ -1209,70 +1384,79 @@ Brick_load_matrix = function(Brick, chr1, chr2,
 #' ensures that only interactions upto a certain distance from the main
 #' diagonal will be loaded into the data structure.
 #'
-#' @param num.rows \strong{Optional}. Default 2000
+#' @param num_rows \strong{Optional}. Default 2000
 #' Number of rows to insert per write operation in the HDF file.
 #'
 #' @return Returns TRUE if all went well.
 #'
 #' @examples
 #'
-#' Bintable.path <- system.file("extdata",
-#' "Bintable_40kb.txt", package = "HiCBricks")
-#' Chromosomes <- "chr19"
-#' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-#' BinTable = Bintable.path, bin.delim = " ",
-#' Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-#' remove.existing = TRUE)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_load_dist_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
 #'
-#' Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
-#' Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
-#' write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
-#' row.names = FALSE, col.names = FALSE)
-#' Brick_load_cis_matrix_till_distance(Brick = Path_to_cached_file, 
-#' chr = "chr19", matrix.file = Matrix.file, delim = " ", 
-#' distance = 200, remove.prior = TRUE)
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_cis_matrix_till_distance(Brick = My_BrickContainer, 
+#' chr = "chr2L", resolution = 100000, matrix_file = Matrix_file, 
+#' delim = " ", distance = 30, remove_prior = TRUE)
 #'
-Brick_load_cis_matrix_till_distance = function(Brick, chr,
-    matrix.file, delim = " ", distance, remove.prior = FALSE,
-    num.rows = 2000, is.sparse = FALSE, sparsity.bins = 100){
+Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA, 
+    resolution = NA, matrix_file, delim = " ", distance, remove_prior = FALSE,
+    num_rows = 2000, is_sparse = FALSE, sparsity_bins = 100){
 
     Reference.object <- GenomicMatrix$new()
-    ListVars <- list(Brick = Brick, chr = chr, matrix.file = matrix.file,
-        is.sparse = is.sparse, sparsity.bins = sparsity.bins, delim = delim,
-        distance = distance, remove.prior = remove.prior)
-    lapply(seq_along(ListVars),function(x){
-        if(length(ListVars[[x]]) > 1){
-            stop(names(ListVars[x]),"had length greater than 1.\n")
-        }
+    ListVars <- list(chr = chr, resolution = resolution, 
+        matrix_file = matrix_file, delim = delim, distance = distance, 
+        remove_prior = remove_prior, num_rows = num_rows, 
+        is_sparse = is_sparse, sparsity_bins = sparsity_bins)
+    lapply(seq_along(ListVars), function(x){
+        configuration_length_check(ListVars[[x]], names(ListVars[x]), 1)
     })
-    lapply(seq_along(ListVars[c("Brick","chr","matrix.file","distance")]),
-        function(x){
-        if(is.null(ListVars[[x]])){
-            stop(names(ListVars[x]),"has no value.\n")
-        }
+    lapply(seq_along(ListVars), function(x){
+        configuration_na_check(ListVars[[x]], names(ListVars[x]))
     })
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick, 
+        chr1 = chr, chr2 = chr, resolution = resolution)
+    if(length(Brick_filepath) == 0){
+        stop("Did not find a Brick file corresponding to", chr, chr, 
+            " pair. Note that, chr2 position is expected to be greater",
+            " than or equal to than chr1 position in the chromosome list.",
+            " Please check the chromosome list using",
+            " BrickContainer_list_chromosomes")
+    }
     if(!Brick_matrix_exists(Brick = Brick, chr1 = chr,
-        chr2 = chr)){
+        chr2 = chr, resolution = resolution)){
         stop("Provided chromosomes do not exist in the chrom table\n")
     }
     if(Brick_matrix_isdone(Brick = Brick, chr1 = chr,
-        chr2 = chr) && !remove.prior){
-        stop("A matrix was preloaded before. Use remove.prior = TRUE to ",
+        chr2 = chr, resolution = resolution) && !remove_prior){
+        stop("A matrix was preloaded before. Use remove_prior = TRUE to ",
             "force value replacement\n")
     }
-    Chrom.info.df <- Brick_get_chrominfo(Brick = Brick)
+    Chrom.info.df <- Brick_get_chrominfo(Brick = Brick, 
+        resolution = resolution)
     chr1.len <- Chrom.info.df[Chrom.info.df[,"chr"]==chr,"nrow"]
     chr2.len <- chr1.len
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root,chr,chr))
-    compute.sparsity <- FALSE
-    if(is.sparse){
-        compute.sparsity <- TRUE
+    compute_sparsity <- FALSE
+    if(is_sparse){
+        compute_sparsity <- TRUE
     }
-    RetVar <- ._Process_matrix_by_distance(Brick = Brick,
-        Matrix.file = matrix.file, delim = delim, Group.path = Group.path,
-        chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num.rows,
-        distance = distance, is.sparse = is.sparse,
-        compute.sparsity = compute.sparsity, sparsity.bins = sparsity.bins)
+    RetVar <- ._Process_matrix_by_distance(Brick = Brick_filepath,
+        Matrix.file = matrix_file, delim = delim, Group.path = Group.path,
+        chr1.len = chr1.len, chr2.len = chr2.len, num.rows = num_rows,
+        distance = distance, is.sparse = is_sparse,
+        compute.sparsity = compute_sparsity, sparsity.bins = sparsity_bins)
     return(RetVar)
 }
 
@@ -1290,22 +1474,22 @@ Brick_load_cis_matrix_till_distance = function(Brick, chr,
 #' @param mcool \strong{Required}.
 #' Path to an mcool file.
 #'
-#' @param dont.look.for.chr2 \strong{Required}.
+#' @param dont_look_for_chr2 \strong{Required}.
 #' At startup, the function will attempt to search for the first occurence
 #' of a chr2 contact value. This is done to avoid the reading of all chr1
 #' values for every chunk processed. If chr1 and chr2 are equivalent, consider
 #' setting it to FALSE.
 #'
-#' @param norm.factor \strong{Optional}. Default "Iterative-Correction".
+#' @param norm_factor \strong{Optional}. Default "Iterative-Correction".
 #' The normalization factor to use for normalization from an mcool file.
-#' norm.factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+#' norm_factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
 #' "Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
 #' the function will load only counts from the mcool file.
 #'
-#' @param cooler.batch.size \strong{Optional}. Default 1000000.
+#' @param cooler_batch_size \strong{Optional}. Default 1000000.
 #' The number of values to read per iteration through a mcool file.
 #'
-#' @param matrix.chunk \strong{Optional}. Default 2000.
+#' @param matrix_chunk \strong{Optional}. Default 2000.
 #' The nxn matrix square to fill per iteration in a mcool file.
 #'
 #' @return Returns TRUE if all went well.
@@ -1315,25 +1499,26 @@ Brick_load_cis_matrix_till_distance = function(Brick, chr,
 #' \dontrun{
 #'
 #' require(curl)
-#' curl_download(url = paste("https://data.4dnucleome.org/"
-#' "files-processed/4DNFI7JNCNFB/"
-#' "@@download/4DNFI7JNCNFB.mcool",sep = ""),
-#' destfile = file.path(tempdir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
+#' out_dir <- file.path(tempdir(),"mcool_load_test")
+#' dir.create(path = out_dir)
+#' curl_download(url = paste("https://data.4dnucleome.org/",
+#' "files-processed/4DNFI7JNCNFB/",
+#' "@@download/4DNFI7JNCNFB.mcool", sep = ""),
+#' destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 #'
-#' Output.brick <- file.path(tempdir(), 
-#'  "H1-hESC-HiC-4DNFI7JNCNFB-10000-ICE-normalised-chr1.brick")
-#' mcool <- file.path(tempdir(),"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
-#'
-#' CreateBrick_from_mcool(Brick = Output.brick,
+#' mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
+#' 
+#' My_BrickContainer <- CreateBrick_from_mcool(output_directory = out_dir,
+#' file_prefix = "Test",
 #' mcool = mcool,
-#' binsize = 10000,
-#' chrs = "chr1")
+#' resolution = 10000,
+#' experiment_name = "A random 4DN dataset")
 #'
-#' Brick_load_data_from_mcool(Brick = Output.brick, mcool = mcool,
-#' chr1 = "chr1", chr2 = "chr1", binsize = 10000,
-#' cooler.batch.size = 1000000, matrix.chunk = 2000,
-#' dont.look.for.chr2 = TRUE, remove.prior = TRUE,
-#' norm.factor = "Iterative-Correction")
+#' Brick_load_data_from_mcool(Brick = My_BrickContainer, mcool = mcool,
+#' chr1 = "chr1", chr2 = "chr1", resolution = 10000,
+#' cooler_batch_size = 1000000, matrix_chunk = 2000,
+#' dont_look_for_chr2 = TRUE, remove_prior = TRUE,
+#' norm_factor = "Iterative-Correction")
 #'
 #' }
 #'
@@ -1343,10 +1528,10 @@ Brick_load_cis_matrix_till_distance = function(Brick, chr,
 #' resolutions in an mcool file, \code{\link{Brick_list_mcool_normalisations}}
 #' to list available normalisation factors in the mcool file.
 #'
-Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
-    chr2, binsize = NULL, cooler.batch.size = 1000000,
-    matrix.chunk = 2000, dont.look.for.chr2 = FALSE, 
-    remove.prior = FALSE, norm.factor = "Iterative-Correction"){
+Brick_load_data_from_mcool <- function(Brick, mcool, chr1 = NULL,
+    chr2 = NULL, resolution = NULL, cooler_batch_size = 1000000,
+    matrix_chunk = 2000, dont_look_for_chr2 = FALSE, 
+    remove_prior = FALSE, norm_factor = "Iterative-Correction"){
     Reference.object <- GenomicMatrix$new()
     if(is.null(chr1) | is.null(chr2)){
         stop("chr1, chr2 cannot be NULL.\n")
@@ -1354,52 +1539,63 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
     if(length(chr1) != length(chr2) | length(chr1) != 1){
         stop("chr1, chr2 are expected to be of length 1.\n")  
     }
+    configuration_na_check(resolution, "resolution")
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
+    if(length(Brick_filepath) == 0){
+        stop("Did not find a Brick file corresponding to", chr1, chr2, 
+            " pair. Note that, chr2 position is expected to be greater",
+            " than or equal to than chr1 position in the chromosome list",
+            " and the chromosome pairs must exists for a particular",
+            " resolution. Please check the chromosome list using",
+            " BrickContainer_list_chromosomes and the resolutions using",
+            " BrickContainer_list_resolutions")
+    }
     if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1,
-        chr2 = chr2)){
+        chr2 = chr2, resolution = resolution)){
         stop("Provided chromosomes do not exist in the chrominfo table\n")
     }
     if(Brick_matrix_isdone(Brick = Brick, chr1 = chr1,
-        chr2 = chr2) & !remove.prior){
+        chr2 = chr2, resolution = resolution) & !remove_prior){
         stop("A matrix was preloaded before. ",
-            "Use remove.prior = TRUE to force value replacement\n")
+            "Use remove_prior = TRUE to force value replacement\n")
     }
     resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
-    if(!is.null(resolutions) & is.null(binsize)){
-        stop("binsize must be provided when ",
-            "different resolutions are present in an mcool file.\n")
+    if(!is.null(resolutions) & is.null(resolution)){
+        stop("resolution must be provided when",
+            " different resolutions are present in an mcool file.\n")
     }
-    if(!is.null(resolutions) & !is.null(binsize)){
-        if(!(as.character(as.integer(binsize)) %in% resolutions)){
-            stop("binsize not found in mcool file. ",
-                "Please check available binsizes ",
-                "with Brick_list_mcool_resolutions.\n")            
+    resolution <- .format_resolution(resolution)
+    if(!is.null(resolutions) & !is.null(resolution)){
+        if(!(resolution %in% resolutions)){
+            stop("resolution not found in mcool file.",
+                " Please check available resolutions",
+                " with Brick_list_mcool_resolutions.\n")            
         }
     }
-    if(!is.null(norm.factor)){
+    if(!is.null(norm_factor)){
         All.factors <- Brick_list_mcool_normalisations(names.only=TRUE)
         if(!Brick_mcool_normalisation_exists(mcool = mcool,
-            norm.factor = norm.factor, binsize = as.character(
-        as.integer(binsize)))){
+            norm_factor = norm_factor, resolution = resolution)){
             Factors.present <- All.factors[vapply(All.factors, 
                 function(x){
                     Brick_mcool_normalisation_exists(mcool = mcool,
-                    norm.factor = x, binsize = as.character(
-                    as.integer(binsize)))
+                    norm_factor = x, resolution = resolution)
                 }, TRUE)]
-            stop(norm.factor," was not found in this mcool file.\n",
+            stop(norm_factor," was not found in this mcool file.\n",
                 "Normalisation factors present in the mcool file are: ",
                 paste(Factors.present, collapse = ", "))
         }
         Norm.factors <- Brick_list_mcool_normalisations()
-        Norm.factor <- Norm.factors[norm.factor]
+        Norm.factor <- Norm.factors[norm_factor]
         names(Norm.factor) <- NULL
     }else{
         Norm.factor <- NULL
     }
-    RetVar <- ._Process_mcool(Brick = Brick, File = mcool,
-        cooler.batch.size = cooler.batch.size, binsize = as.character(
-        as.integer(binsize)), matrix.chunk = matrix.chunk, chr1 = chr1,
-    chr2 = chr2, dont.look.for.chr2 = dont.look.for.chr2,
+    RetVar <- ._Process_mcool(Brick = Brick_filepath, File = mcool,
+        cooler.batch.size = cooler_batch_size, binsize = resolution, 
+        matrix.chunk = matrix_chunk, chr1 = chr1,
+    chr2 = chr2, dont.look.for.chr2 = dont_look_for_chr2,
     norm.factor = Norm.factor, resolution = !is.null(resolutions))
     return(RetVar)
 }
@@ -1413,16 +1609,37 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1,
 #' @return Returns a logical vector of length 1, specifying if a matrix has
 #' been loaded or not.
 #'
-#' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_isdone(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+#' @examples 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_isdone_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_isdone(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
 #'
-Brick_matrix_isdone = function(Brick, chr1, chr2){
+Brick_matrix_isdone = function(Brick, chr1, chr2, resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Brick_list_matrices(Brick = Brick)
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not found\n")
     }
+    Matrix.list <- Brick_list_matrices(Brick = Brick, chr1 = chr1, 
+        chr2 = chr2, resolution = resolution)
     return(Matrix.list[Matrix.list$chr1 == chr1 &
         Matrix.list$chr2 == chr2, "done"])
 }
@@ -1437,15 +1654,36 @@ Brick_matrix_isdone = function(Brick, chr1, chr2){
 #' loaded as a sparse matrix.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_issparse(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_issparse_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_issparse(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
 #'
-Brick_matrix_issparse = function(Brick, chr1, chr2){
+Brick_matrix_issparse = function(Brick, chr1, chr2, resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Brick_list_matrices(Brick = Brick)
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not found\n")
     }
+    Matrix.list <- Brick_list_matrices(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)
     return(Matrix.list[Matrix.list$chr1 == chr1 &
         Matrix.list$chr2 == chr2, "sparsity"])
 }
@@ -1467,18 +1705,41 @@ Brick_matrix_issparse = function(Brick, chr1, chr2){
 #' distance loaded for that matrix
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_maxdist(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_maxdist_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_maxdist(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
 #'
-Brick_matrix_maxdist = function(Brick, chr1, chr2){
+Brick_matrix_maxdist = function(Brick, chr1, chr2, resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Brick_list_matrices(Brick = Brick)
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not found\n")
     }
-    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not loaded\n")
     }
+    Matrix.list <- Brick_list_matrices(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)
     return((Matrix.list[Matrix.list$chr1 == chr1 &
         Matrix.list$chr2 == chr2, "distance"]))
 }
@@ -1499,15 +1760,34 @@ Brick_matrix_maxdist = function(Brick, chr1, chr2){
 #' exists or not.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_exists(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
-#'
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_exists(Brick = Brick.file, chr1 = "chr19", chr2 = "chr20")
-#'
-Brick_matrix_exists = function(Brick, chr1, chr2){
-    ChromInfo.df <- Brick_get_chrominfo(Brick = Brick)
-    return(all(c(chr1,chr2) %in% ChromInfo.df[,"chr"]))
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_exists_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_exists(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
+#' 
+Brick_matrix_exists = function(Brick, chr1, chr2, resolution = NA){
+    configuration_na_check(resolution, "resolution")
+    Brick_list <- BrickContainer_list_files(Brick = Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
+    return(nrow(Brick_list) > 0)
 }
 
 #' Return the value range of the matrix
@@ -1520,15 +1800,36 @@ Brick_matrix_exists = function(Brick, chr1, chr2){
 #' maximum finite real values in the matrix.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_minmax(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
-#'
-Brick_matrix_minmax = function(Brick, chr1, chr2){
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_minmax_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_minmax(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
+#' 
+Brick_matrix_minmax = function(Brick, chr1, chr2, resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Brick_list_matrices(Brick = Brick)
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not found\n")
     }
+    Matrix.list <- Brick_list_matrices(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)
     Filter <- Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2
     Extent <- c(Matrix.list[Filter, "min"],Matrix.list[Filter, "max"])
     return(Extent)
@@ -1544,18 +1845,41 @@ Brick_matrix_minmax = function(Brick, chr1, chr2){
 #' chromosome pair.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_dimensions(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
-#'
-Brick_matrix_dimensions = function(Brick, chr1, chr2){
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_dimension_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_dimensions(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
+#' 
+Brick_matrix_dimensions = function(Brick, chr1, chr2, resolution = NA){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not found\n")
     }
     Reference.object <- GenomicMatrix$new()
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
     Extents <- ._GetDimensions(group.path = Create_Path(
         c(Reference.object$hdf.matrices.root,chr1,chr2)),
-        dataset.path =Reference.object$hdf.matrix.name,
-        File = Brick, return.what = "size")
+        dataset.path = Reference.object$hdf.matrix.name,
+        File = Brick_filepath, return.what = "size")
     return(Extents)
 }
 
@@ -1570,15 +1894,37 @@ Brick_matrix_dimensions = function(Brick, chr1, chr2){
 #' the currently loaded matrix.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_matrix_filename(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
-#'
-Brick_matrix_filename = function(Brick, chr1, chr2){
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "matrix_filename_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_matrix_filename(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000)
+#' 
+Brick_matrix_filename = function(Brick, chr1, chr2, resolution = NA){
     Reference.object <- GenomicMatrix$new()
-    Matrix.list <- Brick_list_matrices(Brick = Brick)
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)){
         stop("chr1 chr2 pairs were not found\n")
     }
+    Matrix.list <- Brick_list_matrices(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)
     Filter <- Matrix.list$chr1 == chr1 & Matrix.list$chr2 == chr2
     Extent <- Matrix.list[Filter, "filename"]
     return(Extent)
@@ -1598,35 +1944,52 @@ Brick_matrix_filename = function(Brick, chr1, chr2){
 #'
 #' @param distance \strong{Required}. 0 based.
 #' Fetch values separated by distance.
-#'
-#' @param constrain.region \strong{Optional}.
+#' 
+#' @param constrain_region \strong{Optional}.
 #' A character vector of length 1 with the form chr:start:end specifying the
 #' region for which the distance values must be retrieved.
 #'
-#' @param batch.size \strong{Optional}. Default 500
+#' @param batch_size \strong{Optional}. Default 500
 #' A numeric vector of length 1 specifying the size of the chunk to retrieve
 #' for diagonal selection.
-#'
+#' 
 #' @param FUN \strong{Optional}.
 #' If provided a data transformation with FUN will be applied before values
 #' are returned.
-#'
+#' 
 #' @return Returns a numeric vector of length N depending on the presence of
-#' constrain.region, FUN and distance from the main diagonal.
+#' constrain_region, FUN and distance from the main diagonal.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_values_by_distance(Brick = Brick.file, chr = "chr19",
-#' distance = 0)
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "val_by_dist_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L",
+#' distance = 0, resolution = 100000)
 #'
 #' Failsafe_median <- function(x){
 #'      x[is.nan(x) | is.infinite(x) | is.na(x)] <- 0
 #'      return(median(x))
 #' }
 #'
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_values_by_distance(Brick = Brick.file, chr = "chr19",
-#' distance = 4, FUN = Failsafe_median)
+#' Brick_get_values_by_distance(Brick = My_BrickContainer, chr = "chr2L", 
+#' resolution = 100000, distance = 4, FUN = Failsafe_median)
 #'
 #' @seealso \code{\link{Brick_get_matrix_within_coords}} to get matrix by
 #' using matrix coordinates, \code{\link{Brick_fetch_row_vector}} to get values
@@ -1634,15 +1997,17 @@ Brick_matrix_filename = function(Brick, chr1, chr2){
 #' to get values using matrix coordinates, \code{\link{Brick_get_matrix}} to
 #' get matrix by using matrix coordinates.
 #'
-Brick_get_values_by_distance = function(Brick, chr,
-    distance, constrain.region = NULL, batch.size=500, FUN=NULL){
+Brick_get_values_by_distance = function(Brick, chr, distance, 
+    resolution, constrain_region = NULL, batch_size=500, FUN=NULL){
     if(any(vapply(list(Brick,chr,distance),is.null,TRUE))) {
         stop("Brick, chr, distance cannot be NULL.\n")
     }
     Reference.object <- GenomicMatrix$new()
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr, chr2 = chr) &
-        !Brick_matrix_isdone(Brick = Brick, chr1 = chr, chr2 = chr)){
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr, 
+        chr2 = chr, resolution = resolution) &
+        !Brick_matrix_isdone(Brick = Brick, chr1 = chr, 
+            chr2 = chr, resolution = resolution)){
         stop("Chromosome is not listed or has not been ",
             "loaded in this HDF file.\n")
     }
@@ -1653,7 +2018,8 @@ Brick_get_values_by_distance = function(Brick, chr,
     if(any(distance > Nrow, distance < 0)){
         stop("distance must range between 0 and",Nrow,"\n")
     }
-    Max.dist <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr, chr2 = chr)
+    Max.dist <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr, chr2 = chr,
+        resolution = resolution)
     if(distance > Max.dist){
         stop(paste("The farthest pixel loaded for ",
             "this matrix was at a distance of "
@@ -1664,40 +2030,42 @@ Brick_get_values_by_distance = function(Brick, chr,
     Path <- Create_Path(c(Root.folders['matrices'],chr,chr))
     Vector.start <- 1
     Vector.stop <- ChromInfo[ChromInfo$chr==chr,"nrow"]
-    if(!is.null(constrain.region)){
+    if(!is.null(constrain_region)){
         Vector.coordinates <- Brick_return_region_position(Brick = Brick,
-            region=constrain.region)
+            region=constrain_region, resolution = resolution)
         if(is.null(Vector.coordinates)){
             stop("Overlap operation was unsuccessful! ",
                 "Please check coordinates "
-                ,constrain.region)
+                ,constrain_region)
         }
         Vector.start <- min(Vector.coordinates)
         Vector.stop <- max(Vector.coordinates)
     }
     Starting.col <- Vector.start + distance
     Count <- ((Vector.stop - Vector.start) + 1) - distance
-    tot.mat.extracted <- Count * Count
+    # tot.mat.extracted <- Count * Count
     # cat("Boo ",Count,"\n")
     Start <- c(Vector.start,Starting.col)
     Stride <- c(1,1)
     Counts <- Count
     CumSums <- 0
     Groups <- c(Reference.object$hdf.matrices.root,chr)
-    if(Count > batch.size){
-        repeated <- floor(Count/batch.size)
-        Counts <- rep(batch.size,repeated)
-        if(repeated != ceiling(Count/batch.size)){
+    if(Count > batch_size){
+        repeated <- floor(Count/batch_size)
+        Counts <- rep(batch_size,repeated)
+        if(repeated != ceiling(Count/batch_size)){
             cumulative <- sum(Counts)
             Counts <- c(Counts,(Count-cumulative))
         }
         CumSums <- cumsum(c(0,Counts[seq_len(length(Counts)-1)]))
     }
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
+    chr1 = chr, chr2 = chr, resolution = resolution)
     DistancesVector.list <- lapply(seq_len(length(Counts)),function(x){
         Count <- Counts[x]
         Offset <- CumSums[x]
         cur.start <- Start+Offset
-        diag(._Brick_Get_Something_(Group.path = Path, Brick = Brick,
+        diag(._Brick_Get_Something_(Group.path = Path, Brick = Brick_filepath,
             Name = Reference.object$hdf.matrix.name,
             Start= cur.start, Stride = Stride, Count = c(Count,Count),
             return.what = "data"))
@@ -1721,12 +2089,12 @@ Brick_get_values_by_distance = function(Brick, chr,
 #'
 #' @inheritParams Brick_get_chrominfo
 #'
-#' @param x.coords \strong{Required}.
+#' @param x_coords \strong{Required}.
 #' A string specifying the region to subset on the rows. It takes the form
 #' chr:start:end. An overlap operation with the associated bintable will be
 #' done to identify the bins to subset on the row
 #'
-#' @param y.coords \strong{Required}.
+#' @param y_coords \strong{Required}.
 #' A string specifying the region to subset on the rows. It takes the form
 #' chr:start:end. An overlap operation with the associated bintable will be
 #' done to identify the bins to subset on the column
@@ -1739,24 +2107,41 @@ Brick_get_values_by_distance = function(Brick, chr,
 #' If provided a data transformation with FUN will be applied before
 #' the matrix is returned.
 #'
-#' @return Returns a matrix of dimension x.coords binned length by y.coords
+#' @return Returns a matrix of dimension x_coords binned length by y_coords
 #' binned length. This may differ based on FUN.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_matrix_within_coords(Brick = Brick.file,
-#' x.coords = "chr19:40000:2000000",
-#' y.coords = "chr19:40000:2000000")
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_matrix_coords_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_get_matrix_within_coords(Brick = My_BrickContainer,
+#' x_coords = "chr2L:1:1000000",
+#' y_coords = "chr2L:1:1000000",
+#' resolution = 100000)
 #'
-#' Brick_get_matrix_within_coords(Brick = Brick.file,
-#' x.coords = "chr19:40000:2000000",
-#' y.coords = "chr19:40000:2000000",
+#' Brick_get_matrix_within_coords(Brick = My_BrickContainer,
+#' x_coords = "chr2L:1:1000000",
+#' y_coords = "chr2L:1:1000000",
+#' resolution = 100000,
 #' FUN = mean)
 #'
-#' Brick_get_matrix_within_coords(Brick = Brick.file,
-#' x.coords = "chr19:40000:2000000",
-#' y.coords = "chr19:40000:2000000",
-#' FUN = median)
 #' 
 #' @seealso \code{\link{Brick_get_matrix}} to get matrix by using matrix
 #' coordinates, \code{\link{Brick_get_values_by_distance}} to get values
@@ -1764,67 +2149,70 @@ Brick_get_values_by_distance = function(Brick, chr,
 #' to get values in a certain row/col and subset them,
 #' \code{\link{Brick_get_vector_values}} to get values using matrix
 #' coordinates.
-Brick_get_matrix_within_coords = function(Brick, x.coords,
-    y.coords, force = FALSE, FUN=NULL){
+Brick_get_matrix_within_coords = function(Brick, x_coords,
+    y_coords, resolution, force = FALSE, FUN=NULL){
     type <- "within"
-    if( (is.null(x.coords)) | (is.null(y.coords)) ){
-        stop("x.coords, y.coords and Brick cannot be NULL")
+    if( (is.null(x_coords)) | (is.null(y_coords)) ){
+        stop("x_coords, y_coords and Brick cannot be NULL")
     }
-    if(!(length(x.coords)==1) | !(length(y.coords)==1)){
-        stop("This function processes single process calls at a time. ",
-            "Setup an Iterator for more functionality")
+    if(!(length(x_coords)==1) | !(length(y_coords)==1)){
+        stop("This function processes single process calls at a time.",
+            " Setup an Iterator for more functionality")
     }
-    if( !is.character(x.coords) | !is.character(y.coords) ){
-        stop("Two string variables were expected for x.coords & y.coords, ",
-            "found x.coords class ", class(x.coords),
-            " and y.coords class ",
-            class(y.coords))
+    if( !is.character(x_coords) | !is.character(y_coords) ){
+        stop("Two string variables were expected for x_coords & y_coords,",
+            " found x_coords class ", class(x_coords), " and y_coords class ",
+            class(y_coords))
     }
-    xcoords.split <- Split_genomic_coordinates(Coordinate=x.coords)
+    xcoords.split <- Split_genomic_coordinates(Coordinate=x_coords)
     chr1 <- xcoords.split[[1]][1]
     chr1.start <- as.numeric(xcoords.split[[1]][2])
     chr1.stop <- as.numeric(xcoords.split[[1]][3])
-    chr2.split <- Split_genomic_coordinates(Coordinate=y.coords)
+    chr2.split <- Split_genomic_coordinates(Coordinate=y_coords)
     chr2 <- chr2.split[[1]][1]
     chr2.start <- as.numeric(chr2.split[[1]][2])
     chr2.stop <- as.numeric(chr2.split[[1]][3])
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
     ChromosomeList <- ChromInfo[,"chr"]
     if( any(!(c(chr1,chr2) %in% ChromosomeList)) ){
         stop("Provided chromosomes were not found in chromosome list.")
     }
-    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop(chr1," ",chr2," matrix is yet to be loaded into the class.")
     }
     chr1.ranges <- Brick_fetch_range_index(Brick = Brick, chr = chr1,
-    start = chr1.start, end = chr1.stop, names=NULL, type=type)
+        start = chr1.start, end = chr1.stop, names=NA, 
+        resolution = resolution, type=type)
     chr2.ranges <- Brick_fetch_range_index(Brick = Brick, chr = chr2,
-        start = chr2.start, end = chr2.stop, names=NULL, type=type)
+        start = chr2.start, end = chr2.stop, names=NA, 
+        resolution = resolution, type=type)
     if(is.null(chr1.ranges$Indexes[[1]]) | is.null(chr2.ranges$Indexes[[1]])){
         stop("Overlap operation was unsuccessful! Please check coordinates ",
-            x.coords," & ",y.coords)
+            x_coords," & ",y_coords)
     }
-    x.vector <- chr1.ranges$Indexes[[1]]
-    y.vector <- chr2.ranges$Indexes[[1]]
-    Matrix <- Brick_get_matrix(Brick = Brick, chr1=chr1, chr2=chr2,
-        x.vector=x.vector, y.vector=y.vector, force = force, FUN=FUN)
+    x_vector <- chr1.ranges$Indexes[[1]]
+    y_vector <- chr2.ranges$Indexes[[1]]
+    Matrix <- Brick_get_matrix(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        x_coords = x_vector, y_coords = y_vector, resolution = resolution, 
+        force = force, FUN = FUN)
     return(Matrix)
 }
 
 #' Return a matrix subset.
 #'
 #' `Brick_get_matrix` will fetch a matrix subset between row values
-#' ranging from min(x.vector) to max(x.vector) and column values ranging from
-#' min(x.vector) to max(x.vector)
+#' ranging from min(x_coords) to max(x_coords) and column values ranging from
+#' min(x_coords) to max(x_coords)
 #'
 #' @inheritParams Brick_get_chrominfo
 #'
 #' @inheritParams Brick_load_matrix
 #'
-#' @param x.vector \strong{Required}.
+#' @param x_coords \strong{Required}.
 #' A one-dimensional numeric vector specifying the rows to subset.
 #'
-#' @param y.vector \strong{Required}.
+#' @param y_coords \strong{Required}.
 #' A one-dimensional numeric vector specifying the columns to subset.
 #'
 #' @param FUN \strong{Optional}.
@@ -1833,13 +2221,31 @@ Brick_get_matrix_within_coords = function(Brick, x.coords,
 #'
 #' @inheritParams Brick_get_matrix_within_coords
 #'
-#' @return Returns a matrix of dimension x.vector length by y.vector length.
+#' @return Returns a matrix of dimension x_coords length by y_coords length.
 #' This may differ based on the operations with FUN.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_matrix(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-#' x.vector = c(1:10), y.vector = c(1:10))
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_matrix_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_get_matrix(Brick = My_BrickContainer, chr1 = "chr2L", chr2 = "chr2L",
+#' x_coords = c(1:10), y_coords = c(1:10), resolution = 100000)
 #'
 #' @seealso \code{\link{Brick_get_matrix_within_coords}} to get matrix by using
 #' matrix genomic coordinates, \code{\link{Brick_get_values_by_distance}} to
@@ -1847,34 +2253,35 @@ Brick_get_matrix_within_coords = function(Brick, x.coords,
 #' \code{\link{Brick_fetch_row_vector}} to getvalues in a certain row/col and
 #' subset them, \code{\link{Brick_get_vector_values}} to get values using
 #' matrix coordinates.
-Brick_get_matrix = function(Brick, chr1, chr2, x.vector,
-    y.vector, force = FALSE, FUN=NULL){
-    # cat(" Rows: ",x.vector," Cols: ",y.vector,"\n")
-    if(any(!._Check_numeric(x.vector) | !._Check_numeric(y.vector))){
-        stop("x.vector and y.vector must be numeric.\n")
+Brick_get_matrix = function(Brick, chr1, chr2, x_coords,
+    y_coords, resolution, force = FALSE, FUN=NULL){
+    # cat(" Rows: ",x_coords," Cols: ",y_coords,"\n")
+    if(any(!._Check_numeric(x_coords) | !._Check_numeric(y_coords))){
+        stop("x_coords and y_coords must be numeric.\n")
     }
-    if(is.null(chr1) | is.null(chr2) | is.null(x.vector) | is.null(y.vector)){
-        stop("Either of chr1, chr2, x.vector or y.vector ",
+    if(is.null(chr1) | is.null(chr2) | is.null(x_coords) | is.null(y_coords)){
+        stop("Either of chr1, chr2, x_coords or y_coords ",
             "were provided as NULL values.\n")
     }
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
     ChromosomeList <- ChromInfo[,"chr"]
     if( any(!(c(chr1,chr2) %in% ChromosomeList)) ){
         stop("Provided chromosomes were not found in chromosome list.\n")
     }
-    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)){
         stop(chr1,chr2," matrix is yet to be loaded into the class.\n")
     }
     chr1.len <- ChromInfo$nrow[ChromInfo$chr == chr1]
     chr2.len <- ChromInfo$nrow[ChromInfo$chr == chr2]
-    if(any(x.vector > chr1.len) |
-        any(y.vector > chr2.len) |
-        min(x.vector,y.vector) < 1 ) {
-        stop("x.vector or y.vector falls outside ",
+    if(any(x_coords > chr1.len) |
+        any(y_coords > chr2.len) |
+        min(x_coords,y_coords) < 1 ) {
+        stop("x_coords or y_coords falls outside ",
             "the bounds of loaded Bintables")
     }
     Matrix <- Brick_get_vector_values(Brick = Brick, chr1=chr1, chr2=chr2,
-        xaxis=x.vector, yaxis=y.vector, force = force)
+        xaxis=x_coords, yaxis=y_coords, resolution = resolution, force = force)
     if(is.null(FUN)){
         return(Matrix)             
     }else{
@@ -1927,11 +2334,30 @@ Brick_get_matrix = function(Brick, chr1, chr2, x.vector,
 #'
 #' @examples
 #'
-#' Coordinate <- c("chr19:1:40000","chr19:40001:80000")
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
-#' chr1 = "chr19", chr2 = "chr19", by = "ranges", vector = Coordinate,
-#' regions = c("chr19:1:1000000", "chr19:40001:2000000"))
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_row_vector_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Coordinate <- c("chr2L:1:100000","chr2L:100001:200000")
+#' Test_Run <- Brick_fetch_row_vector(Brick = My_BrickContainer,
+#' chr1 = "chr2L", chr2 = "chr2L", resolution = 100000, 
+#' by = "ranges", vector = Coordinate,
+#' regions = c("chr2L:1:1000000", "chr2L:40001:2000000"))
 #'
 #' @seealso \code{\link{Brick_get_matrix_within_coords}} to get matrix by
 #' using matrix genomic coordinates, \code{\link{Brick_get_values_by_distance}}
@@ -1940,8 +2366,8 @@ Brick_get_matrix = function(Brick, chr1, chr2, x.vector,
 #' subset them, \code{\link{Brick_get_matrix}} to get matrix by using
 #' matrix coordinates.
 #'
-Brick_fetch_row_vector = function(Brick, chr1, chr2, by=c("position",
-    "ranges"), vector, regions=NULL, force = FALSE, 
+Brick_fetch_row_vector = function(Brick, chr1, chr2, resolution, 
+    by=c("position", "ranges"), vector, regions=NULL, force = FALSE, 
     flip = FALSE, FUN=NULL){
     Chrom.all <- c(chr1,chr2)
     if(is.null(chr1) | is.null(chr2) | is.null(by) | is.null(vector)) {
@@ -1951,13 +2377,15 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, by=c("position",
         stop("by expects a vector of type character, length 1 and ",
             "takes either one of position or ranges as values")
     }
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
     ChromosomeList <- ChromInfo[,"chr"]
-    max.dist <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr1, chr2 = chr2)
+    max.dist <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)
     if(!is.character(chr1) | !is.character(chr2)){
         stop("Provided Chromosomes does not appear to be of class character")
     }
-    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop(chr1,chr2," matrix is yet to be loaded.")
     }
     if(by=="position"){
@@ -1976,11 +2404,15 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, by=c("position",
     if(length(Chrom.all)>2){
         stop("This module is not iterable")
     }
-    chr1.ranges <- Brick_get_bintable(Brick = Brick, chr=chr1)
-    chr2.ranges <- Brick_get_bintable(Brick = Brick, chr=chr2)
+    chr1.ranges <- Brick_get_bintable(Brick = Brick, chr=chr1, 
+        resolution = resolution)
+    chr2.ranges <- Brick_get_bintable(Brick = Brick, chr=chr2,
+        resolution = resolution)
     if(flip){
-        chr1.ranges <- Brick_get_bintable(Brick = Brick, chr=chr2)
-        chr2.ranges <- Brick_get_bintable(Brick = Brick, chr=chr1)
+        chr1.ranges <- Brick_get_bintable(Brick = Brick, chr=chr2,
+            resolution = resolution)
+        chr2.ranges <- Brick_get_bintable(Brick = Brick, chr=chr1,
+            resolution = resolution)
     }
     if(by=="ranges"){
         if(any(!(vector %in% names(chr1.ranges)))){
@@ -2006,7 +2438,8 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, by=c("position",
         x <- Positions[ind]
         if(PikaPika){
             region <- regions[ind]
-            y <- Brick_return_region_position(Brick = Brick, region = region)
+            y <- Brick_return_region_position(Brick = Brick, region = region,
+                resolution = resolution)
         }else{
             y <- seq_len(length(chr2.ranges))
         }
@@ -2019,12 +2452,13 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, by=c("position",
             y <- x
             x <- x1
         }
-        Values <- Brick_get_vector_values(Brick = Brick, chr1=chr1, chr2=chr2,
-            xaxis=x, yaxis=y, FUN=FUN, force = force)
+        Values <- Brick_get_vector_values(Brick = Brick, chr1=chr1, chr2=chr2, 
+            resolution = resolution, xaxis=x, yaxis=y, FUN=FUN, force = force)
         return(Values)
     })
     return(Vector.values)
 }
+
 #' Return a N dimensional vector selection.
 #'
 #' `Brick_get_vector_values` is the base function being used by all
@@ -2054,26 +2488,45 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, by=c("position",
 #' returns a matrix of dimension xaxis length by yaxis length.
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_vector_values(Brick = Brick.file, chr1 = "chr19",
-#' chr2 = "chr19", xaxis = c(1:10), yaxis = c(1:10))
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_vector_val_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_get_vector_values(Brick = My_BrickContainer, chr1 = "chr2L",
+#' chr2 = "chr2L", resolution = 100000, xaxis = c(1:10), yaxis = c(1:10))
 #'
 #' @section Note: Whatever the length of xaxis or yaxis may be, the coordinates
 #' under consideration will range from min(xaxis) to max(xaxis) on the rows or
 #' min(yaxis) to max(yaxis) on the columns.
 #'
-Brick_get_vector_values = function(Brick, chr1, chr2,
+Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
     xaxis, yaxis, FUN=NULL, force = FALSE){
     Reference.object <- GenomicMatrix$new()
     if(is.null(chr1) | is.null(chr2)){
         stop("chr1 and chr2 keys cannot be empty!")
     }
-    ChromInfo <- Brick_get_chrominfo(Brick = Brick)
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
     ChromosomeList <- ChromInfo[,"chr"]
     if(!is.character(chr1) | !is.character(chr2)){
         stop("Provided Chromosomes does not appear to be of class character")
     }
-    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop(chr1,chr2," matrix is yet to be loaded.")
     }
     if(is.null(xaxis) & is.null(yaxis)){
@@ -2082,7 +2535,8 @@ Brick_get_vector_values = function(Brick, chr1, chr2,
     Start <- c(min(xaxis),min(yaxis))
     Stride <- c(1,1)
     Count <- c(length(xaxis),length(yaxis))
-    Max.dist <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr1, chr2 = chr2)
+    Max.dist <- Brick_matrix_maxdist(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)
     if(max(min(xaxis)-max(yaxis),(max(xaxis) - min(yaxis))) > Max.dist &
     !force){
         stop(paste("The farthest pixel loaded for ",
@@ -2092,9 +2546,11 @@ Brick_get_vector_values = function(Brick, chr1, chr2,
     }
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root,
         chr1, chr2))
-    Vector <- ._Brick_Get_Something_(Group.path = Group.path, Brick = Brick,
-        Name = Reference.object$hdf.matrix.name, Start = Start,
-        Stride = Stride, Count = Count, return.what = "data")
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
+    Vector <- ._Brick_Get_Something_(Group.path = Group.path, 
+        Brick = Brick_filepath, Name = Reference.object$hdf.matrix.name, 
+        Start = Start, Stride = Stride, Count = Count, return.what = "data")
     if(is.null(FUN)){
         return(Vector)
     }else{
@@ -2102,10 +2558,21 @@ Brick_get_vector_values = function(Brick, chr1, chr2,
     }
 }
 
-
 #' Get the matrix metadata columns in the Brick store.
 #'
-#' `Brick_get_matrix_mcols` will get the specified matrix metadata column.
+#' `Brick_get_matrix_mcols` will get the specified matrix metadata column for
+#' a chr1 vs chr2 Hi-C data matrix. Here, chr1 represents the rows and chr2
+#' represents the columns of the matrix. For cis Hi-C matrices, where 
+#' chr1 == chr2, chr2_bin_coverage and chr2_col_sums equals chr1_bin_coverage 
+#' and chr1_row_sums respectively.
+#' 
+#' These metadata columns are: 
+#' - chr1_bin_coverage: Percentage of rows containing non-zero values
+#' - chr2_bin_coverage: Percentage of columns containing non-zero values
+#' - chr1_row_sums: Total signal (if normalised) or number of reads 
+#' (if counts) in each row.
+#' - chr2_col_sums: Total signal (if normalised) or number of reads 
+#' (if counts) in each column.
 #'
 #' @inheritParams Brick_get_chrominfo
 #'
@@ -2118,260 +2585,187 @@ Brick_get_vector_values = function(Brick, chr1, chr2,
 #' metric
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_get_matrix_mcols(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-#' what = "bin.coverage")
-Brick_get_matrix_mcols = function(Brick, chr1, chr2, what){
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_matrix_mcols_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_get_matrix_mcols(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", resolution = 100000, what = "chr1_bin_coverage")
+#' 
+Brick_get_matrix_mcols = function(Brick, chr1, chr2, resolution, 
+    what = c("chr1_bin_coverage", "chr2_bin_coverage", 
+        "chr1_row_sums", "chr2_col_sums")){
+    what = match.arg(what)
     Reference.object <- GenomicMatrix$new()
     Meta.cols <- Reference.object$hdf.matrix.meta.cols()
-    if(any(is.null(c(Brick,chr1,chr2,what)))){
+    BrickContainer_class_check(Brick)
+    if(any(is.null(c(chr1,chr2,what)))){
         stop("Brick, chr1, chr2, what cannot be NULL.\n")
     }
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1, chr2 = chr2, 
+        resolution = resolution)){
         stop("Matrix for this chromsome pair does not exist.\n")  
     }
-    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2)){
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
         stop("Matrix for this chromsome pair is yet to be loaded.\n")  
     }
     if(length(what) >1){
         stop("What must be a character vector of length 1\n")     
     }
-    if(!Brick_matrix_issparse(Brick = Brick, chr1 = chr1, chr2 = chr2) & what
-        == Meta.cols["sparse"]){
+    if(!Brick_matrix_issparse(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution) & what == Meta.cols["sparse"]){
         stop("This matrix is not a sparse matrix.",
             " So sparsity.index was not calculated\n")
     }
     if(what == Meta.cols["sparse"] & chr1 != chr2){
         stop("sparsity.index only applies to cis matrices (chr1 == chr2).\n")
     }
-
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
     Group.path <- Create_Path(c(Reference.object$hdf.matrices.root, chr1,
         chr2))
-    Vector <- ._Brick_Get_Something_(Group.path = Group.path, Brick = Brick,
-    Name = what, return.what = "data")
+    Vector <- ._Brick_Get_Something_(Group.path = Group.path, 
+        Brick = Brick_filepath, Name = what, return.what = "data")
     return(Vector)
 }
-
 
 #' List the matrix metadata columns in the Brick store.
 #'
 #' `Brick_get_matrix_mcols` will list the names of all matrix metadata 
 #' columns.
-#'
-#' @inheritParams Brick_get_chrominfo
-#'
-#' @inheritParams Brick_load_matrix
 #' 
 #' @return Returns a vector containing the names of all matrix metadata columns
 #'
 #' @examples
-#' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-#' Brick_list_matrix_mcols(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
-Brick_list_matrix_mcols = function(Brick, chr1, chr2){
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "list_matrix_mcols_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Brick_list_matrix_mcols()
+Brick_list_matrix_mcols = function(){
     Reference.object <- GenomicMatrix$new()
     Meta.cols <- Reference.object$hdf.matrix.meta.cols()
     return(Meta.cols)
 }
 
 
-# #' List all Bricks that have been created with .
-# #'
-# #' `Brick_list_tracked_bricks` will list all Brick objects that are being
-# #' tracked.
-# #'
-# #' @param detailed \strong{Optional}
-# #' If FALSE, produces a data.frame of file paths pointing to the
-# #' Brick objects. If TRUE, produces a tibble containing additional information
-# #' such as the bioc cache tracking id, and the creation, last accession and
-# #' modification times.
-# #'
-# #' @param preserve.col.names \strong{Optional}
-# #' If TRUE, will preserve the original colnames from the bioc cache tibble
-# #' object. If FALSE, will attempt to humanize the colnames to improve
-# #' readability.
-# #' 
-# #' @return Returns a data.frame or tibble containing the path to tracked
-# #' Brick objects. If tibble will contain additional information related to
-# #' the tracking. For details see parameter detailed.
-# #'
-# #' @examples
-# #' Brick_list_tracked_bricks()
-# Brick_list_tracked_bricks = function(detailed = FALSE,
-#     preserve.col.names = FALSE){
-#     Reference.object <- GenomicMatrix$new()
-#     Cache.dir <- ._Get_cachedir()
-#     Info.tib <- bfcquery(x = Cache.dir,
-#         query = paste(".",Reference.object$brick.extension,sep = ""),
-#         field = "rpath")
-#     if(nrow(Info.tib) == 0){
-#         return(NULL)
-#     }
-#     File.names <- Info.tib[["rname"]]
-#     File.dirs <- Info.tib[[Reference.object$cache.metacol.dirpath]]
-#     File.paths <- Info.tib[["rpath"]]
-#     File.hashes <- Info.tib[[Reference.object$cache.metacol.hashname]]
-#     Minimal.df <- data.frame( filename = file.path(File.dirs, File.names),
-#         paths = File.paths, hashes = File.hashes)
-#     if(!detailed){
-#         return(Minimal.df)
-#     }else{
-#         Info.tib$path_to_file <- File.paths
-#         Info.tib <- Info.tib[,c(1, 2, 5, 9, 10, 11, 3, 4, 8)]
-#         if(!preserve.col.names){
-#             colnames(Info.tib) <- c("Unique_db_identifier",
-#                 "name_of_origin_file", "name_in_cache_dir",
-#                 "path_to_file", "unique_file_hash", "path_to_origin_dir",
-#                 "create_time", "access_time", "last_modified_time")
-#         }
-#         return(Info.tib)
-#     }
-# }
+#' Export an entire resolution from a given BrickContainer as a 
+#' upper triangle sparse matrix
+#'
+#' `Brick_export_to_sparse` will accept as input an object of class 
+#' BrickContainer, a string of length 1 as resolution and a path specifying
+#' the output file to write. It writes the content of the all loaded Brick
+#' objects as a upper triangle sparse matrix (col > row) containing 
+#' non-zero values.
+#'
+#' @inheritParams Brick_get_chrominfo
+#'
+#' @param out_file Path to the output file to write.
+#' 
+#' @param sep column delimiter in output file. Default single space.
+#' 
+#' @param remove_file Default FALSE. If a file by the same name is present
+#' that file will be removed.
+#'
+#' @return Returns a data.frame corresponding to the head of the output file
+#' 
+#' @examples
+#' 
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "write_file")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_export_to_sparse(Brick = My_BrickContainer, 
+#' out_file = file.path(out_dir, "example_out.txt"), 
+#' resolution = 100000)
+#' 
+Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE, 
+    resolution, sep = " "){
+    Reference.object <- GenomicMatrix$new()
+    Chrominfo_df <- Brick_get_chrominfo(Brick, resolution = resolution)
 
-
-# #' Check if a Brick is being tracked.
-# #'
-# #' `Brick_is_tracked` checks if the provided Brick file is being
-# #' tracked or not.
-# #'
-# #' @param Brick \strong{required}
-# #' Path to the Brick file to check.
-# #' 
-# #' @return Returns TRUE or FALSE indicating if the file path is being tracked
-# #' or not.
-# #'
-# #' @examples
-# #' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-# #' Brick_is_tracked(Brick = Brick.file)
-# Brick_is_tracked = function(Brick){
-#     Reference.object <- GenomicMatrix$new()
-#     Cache.dir <- ._Get_cachedir()
-#     Tracked_name <- ._Get_Brick_hashname(Brick = Brick)
-#     Col.present <- Reference.object$cache.metacol.hashname %in%
-#     bfcquerycols(Cache.dir)
-#     if(Col.present){
-#         Info.tib <- bfcquery(x = Cache.dir,
-#             query = Tracked_name,
-#             field = Reference.object$cache.metacol.hashname)
-#         return(nrow(Info.tib) > 0 )
-#     }else{
-#         return(Col.present)
-#     }
-# }
-
-
-# #' Check if a Brick is being tracked.
-# #'
-# #' `Brick_track_bricks` will start tracking the provided Brick file.
-# #'
-# #' @param Brick \strong{required}
-# #' Path to the Brick file to track.
-# #' 
-# #' @return Returns a named vector containing the path to the file along with
-# #' the bioc Cache id as its name.
-# #'
-# #' @examples
-# #' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-# #' if(Brick_is_tracked(Brick.file)) {
-# #'     Brick_untrack_brick(Brick = Brick.file)
-# #'     Brick_track_bricks(Brick = Brick.file)
-# #' }else{
-# #'     Brick_track_bricks(Brick = Brick.file)
-# #' }
-# Brick_track_bricks = function(Brick){
-#     Reference.object <- GenomicMatrix$new()
-#     Cache.dir <- ._Get_cachedir()
-#     Dir.path <- normalizePath(dirname(Brick))
-#     Filename <- basename(Brick)
-#     Tracked_name <- ._Get_Brick_hashname(Brick)
-#     if(Brick_is_tracked(Brick = Brick)){
-#         stop("This Brick object is already being tracked!")
-#     }
-#     ReturnThingy <- bfcadd(x = Cache.dir, rname = Filename,
-#         fpath = file.path(Dir.path, Filename),
-#         ext = Reference.object$brick.extension,
-#         rtype = "local", action = "asis")
-#     DB_id <- names(ReturnThingy)
-#     Metadata.df <- data.frame(dbid = DB_id,
-#         hashname = Tracked_name,
-#         dirpath = Dir.path)
-#     colnames(Metadata.df) <- c(
-#         Reference.object$cache.metacol.dbid,
-#         Reference.object$cache.metacol.hashname,
-#         Reference.object$cache.metacol.dirpath)
-#     ._add_metadata_to_cache(metadata.df = Metadata.df,
-#         cache.dir = Cache.dir)
-#     return(ReturnThingy)
-# }
-
-
-# #' Check if a Brick is being tracked.
-# #'
-# #' `Brick_untrack_brick` will stop tracking the provided Brick file,
-# #' if it exists.
-# #'
-# #' @param Brick \strong{required}
-# #' Path to the Brick file to untrack.
-# #'
-# #' @return Returns any value provided by bfcremove.
-# #'
-# #' @examples
-# #' Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-# #' if(Brick_is_tracked(Brick.file)){
-# #'     Brick_untrack_brick(Brick = Brick.file)
-# #' }else{
-# #'     Brick_track_bricks(Brick = Brick.file)
-# #'     Brick_untrack_brick(Brick = Brick.file)
-# #' }
-# Brick_untrack_brick = function(Brick){
-#     Reference.object <- GenomicMatrix$new()
-#     Cache.dir <- ._Get_cachedir()
-#     if(!(Reference.object$cache.metacol.hashname %in%
-#             bfcquerycols(Cache.dir))){
-#         stop("Tracking of Brick objects is yet to be initialized!")
-#     }
-#     Tracked_name <- ._Get_Brick_hashname(Brick)
-#     Info.tib <- bfcquery(x = Cache.dir, query = Tracked_name,
-#         field = Reference.object$cache.metacol.hashname)
-#     if(Brick_is_tracked(Brick = Brick)){
-#         DB_id <- Info.tib$rid
-#         Done <- bfcremove(Cache.dir, DB_id)
-#         return(Done)
-#     }else{
-#         stop("Brick is not being tracked!")
-#     }
-# }
-
-
-# #' Check if a Brick is being tracked.
-# #'
-# #' `Brick_path_to_file` will query the tracking cache and return the complete
-# #' path to the file that is being tracked.
-# #'
-# #' @param Brick \strong{required}
-# #' Path to the Brick file to locate.
-# #'
-# #' @return Returns the corresponding path to the file that is being tracked.
-# #'
-# #' @examples
-# #'
-# #' Bintable.path <- system.file("extdata",
-# #' "Bintable_40kb.txt", package = "HiCBricks")
-# #' Chromosomes <- "chr19"
-# #' Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-# #' BinTable = Bintable.path, bin.delim = " ",
-# #' Output.Filename = "test.hdf", exec = "cat",
-# #' remove.existing = TRUE)
-# #'
-# #' Brick.file <- "test.hdf"
-# #' Brick_path_to_file(Brick = Brick.file)
-# Brick_path_to_file = function(Brick){
-#     if(!(Brick_is_tracked(Brick))){
-#         stop("The provided Brick is not being tracked")
-#     }
-#     Tracked_name <- ._Get_Brick_hashname(Brick)
-#     Working.File.df <- Brick_list_tracked_bricks()
-#     Hashes <- Working.File.df[,"hashes"]
-#     Path.to.file <- as.character(Working.File.df[Hashes == Tracked_name &
-#         !is.na(Hashes), "paths"])
-#     return(Path.to.file)
-# }
+    end_positions <- cumsum(Chrominfo_df[,"nrow"])
+    start_positions <- c(1, end_positions[-length(end_positions)] + 1)
+    names(start_positions) <- Chrominfo_df$chr
+    chromosome_coord_pairs <- .make_coords_list(Brick, resolution)
+    if(file.exists(out_file) & !remove_file){
+        stop(out_file, " already exists at path")
+    }
+    open_connection <- file(out_file, open = "w")
+    temp_df <- data.frame(chr1 = "chr1", 
+            chr2 = "chr2", 
+            row_coord = "row_coord",
+            col_coord = "col_coord",
+            value = "value")
+    return(chromosome_coord_pairs)
+    write.table(x = temp_df, file = open_connection, sep = sep, 
+        row.names = FALSE, col.names = FALSE, quote = FALSE)
+    lapply(seq_len(nrow(chromosome_coord_pairs)), function(x){
+        a_row <- chromosome_coord_pairs[x,]
+        a_vector <- .fetch_upper_tri_value_by_row(
+            Brick_filepath = a_row$filepath,
+            chr1 = a_row$chr1, 
+            chr2 = a_row$chr2, 
+            row = a_row$chr1_start,
+            col = a_row$chr2_start, 
+            chr2_length = a_row$chr2_length)
+        a_vector <- a_vector[1,]
+        non_zero_filter <- a_vector != 0
+        row_seq <- rep(a_row$chr1_start, times = length(a_vector))
+        row_seq <- row_seq[non_zero_filter] + (start_positions[a_row$chr1] - 1)
+        col_seq <- seq(from = a_row$chr2_start, by = 1, 
+            length.out = a_row$chr2_length)
+        col_seq <- col_seq[non_zero_filter] + (start_positions[a_row$chr2] - 1)
+        temp_df <- data.frame(chr1 = a_row$chr1, 
+            chr2 = a_row$chr2, 
+            row_coord = row_seq,
+            col_coord = col_seq,
+            value = a_vector[non_zero_filter],
+            stringsAsFactors = FALSE)
+        write.table(x = temp_df, file = open_connection, sep = sep, 
+            row.names = FALSE, col.names = FALSE, quote = FALSE)
+    })
+    close(open_connection)
+    return(read.table(file = out_file, header = TRUE, sep = sep, 
+            stringsAsFactors = FALSE, nrows = 100))
+}

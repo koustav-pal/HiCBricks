@@ -8,8 +8,10 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         hdf.metadata.root = "Base.metadata",
         metadata.chrom.dataset = "chrominfo",
         hdf.matrix.name = "matrix",
-        hdf.matrix.coverage = "bin.coverage",
-        hdf.matrix.rowSums = "row.sums",
+        hdf.matrix.coverage = "chr1_bin_coverage",
+        hdf.matrix.coverage.t = "chr2_bin_coverage",
+        hdf.matrix.rowSums = "chr1_row_sums",
+        hdf.matrix.colSums = "chr2_col_sums",
         hdf.matrix.sparsity = "sparsity",
         hdf.bintable.ranges.group = "Bintable",
         hdf.ranges.dataset.name = "ranges",
@@ -24,6 +26,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         cache.metacol.dirpath = "dirpath",
         brick.extension = "brick",
         Max.vector.size=104857600,
+        brick.config.name = "HiCBricks_builder_config.json",
         mcool.available.normalisations = function(){
             Names <- c("Knight-Ruitz","Vanilla-coverage",
                 "Vanilla-coverage-square-root","Iterative-Correction")
@@ -45,10 +48,16 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             return(transformlist[[name]])
         },
         hdf.matrix.meta.cols = function(){
-            Temp <- c(self$hdf.matrix.coverage, 
-                self$hdf.matrix.rowSums, 
+            Temp <- c(self$hdf.matrix.coverage,
+                self$hdf.matrix.coverage.t,
+                self$hdf.matrix.rowSums,
+                self$hdf.matrix.colSums, 
                 self$hdf.matrix.sparsity)
-            names(Temp) <- c("bin.cov","row.sums","sparse")
+            names(Temp) <- c("chr1_bin_coverage",
+                "chr2_bin_coverage",
+                "chr1_row_sums",
+                "chr2_col_sums",
+                "sparse")
             return(Temp)
         },
         hdf.ranges.protected.names = function(){
@@ -118,7 +127,12 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         },
         mcool.index.keys = function(){
             return(c("indexes","bin1_offset","chrom_offset"))
-        }
+        },
+        Configurator_JSON_headers_names = c("file_prefix", 
+            "project_directory", "experiment_name", "resolutions", 
+            "chromosomes", "lengths", "queues"),
+        Configurator_JSON_matrix_names = c("chrom1", 
+            "chrom2", "resolution", "dimensions", "mat_type", "filename")
     ),
     private = list(
         Attribute.List=NA,
@@ -189,14 +203,17 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Fraction <- LengthOfGTZero/LengthOfRow
     return(Fraction)
 }
+
 ._Do_on_vector_ComputeRowSums_ = function(x){
     x[is.na(x) | is.infinite(x)] <- 0
     return(sum(x))
 }
+
 ._Do_on_vector_ComputeMinMax_ = function(x){
     x[is.na(x) | is.infinite(x)] <- 0
     return(c(min(x),max(x)))
 }
+
 ._Do_on_vector_SparsityIndex_ = function(x=NULL,index=NULL,
     sparsity.bins = NULL){
     x[is.na(x) | is.infinite(x)] <- 0
@@ -205,6 +222,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Rows <- x[Range]
     return(length(Rows[Rows!=0])/length(Rows))
 }
+
 ._Brick_Get_Something_ <- function(Group.path = NULL, Brick = NULL, 
     Name = NULL, Index = NULL, Start = NULL, Stride = NULL, Count = NULL, 
     return.what = "group_handle"){
@@ -229,6 +247,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         return(Dataset)
     }
 }
+
 ._Brick_Put_Something_ <- function(Group.path = NULL, Brick = NULL,
     Name = NULL, data = NULL, Index = NULL, Start = NULL, Stride = NULL, 
     Count = NULL){
@@ -239,6 +258,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         index=Index, start = Start, stride = Stride, count = Count)
     H5Gclose(Group.handler)
 }
+
 ._Brick_do_on_ComplexSelection_ <- function(Group.path = NULL, Brick = NULL, 
     Name = NULL, Start.list = NULL, Stride.list = NULL, Count.list = NULL, 
     Data = NULL, Brick.list = NULL, do.what = "fetch"){
@@ -254,6 +274,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             "Start, Stride, Count, Brick.\n")
     }
 }
+
 ._Brick_WriteDataFrame_ <- function(Brick = NULL, Path = NULL, name = NULL, 
     object = NULL){
     if(!(length(c(Brick,Path,name,object))>=4)){
@@ -266,6 +287,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         name = name)
     H5Gclose(Brick.handler)
 }
+
 ._Brick_WriteArray_ <- function(Brick = NULL, Path = NULL, name = NULL, 
     object = NULL){
     if(!(length(c(Brick,Path,name,object))>=4)){
@@ -278,6 +300,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             name = name)
     H5Gclose(Brick.handler)
 }
+
+
 ._Brick_Add_Ranges_ = function(Group.path = NULL, Brick = NULL, name = NULL, 
     ranges.df = NULL, mcol.list = NULL){
     Reference.object <- GenomicMatrix$new()
@@ -318,6 +342,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             name = m.name, object = MCol)
     }
 }
+
 ._FindLineNumbers_ = function(Row.len=NULL,Col.len=NULL){
     Reference.object <- GenomicMatrix$new()
     pixel.mem <- 48
@@ -326,6 +351,7 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Batch.size[Batch.size<1] <- 1
     return(Batch.size)
 }
+
 ._Do_rbind_on_matrices_of_different_sizes_ <- function(Matrix.top = NULL, 
     Matrix.bottom = NULL, row.length = NULL, col.length = NULL, 
     top.coords = NULL, bottom.coords = NULL){
@@ -346,7 +372,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     Matrix.return <- rbind(Matrix.top,Matrix.bottom)
     return(Matrix.return)
 }
-._Create_file_connection = function(Filename=NULL,mode="r"){
+
+.create_file_connection = function(Filename=NULL,mode="r"){
     if(grepl('$/.gz',Filename)){
         connection=gzfile(Filename,open=mode)
     }else if(grepl('$/.bz2',Filename)){
@@ -390,6 +417,15 @@ GenomicMatrix <- R6Class("GenomicMatrix",
         "sparsity" = Sparsity.Index, "extent" = range)
     return(A.list)
 }
+._Compute_various_col_matrix_metrics <- function(Matrix = NULL, 
+    metrics.list){
+    Matrix[is.na(Matrix) | is.infinite(Matrix)] <- 0
+    metrics.list[["bin.coverage"]] <- 
+        metrics.list[["bin.coverage"]] + colSums(Matrix > 0)
+    metrics.list[["col.sums"]] <- metrics.list[["col.sums"]] +
+    colSums(Matrix)
+    return(metrics.list)
+}
 humanize_size <- function(x){
     Size <- x/1024
     if(Size < 1){
@@ -413,7 +449,7 @@ humanize_size <- function(x){
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
-    Handler <- ._Create_file_connection(Filename = Matrix.file, mode = "r")
+    Handler <- .create_file_connection(Filename = Matrix.file, mode = "r")
     Start.row <- 1
     Start.col <- 1
     Row.Offset <- 0
@@ -475,10 +511,22 @@ humanize_size <- function(x){
         i<-i+1
     }
     close(Handler)
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.rowSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.colSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage, 
+        object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage.t, 
+        object = Bin.coverage)
     if(compute.sparsity){
         ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 
@@ -496,15 +544,14 @@ humanize_size <- function(x){
     return(TRUE)
 }
 ._ProcessMatrix_ <- function(Brick = NULL, Matrix.file = NULL, delim = NULL, 
-    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, exec = NULL,
-    num.rows = 2000, is.sparse = NULL, compute.sparsity = NULL,
-    distance = NULL, sparsity.bins = 100){
+    Group.path = NULL, chr1.len = NULL, chr2.len = NULL, num.rows = 2000, 
+    is.sparse = NULL, compute.sparsity = NULL, distance = NULL, 
+    sparsity.bins = 100){
     Reference.object <- GenomicMatrix$new()
     if(is.sparse){
         Sparsity.bins = sparsity.bins
     }
     options(datatable.fread.input.cmd.message=FALSE)
-    Command <- paste(exec, Matrix.file)
     Start.row <- 1
     Start.col <- 1
     Set.col <- TRUE
@@ -521,9 +568,13 @@ humanize_size <- function(x){
     }
     Bin.coverage <- NULL
     Row.sums <- NULL
+    Col.sums <- NULL
+    Col.bin.coverage <- NULL
     Sparsity.Index <- NULL
     Iterations.number <- chr1.len / NumLines
     Iterations <- rep(NumLines,floor(Iterations.number))
+    Col.metrics.list <- list("bin.coverage" = rep(0,chr2.len),
+        "col.sums" = rep(0,chr2.len))
     if(is.null(distance)){
         distance <- chr2.len
     }
@@ -544,7 +595,7 @@ humanize_size <- function(x){
     while(i<=length(Iterations)) {
         Iter <- Iterations[i]
         Skip <- Skippity[i]
-        Matrix <- as.matrix(fread(cmd=Command, sep=delim, nrows=Iter, 
+        Matrix <- as.matrix(fread(file = Matrix.file, sep=delim, nrows=Iter, 
             na.strings="NA", stringsAsFactors=FALSE, skip=Skip, verbose=FALSE, 
             dec=".", showProgress=TRUE))
         message("Read ",Iter," lines after Skipping ",Skip," lines")
@@ -553,6 +604,9 @@ humanize_size <- function(x){
             compute.sparsity = compute.sparsity, sparsity.bins = sparsity.bins, 
             range = Matrix.range, distance = distance, 
             diag.position.start = Skip + 1)
+        Col.metrics.list <- ._Compute_various_col_matrix_metrics(
+            Matrix = Matrix, 
+            metrics.list = Col.metrics.list)
         Matrix.range <- Metrics.list[["extent"]]
         Bin.coverage <- c(Bin.coverage,Metrics.list[["bin.cov"]])
         Row.sums <- c(Row.sums,Metrics.list[["row.sum"]])
@@ -579,10 +633,22 @@ humanize_size <- function(x){
         message("Read ",(Skip+Iter)," records...")
         i<-i+1
     }
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.rowSums, object = Row.sums)
-    ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
-        name = Reference.object$hdf.matrix.coverage, object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.rowSums, 
+        object = Row.sums)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.colSums, 
+        object = Col.metrics.list[["col.sums"]])
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage, 
+        object = Bin.coverage)
+    ._Brick_WriteArray_(Brick = Brick, 
+        Path = Group.path, 
+        name = Reference.object$hdf.matrix.coverage.t, 
+        object = Col.metrics.list[["bin.coverage"]]/chr1.len)
     if(compute.sparsity){
         ._Brick_WriteArray_(Brick = Brick, Path = Group.path, 
             name = Reference.object$hdf.matrix.sparsity, 
@@ -600,6 +666,84 @@ humanize_size <- function(x){
         values = Attr.vals, 
         on = "group")
     return(TRUE)
+}
+
+.create_brick <- function(output_directory, filename, 
+    chrom1, chrom2, resolution, bintable_df, 
+    hdf_chunksize=NULL, remove_existing=FALSE,
+    link_existing = FALSE){
+
+    Reference.object <- GenomicMatrix$new()
+    Root.folders <- Reference.object$GetRootFolders()
+    Chrom_info_df <- return_chrominfo_df(bintable_df = bintable_df, 
+        chromosomes = NULL)
+    Dims <- c(Chrom_info_df[Chrom_info_df$chr == chrom1,"nrow"],
+        Chrom_info_df[Chrom_info_df$chr == chrom2,"nrow"])
+    mat_type <- ifelse(chrom1 == chrom2, "cis", "trans")
+    hdf_file <- file.path(output_directory, filename)
+    if(file.exists(hdf_file)){
+        if(link_existing){
+            return(.create_configuration_matrix_info(
+                resolution = resolution,
+                chrom1 = chrom1,
+                chrom2 = chrom2,
+                chrom1_binned_length = Dims[1],
+                chrom2_binned_length = Dims[2],
+                type = mat_type,
+                filename = filename))
+        }
+        if(!remove_existing){
+            stop("An HDF file by the same name already exists.",
+                " Please provide remove_existing = TRUE to overwrite it,",
+                " or link_existing = TRUE to add the same file",
+                " to the BrickContainer")
+        }
+        file.remove(hdf_file)
+    }
+    h5createFile(hdf_file)
+    for (Folder in Root.folders) {
+        CreateGroups(Group.path = Create_Path(Folder), 
+            File = hdf_file)
+    }
+    # Create metadata chromosome groups
+    ._Brick_WriteDataFrame_(Brick = hdf_file, 
+        Path = c(Root.folders['metadata']), 
+        name = Reference.object$metadata.chrom.dataset, 
+        object = Chrom_info_df)
+    ._Brick_Add_Ranges_(Group.path = Create_Path(
+        c(Root.folders['ranges'],
+        Reference.object$hdf.bintable.ranges.group)), 
+        Brick = hdf_file,
+        ranges.df = bintable_df, 
+        name = Reference.object$hdf.ranges.dataset.name,
+        mcol.list = NULL)
+    CreateGroups(Group.path = Create_Path(c(Root.folders['matrices'],
+        chrom1)), File = hdf_file)
+    chr2.path <- Create_Path(
+        c(Root.folders['matrices'],chrom1,chrom2))
+    # cat(Chrom.info.df$chr,chrom1,chrom2,"\n")
+    CreateGroups(Group.path = chr2.path, File = hdf_file)
+    CreateAttributes(Path = chr2.path, File = hdf_file,
+        Attributes = Reference.object$matrices.chrom.attributes,
+        data_types = Reference.object$matrices.chrom.attributes.dtype,
+        dims = Reference.object$matrices.chrom.attributes.dims,
+        maxdims = NULL,
+        on = "group")
+    if(is.null(hdf_chunksize)){
+        hdf_chunksize <- ceiling(Dims/100)
+    }
+    Array.dim <- Chrom_info_df[Chrom_info_df$chr == chrom1,"nrow"]
+    CreateDataset(Path = c(Root.folders['matrices'], chrom1, chrom2),
+        File = hdf_file, name = Reference.object$hdf.matrix.name,
+        dims = Dims, maxdims = Dims)
+    return(.create_configuration_matrix_info(
+        resolution = resolution,
+        chrom1 = chrom1,
+        chrom2 = chrom2,
+        chrom1_binned_length = Dims[1],
+        chrom2_binned_length = Dims[2],
+        type = mat_type,
+        filename = filename))
 }
 
 ._GetDimensions <- function(group.path = NULL, dataset.path = NULL, 

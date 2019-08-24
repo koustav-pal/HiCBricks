@@ -14,7 +14,7 @@ ReturnH5Handler <- function(Path=NULL,File = NULL){
 ReturnH5Attribute <- function(Handle = NULL, name = NULL, type = NULL){
     if(!H5Aexists(Handle, name)){
         CloseH5Con(Handle = Handle, type = type)
-        stop("Attribute ",name,"not found in HDF file.\n")
+        stop("Attribute ",name," not found in HDF file.\n")
     }
     Attributes <- H5Aread(H5Aopen(Handle,name))
     return(Attributes)
@@ -43,7 +43,7 @@ CreateGroups <- function(Group.path = NULL, File = NULL){
 }
 CreateDataset <- function(Path = NULL, File = NULL, name = NULL, dims = NULL, 
     maxdims = NULL, data_type = "H5T_NATIVE_DOUBLE", chunk_size = NULL, 
-    compression_level = 6, fill_with = 0, warnings = TRUE){
+    compression_level = 6, fill_with = 0){
     Full.path <- Create_Path(Path)
     if(is.null(chunk_size)){
         chunk_size <- ceiling(dims/100)
@@ -51,8 +51,7 @@ CreateDataset <- function(Path = NULL, File = NULL, name = NULL, dims = NULL,
     H5Handler <- ReturnH5Handler(Path=Full.path,File = File)
     h5createDataset(file=H5Handler, dataset=name, dims= dims,
         maxdims = dims, H5type=data_type, chunk = chunk_size,
-        level = compression_level, fillValue = fill_with, 
-        showWarnings = warnings)
+        level = compression_level, fillValue = fill_with)
     H5Gclose(H5Handler)
 }
 CreateAttributes <- function(Path = NULL, File = NULL, Attributes = NULL, 

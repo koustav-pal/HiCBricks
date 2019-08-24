@@ -4,12 +4,14 @@
 \alias{Brick_fetch_row_vector}
 \title{Return row or col vectors.}
 \usage{
-Brick_fetch_row_vector(Brick, chr1, chr2, by = c("position", "ranges"),
-    vector, regions = NULL, force = FALSE, flip = FALSE, FUN = NULL)
+Brick_fetch_row_vector(Brick, chr1, chr2, resolution, by = c("position",
+    "ranges"), vector, regions = NULL, force = FALSE, flip = FALSE,
+    FUN = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -18,6 +20,10 @@ the rows of the matrix}
 \item{chr2}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
 \item{by}{\strong{Required}.
 One of two possible values, "position" or "ranges". A one-dimensional
@@ -62,11 +68,30 @@ rows subsetted.
 }
 \examples{
 
-Coordinate <- c("chr19:1:40000","chr19:40001:80000")
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Test_Run <- Brick_fetch_row_vector(Brick = Brick.file,
-chr1 = "chr19", chr2 = "chr19", by = "ranges", vector = Coordinate,
-regions = c("chr19:1:1000000", "chr19:40001:2000000"))
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "get_row_vector_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+remove_prior = TRUE, resolution = 100000)
+
+Coordinate <- c("chr2L:1:100000","chr2L:100001:200000")
+Test_Run <- Brick_fetch_row_vector(Brick = My_BrickContainer,
+chr1 = "chr2L", chr2 = "chr2L", resolution = 100000, 
+by = "ranges", vector = Coordinate,
+regions = c("chr2L:1:1000000", "chr2L:40001:2000000"))
 
 }
 \seealso{

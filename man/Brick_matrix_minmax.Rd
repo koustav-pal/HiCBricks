@@ -4,11 +4,12 @@
 \alias{Brick_matrix_minmax}
 \title{Return the value range of the matrix}
 \usage{
-Brick_matrix_minmax(Brick, chr1, chr2)
+Brick_matrix_minmax(Brick, chr1, chr2, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -17,6 +18,10 @@ the rows of the matrix}
 \item{chr2}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 Returns a numeric vector of length 2, specifying the minimum and
@@ -26,7 +31,26 @@ maximum finite real values in the matrix.
 Return the value range of the matrix
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_matrix_minmax(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19")
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "matrix_minmax_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+remove_prior = TRUE, resolution = 100000)
+
+Brick_matrix_minmax(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", resolution = 100000)
 
 }

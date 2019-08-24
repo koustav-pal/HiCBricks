@@ -130,33 +130,41 @@
     if(is.list(metrics.list[["row.sums"]])){
         chr1.length <- length(metrics.list[["row.sums"]][[chr1]])
         chr2.length <- length(metrics.list[["row.sums"]][[chr2]])
-        ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
             name = Reference.object$hdf.matrix.rowSums,
             object = metrics.list[["row.sums"]][[chr1]])
-        ._Brick_WriteArray_(Brick = Brick, Path = group.path,
-            name = Reference.object$hdf.matrix.rowSums,
-            object = metrics.list[["bin.coverage"]][[chr1]]/chr1.length)
-        WriteAttributes(Path = group.path, File = Brick,
-            Attributes = Attributes, values = Attr.vals, on = "group")
-        group.path <- Create_Path(
-            c(Reference.object$hdf.matrices.root,
-                chr2,
-                chr1))
-        ._Brick_WriteArray_(Brick = Brick, Path = group.path,
-            name = Reference.object$hdf.matrix.rowSums,
-            object = metrics.list[["row.sums"]][[chr2]])
-        ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
             name = Reference.object$hdf.matrix.coverage,
+            object = metrics.list[["bin.coverage"]][[chr1]]/chr1.length)
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
+            name = Reference.object$hdf.matrix.colSums,
+            object = metrics.list[["row.sums"]][[chr2]])
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
+            name = Reference.object$hdf.matrix.coverage.t,
             object = metrics.list[["bin.coverage"]][[chr2]]/chr2.length)
         WriteAttributes(Path = group.path, File = Brick,
             Attributes = Attributes, values = Attr.vals, on = "group")
     }else{
         chr1.length <- length(metrics.list[["row.sums"]])
-        ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
             name = Reference.object$hdf.matrix.rowSums,
             object = metrics.list[["row.sums"]])
-        ._Brick_WriteArray_(Brick = Brick, Path = group.path,
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
+            name = Reference.object$hdf.matrix.colSums,
+            object = metrics.list[["row.sums"]])
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
             name = Reference.object$hdf.matrix.coverage,
+            object = metrics.list[["bin.coverage"]]/chr1.length)
+        ._Brick_WriteArray_(Brick = Brick, 
+            Path = group.path,
+            name = Reference.object$hdf.matrix.coverage.t,
             object = metrics.list[["bin.coverage"]]/chr1.length)
         WriteAttributes(Path = group.path, File = Brick,
             Attributes = Attributes, values = Attr.vals, on = "group")
@@ -255,12 +263,16 @@ populate_matrix_with_values <- function(Brick = NULL, File = NULL,
                 Index <- c(iter.start[m]:iter.end[m])
                 Bin1_id <- ._Brick_Get_Something_(
                     Group.path = Matrix.group.path,
-                    Brick = File, Index = list(Index), Name = Matrix.Keys[2],
+                    Brick = File, 
+                    Index = list(Index), 
+                    Name = Matrix.Keys[2],
                     return.what = "data")
                 Bin1_id <- Bin1_id + 1
                 Bin2_id <- ._Brick_Get_Something_(
                     Group.path = Matrix.group.path,
-                    Brick = File, Index = list(Index), Name = Matrix.Keys[3],
+                    Brick = File, 
+                    Index = list(Index), 
+                    Name = Matrix.Keys[3],
                     return.what = "data")
                 Bin2_id <- Bin2_id + 1
                 message("Read ",length(c(iter.start[m]:iter.end[m])),
@@ -275,11 +287,12 @@ populate_matrix_with_values <- function(Brick = NULL, File = NULL,
                 Bin2_id <- Bin2_id[Filter] - chrom2.offset - col.offset
                 if(any(length(Bin1_id) > 0)){
                     Counts <- ._Brick_Get_Something_(
-                        Group.path = Matrix.group.path, Brick = File,
-                    Index = list(Index[Filter]), Name = Matrix.Keys[4],
-                    return.what = "data")
+                        Group.path = Matrix.group.path, 
+                        Brick = File,
+                        Index = list(Index[Filter]), 
+                        Name = Matrix.Keys[4],
+                        return.what = "data")
                     if(!is.null(bias.vector)){
-
                         Counts <- Counts *
                         bias.vector[Bin1_id_norm] *
                         bias.vector[Bin2_id_norm]
@@ -372,13 +385,6 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
         ._Brick_Put_Something_(Group.path = group.path, Brick = Brick,
             Name = dataset.name, data = Matrix, Start = Start,
             Stride = Stride, Count = Count)
-        Start <- rev(Start)
-        Stride <- c(1,1)
-        Count <- rev(Count)
-        ._Brick_Put_Something_(Group.path = Create_Path(
-            c(Reference.object$hdf.matrices.root,chrom2,chrom1)),
-            Brick = Brick, Name = dataset.name, data = t(Matrix), 
-            Start = Start, Stride = Stride, Count = Count)
         Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0
         metrics.list[["row.sums"]][[chrom2]] <- add_to_data(
                 Vector = metrics.list[["row.sums"]][[chrom2]],
@@ -532,5 +538,5 @@ mcool_list_resolutions <- function(mcool = NULL){
     }else{
         BinList <- NULL
     }
-    return(BinList)
+    return(.format_resolution(BinList))
 }

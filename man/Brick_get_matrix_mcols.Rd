@@ -4,11 +4,14 @@
 \alias{Brick_get_matrix_mcols}
 \title{Get the matrix metadata columns in the Brick store.}
 \usage{
-Brick_get_matrix_mcols(Brick, chr1, chr2, what)
+Brick_get_matrix_mcols(Brick, chr1, chr2, resolution,
+    what = c("chr1_bin_coverage", "chr2_bin_coverage", "chr1_row_sums",
+    "chr2_col_sums"))
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -18,6 +21,10 @@ the rows of the matrix}
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
 
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
 \item{what}{\strong{Required}
 A character vector of length 1 specifying the matrix metric to retrieve}
 }
@@ -26,10 +33,45 @@ Returns a 1xN dimensional vector containing the specified matrix
 metric
 }
 \description{
-\code{Brick_get_matrix_mcols} will get the specified matrix metadata column.
+\code{Brick_get_matrix_mcols} will get the specified matrix metadata column for
+a chr1 vs chr2 Hi-C data matrix. Here, chr1 represents the rows and chr2
+represents the columns of the matrix. For cis Hi-C matrices, where
+chr1 == chr2, chr2_bin_coverage and chr2_col_sums equals chr1_bin_coverage
+and chr1_row_sums respectively.
+}
+\details{
+These metadata columns are:
+\itemize{
+\item chr1_bin_coverage: Percentage of rows containing non-zero values
+\item chr2_bin_coverage: Percentage of columns containing non-zero values
+\item chr1_row_sums: Total signal (if normalised) or number of reads
+(if counts) in each row.
+\item chr2_col_sums: Total signal (if normalised) or number of reads
+(if counts) in each column.
+}
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_matrix_mcols(Brick = Brick.file, chr1 = "chr19", chr2 = "chr19",
-what = "bin.coverage")
+
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "get_matrix_mcols_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+remove_prior = TRUE, resolution = 100000)
+
+Brick_get_matrix_mcols(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", resolution = 100000, what = "chr1_bin_coverage")
+
 }

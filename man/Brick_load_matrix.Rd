@@ -4,13 +4,15 @@
 \alias{Brick_load_matrix}
 \title{Load a NxM dimensional matrix into the Brick store.}
 \usage{
-Brick_load_matrix(Brick, chr1, chr2, matrix.file, delim = " ", exec,
-    remove.prior = FALSE, num.rows = 2000, is.sparse = FALSE,
-    sparsity.bins = 100)
+Brick_load_matrix(Brick = NA, chr1 = NA, chr2 = NA,
+    resolution = NA, matrix_file = NA, delim = " ",
+    remove_prior = FALSE, num_rows = 2000, is_sparse = FALSE,
+    sparsity_bins = 100)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr1}{\strong{Required}.
 A character vector of length 1 specifying the chromosome corresponding to
@@ -20,31 +22,31 @@ the rows of the matrix}
 A character vector of length 1 specifying the chromosome corresponding to
 the columns of the matrix}
 
-\item{matrix.file}{\strong{Required}.
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{matrix_file}{\strong{Required}.
 A character vector of length 1 specifying the name of the file to load as a
 matrix into the Brick store.}
 
 \item{delim}{\strong{Optional}. Default " "
 The delimiter of the matrix file.}
 
-\item{exec}{\strong{Required}.
-A string specifying the program to use for reading the file. Use cat for txt
-files, for bz2 files use bzcat and for gz files zcat.}
-
-\item{remove.prior}{\strong{Optional}. Default FALSE
-If a matrix was loaded before, it will not be replaced. Use remove.prior to
+\item{remove_prior}{\strong{Optional}. Default FALSE
+If a matrix was loaded before, it will not be replaced. Use remove_prior to
 override and replace the existing matrix.}
 
-\item{num.rows}{\strong{Optional}. Default 2000
+\item{num_rows}{\strong{Optional}. Default 2000
 Number of rows to read, in each chunk.}
 
-\item{is.sparse}{\strong{Optional}. Default FALSE
+\item{is_sparse}{\strong{Optional}. Default FALSE
 If true, designates the matrix as being a sparse matrix, and computes the
 sparsity.index. The sparsity index measures the proportion of non-zero rows
 or columns at a certain distance from the diagonal (100) in cis interaction
 matrices.}
 
-\item{sparsity.bins}{\strong{Optional}. Default 100
+\item{sparsity_bins}{\strong{Optional}. Default 100
 With regards to computing the sparsity.index, this parameter decides the
 number of bins to scan from the diagonal.}
 }
@@ -56,20 +58,23 @@ Load a NxM dimensional matrix into the Brick store.
 }
 \examples{
 
-Bintable.path <- system.file("extdata",
-"Bintable_40kb.txt", package = "HiCBricks")
-Chromosomes <- "chr19"
-Path_to_cached_file <- CreateBrick(ChromNames = Chromosomes,
-BinTable = Bintable.path, bin.delim = " ",
-Output.Filename = file.path(tempdir(),"test.hdf"), exec = "cat",
-remove.existing = TRUE)
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
 
-Test.mat <- matrix(runif(800*800),nrow = 800, ncol = 800)
-Matrix.file <- file.path(tempdir(),"Test_matrix.txt")
-write.table(x = Test.mat, file = Matrix.file, sep = " ", quote = FALSE,
-row.names = FALSE, col.names = FALSE)
-Brick_load_matrix(Brick = Path_to_cached_file, chr1 = "chr19", 
-chr2 = "chr19", matrix.file = Matrix.file, delim = " ", exec = "cat",
-remove.prior = TRUE)
+out_dir <- file.path(tempdir(), "matrix_load_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+remove_prior = TRUE, resolution = 100000)
 
 }

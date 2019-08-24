@@ -4,18 +4,19 @@
 \alias{Brick_vizart_plot_heatmap}
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
-Brick_vizart_plot_heatmap(File, Bricks, x.coords, y.coords, FUN = NULL,
-    value.cap = NULL, distance = NULL, rotate = FALSE, x.axis = TRUE,
-    x.axis.title = NULL, y.axis = TRUE, y.axis.title = NULL,
-    title = NULL, legend.title = NULL, return.object = FALSE,
-    x.axis.num.breaks = 5, y.axis.num.breaks = 5, palette,
-    col.direction = 1, extrapolate.on = NULL, x.axis.text.size = 10,
-    y.axis.text.size = 10, text.size = 10, legend.title.text.size = 8,
-    legend.text.size = 8, title.size = 10, tad.ranges = NULL,
-    group.col = NULL, tad.colour.col = NULL, colours = NULL,
-    colours.names = NULL, cut.corners = FALSE, highlight.points = NULL,
-    width = 10, height = 6, line.width = 0.5, units = "cm",
-    legend.key.width = unit(3, "cm"), legend.key.height = unit(0.5,
+Brick_vizart_plot_heatmap(File, Bricks, resolution, x_coords, y_coords,
+    FUN = NULL, value_cap = NULL, distance = NULL, rotate = FALSE,
+    x_axis = TRUE, x_axis_title = NULL, y_axis = TRUE,
+    y_axis_title = NULL, title = NULL, legend_title = NULL,
+    return_object = FALSE, x_axis_num_breaks = 5,
+    y_axis_num_breaks = 5, palette, col_direction = 1,
+    extrapolate_on = NULL, x_axis_text_size = 10,
+    y_axis_text_size = 10, text_size = 10, legend_title_text_size = 8,
+    legend_text_size = 8, title_size = 10, tad_ranges = NULL,
+    group_col = NULL, tad_colour_col = NULL, colours = NULL,
+    colours_names = NULL, cut_corners = FALSE, highlight_points = NULL,
+    width = 10, height = 6, line_width = 0.5, units = "cm",
+    legend_key_width = unit(3, "cm"), legend_key_height = unit(0.5,
     "cm"))
 }
 \arguments{
@@ -23,15 +24,19 @@ Brick_vizart_plot_heatmap(File, Bricks, x.coords, y.coords, FUN = NULL,
 A character vector containing the output filename to write.}
 
 \item{Bricks}{\strong{Required}
-A character vector of length 1 (in case of one sample heatmaps) or 2 (in case
-of two sample heatmaps) specifying the names of the Brick stores from where
+A list of length 1 (in case of one sample heatmaps) or 2 (in case
+of two sample heatmaps) specifying the BrickContainers from where
 to fetch the data.}
 
-\item{x.coords}{\strong{Required}
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
+
+\item{x_coords}{\strong{Required}
 A character vector of length 1 specifying the coordinates from where to fetch
 the data.}
 
-\item{y.coords}{\strong{Required}
+\item{y_coords}{\strong{Required}
 A character vector of length 1 specifying the coordinates from where to fetch
 the data.}
 
@@ -39,7 +44,7 @@ the data.}
 If any sort of transformations should be applied to the data before plotting.
 Such as, log10 or log2 transformations.}
 
-\item{value.cap}{\strong{Optional}. Default NULL
+\item{value_cap}{\strong{Optional}. Default NULL
 If present, values beyond a certain quantile will be capped to that quantile.
 In Hi-C this helps to emphasize structural information. Please note, if this
 parameter is present the greatest value will have a greater than sign append-
@@ -53,93 +58,93 @@ parameter will result in an error if it is greater than the loaded distance.}
 \item{rotate}{\strong{Optional}. Default FALSE
 If TRUE, will rotate the heatmap by 90 degrees.}
 
-\item{x.axis}{\strong{Optional}. Default TRUE
+\item{x_axis}{\strong{Optional}. Default TRUE
 If FALSE, the x-axis will be removed (ticks, x-axis labels and title).}
 
-\item{x.axis.title}{\strong{Optional}. Default NULL
+\item{x_axis_title}{\strong{Optional}. Default NULL
 If present, will be the \emph{x-axis} title. Else defaults to the provided
-x.coords}
+x_coords}
 
-\item{y.axis}{\strong{Optional}. Default TRUE
+\item{y_axis}{\strong{Optional}. Default TRUE
 If FALSE, the y-axis will be removed (ticks, y-axis labels and title).}
 
-\item{y.axis.title}{\strong{Optional}. Default NULL
+\item{y_axis_title}{\strong{Optional}. Default NULL
 If present, will be the \emph{y-axis} title. Else defaults to the provided
-y.coords}
+y_coords}
 
 \item{title}{\strong{Optional}. Default NULL
 If present, will be the \emph{plot} title. Else defaults to the provided
-x.coords vs y.coords}
+x_coords vs y_coords}
 
-\item{legend.title}{\strong{Optional}. Default NULL
+\item{legend_title}{\strong{Optional}. Default NULL
 If present will be the title of the legend. Else defaults to "Signal".}
 
-\item{return.object}{\strong{Optional}. Default FALSE
+\item{return_object}{\strong{Optional}. Default FALSE
 If present the ggplot object will be returned}
 
-\item{x.axis.num.breaks}{\strong{Optional}. Default 5
+\item{x_axis_num_breaks}{\strong{Optional}. Default 5
 Number of ticks on the x axis}
 
-\item{y.axis.num.breaks}{\strong{Optional}. Default 5
+\item{y_axis_num_breaks}{\strong{Optional}. Default 5
 Number of ticks on the y axis}
 
 \item{palette}{\strong{Required}. Default NULL
 One of the RColorbrewer or viridis colour palettes}
 
-\item{col.direction}{\strong{Optional}. Default 1
+\item{col_direction}{\strong{Optional}. Default 1
 If -1, the colour scale will be reversed.}
 
-\item{extrapolate.on}{\strong{Optional}. Default NULL
+\item{extrapolate_on}{\strong{Optional}. Default NULL
 If present, colours from the palette will be extrapolated between lightest
 and darkest to create the gradient. This value cannot be more than 100.}
 
-\item{x.axis.text.size}{\strong{Optional}. Default 10
+\item{x_axis_text_size}{\strong{Optional}. Default 10
 x-axis text size}
 
-\item{y.axis.text.size}{\strong{Optional}. Default 10
+\item{y_axis_text_size}{\strong{Optional}. Default 10
 y-axis text size}
 
-\item{text.size}{\strong{Optional}. Default 10
+\item{text_size}{\strong{Optional}. Default 10
 text size of text elements in the plot.}
 
-\item{legend.title.text.size}{\strong{Optional}. Default 8
+\item{legend_title_text_size}{\strong{Optional}. Default 8
 text size of the legend title}
 
-\item{legend.text.size}{\strong{Optional}. Default 8
+\item{legend_text_size}{\strong{Optional}. Default 8
 text size of the legend text}
 
-\item{title.size}{\strong{Optional}. Default 10
+\item{title_size}{\strong{Optional}. Default 10
 text size of the title}
 
-\item{tad.ranges}{\strong{Optional}. Default NULL
+\item{tad_ranges}{\strong{Optional}. Default NULL
 A GenomicRanges object specifying the start and end coordinates of TADs to be
 plotted on the heatmap.}
 
-\item{group.col}{\strong{Optional}. Default NULL
+\item{group_col}{\strong{Optional}. Default NULL
 Name of the column which will be used to categorize TADs as belonging to
 either the first or the second Brick stores. This must be a numeric value
 ranging from 1 to 2. If NULL, TADs will be plotted on both Hi-C maps.}
 
-\item{tad.colour.col}{\strong{Optional}. Default NULL
-tad.colour.col takes as value the column name in the tad.ranges object
+\item{tad_colour_col}{\strong{Optional}. Default NULL
+tad_colour_col takes as value the column name in the tad_ranges object
 corresponding to the column which should be used to define different TAD
 categories.}
 
 \item{colours}{\strong{Optional}. Default NULL
-If tad.ranges is present, colours expects a hexcode value of length 1. But,
-if tad.colour.col is specified, it expects colours of the same length as
-unique tad.ranges$tad.colour.col.}
+If tad_ranges is present, colours expects a hexcode value of length 1. But,
+if tad_colour_col is specified, it expects colours of the same length as
+unique tad_ranges$tad_colour_col.}
 
-\item{colours.names}{\strong{Optional}. Default NULL
+\item{colours_names}{\strong{Optional}. Default NULL
 If present, will be assigned to colours. Else, will inherit unique
-tad.colour.col. If tad.colour.col is also absent, will revert to a placehold
+tad_colour_col. If tad_colour_col is also absent, will revert to a placehold
 column name.}
 
-\item{cut.corners}{\strong{Optional}. Default FALSE
-if cut.corners is TRUE, TAD borders will not be truncated, and they will
+\item{cut_corners}{\strong{Optional}. Default FALSE
+if cut_corners is TRUE, TAD borders will not be truncated, and they will
 span until the end of visible heatmap.}
 
-\item{highlight.points}{\strong{Optional}. Not yet implemented.}
+\item{highlight_points}{\strong{Optional}. Not yet implemented.}
 
 \item{width}{\strong{Optional}. Default 10cm
 Width of the output file units.}
@@ -147,20 +152,20 @@ Width of the output file units.}
 \item{height}{\strong{Optional}. Default 6cm
 Height of the output file in units.}
 
-\item{line.width}{\strong{Optional}. Default 0.5
+\item{line_width}{\strong{Optional}. Default 0.5
 When plotting TADs set the width of the plotted lines}
 
 \item{units}{\strong{Optional}. Default cm
 Defines the units of the output file width and height.}
 
-\item{legend.key.width}{\strong{Optional}. Default unit(3,"cm")
+\item{legend_key_width}{\strong{Optional}. Default unit(3,"cm")
 Defines the legend key width.}
 
-\item{legend.key.height}{\strong{Optional}. Default unit(0.5,"cm")
+\item{legend_key_height}{\strong{Optional}. Default unit(0.5,"cm")
 Defines the legend key height.}
 }
 \value{
-If return.object is set to TRUE, the constructed ggplot2
+If return_object is set to TRUE, the constructed ggplot2
 object will be returned. Else TRUE.
 }
 \description{
@@ -180,15 +185,34 @@ Hi-C data.
 }
 \examples{
 FailSafe_log10 <- function(x){
-     x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
-     return(log10(x+1))
+    x[is.na(x) | is.nan(x) | is.infinite(x)] <- 0
+    return(log10(x+1))
 }
 
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_vizart_plot_heatmap(File = "./chr19-5000000-10000000.pdf", 
-Bricks = Brick.file, x.coords = "chr19:5000000:10000000", palette = "Reds",
-y.coords = "chr19:5000000:10000000", FUN = FailSafe_log10, 
-value.cap = 0.99, width = 10, height = 11, legend.key.width = unit(3,"mm"),
-legend.key.height = unit(0.3,"cm"))
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "vizart_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr3R", 
+chr2 = "chr3R", matrix_file = Matrix_file, delim = " ",
+remove_prior = TRUE, resolution = 100000)
+
+Brick_vizart_plot_heatmap(File = "./chr3R-1-10000000.pdf", 
+Bricks = list(My_BrickContainer), resolution = 100000, 
+x_coords = "chr3R:1:10000000", palette = "Reds", 
+y_coords = "chr3R:1:10000000", FUN = FailSafe_log10, 
+value_cap = 0.99, width = 10, height = 11, legend_key_width = unit(3,"mm"),
+legend_key_height = unit(0.3,"cm"))
 
 }

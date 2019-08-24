@@ -4,17 +4,23 @@
 \alias{Brick_get_ranges}
 \title{Fetch the ranges associated to a rangekey or chromosome.}
 \usage{
-Brick_get_ranges(Brick, chr = NULL, rangekey)
+Brick_get_ranges(Brick = NA, chr = NA, rangekey = NA,
+    resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chr}{\strong{Optional}.
 A chr string specifying the chromosome to select from the ranges.}
 
 \item{rangekey}{\strong{Required}.
 A string specifying the name of the ranges.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 Returns a GRanges object with the associated metadata columns that
@@ -32,7 +38,20 @@ and Strand columns may appear as metadata columns. These will most likely
 be artifacts from converting the original ranges object to a data.frame.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Brick_get_ranges(Brick = Brick.file, chr = "chr19", rangekey = "Bintable")
+
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "list_get_ranges_test")
+
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Brick_get_ranges(Brick = My_BrickContainer, chr = "chr2L", 
+    rangekey = "Bintable", resolution = 100000)
 
 }

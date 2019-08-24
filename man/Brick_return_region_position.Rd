@@ -4,15 +4,20 @@
 \alias{Brick_return_region_position}
 \title{Provides the overlapping position (within) from the bintable.}
 \usage{
-Brick_return_region_position(Brick, region)
+Brick_return_region_position(Brick, region, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{region}{\strong{Required}.
 A character vector of length 1 specifying the region to overlap. It must
 take the form chr:start:end.}
+
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 }
 \value{
 Returns a 1 dimensional vector containing the position of the
@@ -38,20 +43,20 @@ deal with.
 
 \examples{
 
-Coordinate <- "chr19:1:1000000"
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Test_Run <- Brick_return_region_position(Brick = Brick.file,
-region = Coordinate)
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"),
+package = "HiCBricks")
 
-\dontrun{
+out_dir <- file.path(tempdir(), "region_position_test")
+dir.create(out_dir)
 
-Coordinate <- c("chr19:1:1000000","chr19:40000:2000000")
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-Test_Run <- Brick_return_region_position(Brick = Brick.file,
-region = Coordinate)
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
 
-This will generate an error because the module itself expects as input a
-vector of length 1.
+Coordinate <- "chr2L:1:1000000"
 
-}
+Test_Run <- Brick_return_region_position(Brick = My_BrickContainer,
+region = Coordinate, resolution = 100000)
+
 }

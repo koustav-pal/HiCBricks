@@ -4,31 +4,41 @@
 \alias{Brick_local_score_differentiator}
 \title{Do TAD Calls with Local Score Differentiator on a Hi-C matrix}
 \usage{
-Brick_local_score_differentiator(Brick, chrs = NULL, min.sum = -1,
-    di.window = 200L, lookup.window = 200L, tukeys.constant = 1.5,
-    strict = TRUE, fill.gaps = TRUE, ignore.sparse = TRUE,
-    sparsity.threshold = 0.8, remove.empty = NULL, chunk.size = 500,
-    force.retrieve = TRUE)
+Brick_local_score_differentiator(Brick, chrs = NULL, resolution = NA,
+    all_resolutions = FALSE, min_sum = -1, di_window = 200L,
+    lookup_window = 200L, tukeys_constant = 1.5, strict = TRUE,
+    fill_gaps = TRUE, ignore_sparse = TRUE, sparsity_threshold = 0.8,
+    remove_empty = NULL, chunk_size = 500, force_retrieve = TRUE)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
-A string specifying the path to the Brick store created with CreateBrick.}
+A string specifying the path to the Brick store created with
+Create_many_Brick.}
 
 \item{chrs}{\strong{Optional}. Default NULL
 If present, only TAD calls for elements in \emph{chrs} will be done.}
 
-\item{min.sum}{\strong{Optional}. Default -1
-Process bins in the matrix with row.sums greater than \emph{min.sum}.}
+\item{resolution}{\strong{Optional}. Default NA
+When an object of class BrickContainer is provided, resolution defines the
+resolution on which the function is executed}
 
-\item{di.window}{\strong{Optional}. Default 200
-Use \emph{di.window} to define the directionality index.}
+\item{all_resolutions}{\strong{Optional}. Default FALSE
+If resolution is not defined and all_resolutions is TRUE, the resolution
+parameter will be ignored and the function is executed on all files listed
+in the Brick container}
 
-\item{lookup.window}{\strong{Optional}. Default 200
-Use \emph{lookup.window} local window to call borders. At smaller
-\emph{di.window} values we recommend setting this to 2*\emph{di.window}}
+\item{min_sum}{\strong{Optional}. Default -1
+Process bins in the matrix with row.sums greater than \emph{min_sum}.}
 
-\item{tukeys.constant}{\strong{Optional}. Default 1.5
-\emph{tukeys.constant}*IQR (inter-quartile range) defines the lower and upper
+\item{di_window}{\strong{Optional}. Default 200
+Use \emph{di_window} to define the directionality index.}
+
+\item{lookup_window}{\strong{Optional}. Default 200
+Use \emph{lookup_window} local window to call borders. At smaller
+\emph{di_window} values we recommend setting this to 2*\emph{di_window}}
+
+\item{tukeys_constant}{\strong{Optional}. Default 1.5
+\emph{tukeys_constant}*IQR (inter-quartile range) defines the lower and upper
 fence values.}
 
 \item{strict}{\strong{Optional}. Default TRUE
@@ -36,11 +46,11 @@ If TRUE, \emph{strict} creates an additional filter on the directionality
 index requiring it to be either greater than or less than 0 on the right tail
 or left tail respectively.}
 
-\item{fill.gaps}{\strong{Optional}. Default TRUE
+\item{fill_gaps}{\strong{Optional}. Default TRUE
 If TRUE, this will affect the TAD stiching process. All Border starts are
 stiched to the next downstream border ends. Therefore, at times border ends
 remain unassociated to a border start. These border ends are stiched to the
-adjacent downstream bin from their upstream border end when \emph{fill.gaps}
+adjacent downstream bin from their upstream border end when \emph{fill_gaps}
 is true.
 
 TADs inferred in this way will be annotated with two metadata columns in the
@@ -48,27 +58,27 @@ GRanges object. \emph{gap.fill} will hold a value of 1 and \emph{level} will
 hold a value 1. TADs which were not filled in will hold a gap.fill value of
 0 and a level value of 2.}
 
-\item{ignore.sparse}{\strong{Optional}. Default TRUE
+\item{ignore_sparse}{\strong{Optional}. Default TRUE
 If TRUE, a matrix which has been defined as sparse during the matrix loading
-process will be treated as a dense matrix. The \emph{sparsity.threshold}
+process will be treated as a dense matrix. The \emph{sparsity_threshold}
 filter will not be applied. Please note, that if a matrix is defined as
-sparse and fill.gaps is TRUE, fill.gaps will be turned off.}
+sparse and fill_gaps is TRUE, fill_gaps will be turned off.}
 
-\item{sparsity.threshold}{\strong{Optional}. Default 0.8
+\item{sparsity_threshold}{\strong{Optional}. Default 0.8
 Sparsity threshold relates to the sparsity index, which is computed as the
 number of non-zero bins at a certain distance from the diagonal. If a matrix
-is sparse and ignore.sparse is FALSE, bins which have a sparsity index value
+is sparse and ignore_sparse is FALSE, bins which have a sparsity index value
 below this threshold will be discarded from DI computation.}
 
-\item{remove.empty}{Not implemented.
+\item{remove_empty}{Not implemented.
 After implementation, this will ensure that the presence of centromeric
 regions is accounted for.}
 
-\item{chunk.size}{\strong{Optional}. Default 500
+\item{chunk_size}{\strong{Optional}. Default 500
 The size of the matrix chunk to process. This value should be larger than 2x
-di.window.}
+di_window.}
 
-\item{force.retrieve}{\strong{Optional}. Default TRUE
+\item{force_retrieve}{\strong{Optional}. Default TRUE
 If TRUE, this will force the retrieval of a matrix chunk even when the
 retrieval includes interaction points which were not loaded into a Brick
 store (larger chunks). Please note, that this does not mean that DI can be
@@ -99,10 +109,10 @@ and the original directionality index, we define domain borders as outliers.
 }
 \details{
 To define an outlier, fences are first defined. The fences are defined using
-tukeys.constant x inter-quartile range of the directionality index. The upper
+tukeys_constant x inter-quartile range of the directionality index. The upper
 fence used for detecting domain starts is the 75th quartile +
-(IQR x tukeys.constant), while the lower fence is the
-25th quartile - (IQR x tukeys.constant). For domain starts the DI difference
+(IQR x tukeys_constant), while the lower fence is the
+25th quartile - (IQR x tukeys_constant). For domain starts the DI difference
 must be greater than or equal to the upper fence, it must be greater than the
 DI and the DI must be a finite real value. If strict is TRUE, DI will also
 be required to be greater than 0. Similarly, for domain ends the
@@ -111,7 +121,7 @@ lower than the DI and the DI must be a finite real value. If strict is TRUE,
 DI will also be required to be lower than 0.
 
 After defining outliers, each domain start will be associated to its
-nearest downstream domain end. If \emph{fill.gaps} is defined as TRUE and
+nearest downstream domain end. If \emph{fill_gaps} is defined as TRUE and
 there are domain ends which remain unassociated to a domain start, These
 domain ends will be associated to the bin adjacent to their nearest upstream
 domain end. This associations will be marked by metadata columns, gap.fill= 1
@@ -121,8 +131,26 @@ This function provides the capability to call very accurante TAD definitions
 in a very fast way.
 }
 \examples{
-Brick.file <- system.file("extdata", "test.hdf", package = "HiCBricks")
-TAD_ranges <- Brick_local_score_differentiator(Brick = Brick.file, 
-chrs = "chr19", di.window = 10, lookup.window = 30, strict = TRUE, 
-fill.gaps = TRUE, chunk.size = 500)
+Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+package = "HiCBricks")
+
+out_dir <- file.path(tempdir(), "lsd_test")
+dir.create(out_dir)
+
+My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+    experiment_name = "Vignette Test", resolution = 100000,
+    remove_existing = TRUE)
+
+Matrix_file <- system.file(file.path("extdata", 
+"Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 
+package = "HiCBricks")
+
+Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr3R", 
+chr2 = "chr3R", matrix_file = Matrix_file, delim = " ",
+remove_prior = TRUE, resolution = 100000)
+
+TAD_ranges <- Brick_local_score_differentiator(Brick = My_BrickContainer, 
+chrs = "chr3R", resolution = 100000, di_window = 10, lookup_window = 30, 
+strict = TRUE, fill_gaps = TRUE, chunk_size = 500)
 }
