@@ -111,7 +111,7 @@ Create_many_Bricks(BinTable = Bintable_path,
 
 > **HiCBricks does not overwrite your files without you saying so** Keeping in line with Bioconductor standards and community guidelines, HiCBricks will never replace a user's files without their explicit permission. When a user defines `remove_existing=TRUE`, they are giving their permission to HiCBricks function to remove any _Brick objects_ they may have created previously. Otherwise, without this parameter the `Create_many_Bricks` will not overwrite existing files. You will encounter this parameter in another form, `remove_prior` when populating HDF files with Hi-C data.
 
-We are now ready to load a 2D matrix data into the _Brick object_. When doing so, we have to pass to the `Brick_load_matrix` function the path to the HDF file (so far containing only the bin table). Then we have to specify which chromosome (for intra-chromosomal _n x n_ contact matrix) or which pair of chromosomes (for inter-chromosomal _n x m_ contact matrix) are contained in the `matrix.file`. In case of intra-chromosomal contacts like in this example, `chr1` and `chr2` arguments will have the same value.
+We are now ready to load a 2D matrix data into the _Brick objects_. When doing so, we pass to the `Brick_load_matrix` function the BrickContainer object returned as output from the previous step. Then we specify which chromosome (for intra-chromosomal _n x n_ contact matrix) or which pair of chromosomes (for inter-chromosomal _n x m_ contact matrix) are contained in the `matrix_file`. In case of intra-chromosomal contacts like in this example, `chr1` and `chr2` arguments will have the same value.
 
 ```{r}
 
@@ -135,7 +135,7 @@ for (chr in Chromosomes) {
 
 ```
 
-Note that also in this case we specify a column delimiter `(delim= " ")` for reading the input file. If you have a very large 2D _cis_ matrix, you may want to load data up to a certain diagonal, i.e. up to bin pairs separated by a certain distance on the genome. The rationale in this case is that the contact frequency is rapidly decaying with distance, thus a you may find a very sparse matrix at longer distances.
+Note that also in this case we specify a column delimiter `(delim= " ")` for reading the input file. If you have a very large 2D _cis_ matrix, you may want to load data up to a certain diagonal, i.e. up to bin pairs separated by a certain distance on the genome. The rationale in this case is that the contact frequency is rapidly decaying with distance, thus you may find a very sparse matrix at longer distances.
 
 In this example we load up to 100 diagonals with `Brick_load_cis_matrix_till_distance`
 
@@ -172,7 +172,7 @@ require(curl)
 Consortium.home = "https://data.4dnucleome.org/files-processed"
 File = file.path(Consortium.home, "4DNFI7JNCNFB",
     "@@download","4DNFI7JNCNFB.mcool")
-mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 dir.create(mcool_out_dir)
 curl_download(url = File,
     destfile = file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
@@ -187,7 +187,7 @@ The 4D nucleome project disseminates its data with several different resolutions
 
 ```{r eval = FALSE}
 
-mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 Brick_list_mcool_resolutions(mcool = mcool_path)
 
@@ -197,7 +197,7 @@ Then users can query the mcool files to find out if a given normalisation factor
 
 ```{r eval = FALSE}
 
-mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 Brick_mcool_normalisation_exists(mcool = mcool_path, 
     norm.factor = "Iterative-Correction",
@@ -220,7 +220,7 @@ Using the `chrs` parameter users can limit the structure created to the relevant
 
 ```{r eval = FALSE}
 
-mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
@@ -239,7 +239,7 @@ You can also add other resolutions using the same function.
 
 ```{r eval = FALSE}
 
-mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
@@ -260,7 +260,7 @@ After the _Brick object_ has been created, we will populate the HDF file with va
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
 My_BrickContainer <- load_BrickContainer(project_dir = out_dir)
 
-mcool_out_dir <- file.path(temp.dir(), "mcool_out_dir")
+mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 Brick_load_data_from_mcool(Brick = My_BrickContainer,
