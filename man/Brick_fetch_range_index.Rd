@@ -6,7 +6,7 @@
 associated to the Hi-C experiment.}
 \usage{
 Brick_fetch_range_index(Brick = NA, chr = NA, start = NA, end = NA,
-    names = NA, resolution = NA, type = "any")
+  names = NA, resolution = NA, type = "any")
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -62,9 +62,9 @@ out_dir <- file.path(tempdir(), "fetch_range_index_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-    experiment_name = "Vignette Test", resolution = 100000,
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
 
 Chrom <- c("chr2L","chr2L")
 Start <- c(1,40000)

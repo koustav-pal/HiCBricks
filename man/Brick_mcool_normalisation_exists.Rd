@@ -5,11 +5,10 @@
 \title{Check if a normalisation exists in an mcool file.}
 \usage{
 Brick_mcool_normalisation_exists(mcool, norm_factor = NULL,
-    resolution = NULL)
+  resolution = NULL)
 }
 \arguments{
-\item{mcool}{\strong{Required}.
-Path to an mcool file.}
+\item{mcool}{\strong{Required}. Path to an mcool file.}
 
 \item{norm_factor}{\strong{Required}.
 The normalization factor to use for normalization from an mcool file.
@@ -42,7 +41,7 @@ destfile = file.path(out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 mcool <- file.path(out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 Brick_mcool_normalisation_exists(mcool = mcool,
 norm_factor = "Iterative-Correction",
-resolution = 10000)
+resolution = 50000)
 
 }
 

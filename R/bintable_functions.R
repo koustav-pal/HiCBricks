@@ -37,7 +37,7 @@ Read_bintable = function(Filename = NULL, read.delim = " ",
     if(impose.discontinuity){
         CheckContinuousRanges(Table=Table,StartCol=c("start"),EndCol=c("end"))
     }
-    Ranges.table <- Table[order(Table[,'chr'],Table[,'start']),]
+    # Ranges.table <- Table[order(Table[,'chr'],Table[,'start']),]
     Table.list <- list('main.tab' = Ranges.table, 'stranded' = is.stranded, 
         'named' = has.names)
     return(Table.list)

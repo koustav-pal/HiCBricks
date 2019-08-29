@@ -5,7 +5,7 @@
 \title{Get the path to HDF files present in the Brick container.}
 \usage{
 BrickContainer_get_path_to_file(Brick = NULL, chr1 = NA, chr2 = NA,
-    type = NA, resolution = NA)
+  type = NA, resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -44,9 +44,9 @@ out_dir <- file.path(tempdir(), "BrickContainer_list_filepath_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-    experiment_name = "Vignette Test", resolution = 100000, 
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  experiment_name = "Vignette Test", resolution = 100000, 
+  remove_existing = TRUE)
 
 BrickContainer_get_path_to_file(Brick = My_BrickContainer, chr1 = "chr2L",
 chr2 = "chr2L", resolution = 100000)

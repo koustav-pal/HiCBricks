@@ -17,9 +17,43 @@ message("Configuration file: ", getRelativePath(pathname =
     object@container_path, 
     relativeTo = getwd(), 
     caseSensitive = TRUE))
-message("Resolutions: ", paste(object@resolutions, collapse = ", "))
-message("Chromosomes: ", paste(object@chromosomes, collapse = ", "))
-message("Lengths: ", paste(object@chromosome_length, collapse = ", "))
+message_vector_limit <- 5
+resolution_message <- ifelse(
+    length(object@resolutions) > message_vector_limit, 
+    paste( paste(
+        object@resolutions[seq(from = 1, to = message_vector_limit)], 
+        collapse = ", "), 
+        "...+", 
+        length(object@resolutions)-message_vector_limit, 
+        " more", 
+        sep = ""),
+    paste(object@resolutions, collapse = ", "))
+
+chromosome_message <- ifelse(
+    length(object@chromosomes) > message_vector_limit, 
+    paste( paste(
+        object@chromosomes[seq(from = 1, to = message_vector_limit)], 
+        collapse = ", "), 
+        "...+", 
+        length(object@chromosomes)- message_vector_limit, 
+        " more", 
+        sep = ""),
+    paste(object@chromosomes, 
+        collapse = ", "))
+
+chromosome_length_message <- ifelse(
+    length(object@chromosome_length) > message_vector_limit, 
+    paste( paste(
+        object@chromosome_length[seq(from = 1, to = message_vector_limit)], 
+        collapse = ", "), 
+        "...+", 
+        length(object@chromosome_length)-message_vector_limit, 
+        " more", sep = ""),
+    paste(object@chromosome_length, 
+        collapse = ", "))
+message("Resolutions: ", resolution_message)
+message("Chromosomes: ", chromosome_message)
+message("Lengths: ", chromosome_length_message)
 num_files <- nrow(object@file_list)
 # type_names <- names(num_type)
 message("containing ", num_files, " matrices across ", 

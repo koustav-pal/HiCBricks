@@ -95,7 +95,8 @@ setGeneric("return_configuration_header",
         a_row[matrix_colnames[2]],
         a_row[matrix_colnames[3]],
         a_row[matrix_colnames[5]],
-        a_row[matrix_colnames[6]], stringsAsFactors = FALSE)
+        a_row[matrix_colnames[6]], 
+        stringsAsFactors = FALSE)
     })
     Matrix_df <- do.call(rbind, Matrix_df_list)
     colnames(Matrix_df) <- matrix_colnames[c(1,2,3,5,6)]
@@ -127,5 +128,5 @@ setGeneric("return_configuration_header",
 
 
 .format_resolution <- function(x){
-    return(format(x, scientific = FALSE))
+    return(trimws(format(x, scientific = FALSE)))
 }

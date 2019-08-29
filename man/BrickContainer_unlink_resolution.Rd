@@ -30,14 +30,14 @@ out_dir <- file.path(tempdir(), "BrickContainer_unlink_res_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-    experiment_name = "Vignette Test", resolution = 100000, 
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  experiment_name = "Vignette Test", resolution = 100000, 
+  remove_existing = TRUE)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-    experiment_name = "Vignette Test", resolution = 40000, 
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+  experiment_name = "Vignette Test", resolution = 40000, 
+  remove_existing = TRUE)
 
 BrickContainer_unlink_resolution(Brick = My_BrickContainer, 
 resolution = 40000)

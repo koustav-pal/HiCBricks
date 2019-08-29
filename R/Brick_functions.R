@@ -286,15 +286,11 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
 
 #' Create the entire HDF5 structure and load the bintable from a mcool file
 #'
-#' `CreateBrick_from_mcool` is a wrapper on Create_many_Bricks which creates 
-#' the Brick data structure from an mcool file.
+#' `Create_many_Bricks_from_mcool` is a wrapper on Create_many_Bricks which 
+#' creates the Brick data structure from an mcool file.
 #'
 #' mcool are a standard 4D nucleome data structure for Hi-C data. Read more
 #' about the 4D nucleome project \href{https://data.4dnucleome.org/}{here}.
-#'
-#' @param chrs \strong{Optional}.
-#' If provided will only create a Brick for these
-#' chromosomes (both cis & trans).
 #'
 #' @inheritParams Brick_load_data_from_mcool
 #'
@@ -316,21 +312,20 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
 #'
 #' mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 #' 
-#' CreateBrick_from_mcool(output_directory = out_dir,
+#' Create_many_Bricks_from_mcool(output_directory = out_dir,
 #' file_prefix = "Test",
 #' mcool = mcool,
-#' resolution = 10000,
-#' experiment_name = "A random 4DN dataset",
-#' chrs = "chr1")
+#' resolution = 50000,
+#' experiment_name = "A random 4DN dataset")
 #'
 #' }
 #'
 #' @seealso \code{\link{Brick_load_data_from_mcool}} to load data from
 #' the mcool to a Brick store.
 #'
-CreateBrick_from_mcool <- function(output_directory = NA, 
+Create_many_Bricks_from_mcool <- function(output_directory = NA, 
     file_prefix = NA, mcool = NULL, resolution = NULL, 
-    experiment_name = NA, chrs = NULL, remove_existing = FALSE){
+    experiment_name = NA, remove_existing = FALSE){
 
     Reference.object <- GenomicMatrix$new()
     if(is.null(mcool)){
@@ -367,20 +362,11 @@ CreateBrick_from_mcool <- function(output_directory = NA,
         mcool.version = mcool.version, resolution = !is.null(resolutions),
         binsize = resolution)
     ChromNames <- cooler.remap.chrom[,"chr.name"]
-    if(!is.null(chrs)){
-        if(any(!(chrs %in% ChromNames))){
-            stop("Some chrs were not found in this mcool file.\n")
-        }
-        ChromNames <- ChromNames[ChromNames %in% chrs]
-    }
     mcool_bintable_ranges <- ._mcool_bintable_ranges(mcool.file = mcool,
         resolution = !is.null(resolutions),
         mcool.remap.chrom = cooler.remap.chrom, 
         binsize = resolution,
         mcool.version = mcool.version)
-    mcool_bintable_ranges <- mcool_bintable_ranges[
-    mcool_bintable_ranges[,"chr"] %in% ChromNames,]
-
     RetVar <- Create_many_Bricks(BinTable = mcool_bintable_ranges, 
         output_directory = output_directory, file_prefix = file_prefix, 
         resolution = resolution, experiment_name = experiment_name, 
@@ -473,7 +459,7 @@ Brick_list_mcool_normalisations <- function(names.only = FALSE){
 #' mcool <- file.path(out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 #' Brick_mcool_normalisation_exists(mcool = mcool,
 #' norm_factor = "Iterative-Correction",
-#' resolution = 10000)
+#' resolution = 50000)
 #'
 #' }
 #'
@@ -1470,15 +1456,8 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #'
 #' @inheritParams Brick_load_matrix
 #'
-#' @inheritParams CreateBrick_from_mcool
-#' @param mcool \strong{Required}.
-#' Path to an mcool file.
-#'
-#' @param dont_look_for_chr2 \strong{Required}.
-#' At startup, the function will attempt to search for the first occurence
-#' of a chr2 contact value. This is done to avoid the reading of all chr1
-#' values for every chunk processed. If chr1 and chr2 are equivalent, consider
-#' setting it to FALSE.
+#' @inheritParams Create_many_Bricks_from_mcool
+#' @param mcool \strong{Required}. Path to an mcool file.
 #'
 #' @param norm_factor \strong{Optional}. Default "Iterative-Correction".
 #' The normalization factor to use for normalization from an mcool file.
@@ -1486,12 +1465,12 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #' "Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
 #' the function will load only counts from the mcool file.
 #'
-#' @param cooler_batch_size \strong{Optional}. Default 1000000.
-#' The number of values to read per iteration through a mcool file.
-#'
 #' @param matrix_chunk \strong{Optional}. Default 2000.
 #' The nxn matrix square to fill per iteration in a mcool file.
 #'
+#' @param num_cpus \strong{Optional}. Default 4.
+#' The number of cpus to use.
+#' 
 #' @return Returns TRUE if all went well.
 #'
 #' @examples
@@ -1508,58 +1487,30 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #'
 #' mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 #' 
-#' My_BrickContainer <- CreateBrick_from_mcool(output_directory = out_dir,
+#' My_BrickContainer <- Create_many_Bricks_from_mcool(
+#' output_directory = out_dir,
 #' file_prefix = "Test",
 #' mcool = mcool,
-#' resolution = 10000,
+#' resolution = 50000,
 #' experiment_name = "A random 4DN dataset")
 #'
 #' Brick_load_data_from_mcool(Brick = My_BrickContainer, mcool = mcool,
-#' chr1 = "chr1", chr2 = "chr1", resolution = 10000,
-#' cooler_batch_size = 1000000, matrix_chunk = 2000,
-#' dont_look_for_chr2 = TRUE, remove_prior = TRUE,
+#' resolution = 50000, matrix_chunk = 2000, remove_prior = TRUE,
 #' norm_factor = "Iterative-Correction")
 #'
 #' }
 #'
 #'
-#' @seealso \code{\link{CreateBrick_from_mcool}} to create matrix from an mcool
-#' file, \code{\link{Brick_list_mcool_resolutions}} to list available
+#' @seealso \code{\link{Create_many_Bricks_from_mcool}} to create matrix from 
+#' an mcool file, \code{\link{Brick_list_mcool_resolutions}} to list available
 #' resolutions in an mcool file, \code{\link{Brick_list_mcool_normalisations}}
 #' to list available normalisation factors in the mcool file.
 #'
-Brick_load_data_from_mcool <- function(Brick, mcool, chr1 = NULL,
-    chr2 = NULL, resolution = NULL, cooler_batch_size = 1000000,
-    matrix_chunk = 2000, dont_look_for_chr2 = FALSE, 
-    remove_prior = FALSE, norm_factor = "Iterative-Correction"){
+Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL, 
+    matrix_chunk = 2000, norm_factor = "Iterative-Correction", 
+    remove_prior = FALSE, num_cpus = 4){
     Reference.object <- GenomicMatrix$new()
-    if(is.null(chr1) | is.null(chr2)){
-        stop("chr1, chr2 cannot be NULL.\n")
-    }
-    if(length(chr1) != length(chr2) | length(chr1) != 1){
-        stop("chr1, chr2 are expected to be of length 1.\n")  
-    }
-    configuration_na_check(resolution, "resolution")
-    Brick_filepath <- BrickContainer_get_path_to_file(Brick, 
-        chr1 = chr1, chr2 = chr2, resolution = resolution)
-    if(length(Brick_filepath) == 0){
-        stop("Did not find a Brick file corresponding to", chr1, chr2, 
-            " pair. Note that, chr2 position is expected to be greater",
-            " than or equal to than chr1 position in the chromosome list",
-            " and the chromosome pairs must exists for a particular",
-            " resolution. Please check the chromosome list using",
-            " BrickContainer_list_chromosomes and the resolutions using",
-            " BrickContainer_list_resolutions")
-    }
-    if(!Brick_matrix_exists(Brick = Brick, chr1 = chr1,
-        chr2 = chr2, resolution = resolution)){
-        stop("Provided chromosomes do not exist in the chrominfo table\n")
-    }
-    if(Brick_matrix_isdone(Brick = Brick, chr1 = chr1,
-        chr2 = chr2, resolution = resolution) & !remove_prior){
-        stop("A matrix was preloaded before. ",
-            "Use remove_prior = TRUE to force value replacement\n")
-    }
+    
     resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
     if(!is.null(resolutions) & is.null(resolution)){
         stop("resolution must be provided when",
@@ -1570,9 +1521,10 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1 = NULL,
         if(!(resolution %in% resolutions)){
             stop("resolution not found in mcool file.",
                 " Please check available resolutions",
-                " with Brick_list_mcool_resolutions.\n")            
+                " with Brick_list_mcool_resolutions.\n")
         }
     }
+    Norm_factor <- NULL
     if(!is.null(norm_factor)){
         All.factors <- Brick_list_mcool_normalisations(names.only=TRUE)
         if(!Brick_mcool_normalisation_exists(mcool = mcool,
@@ -1586,17 +1538,14 @@ Brick_load_data_from_mcool <- function(Brick, mcool, chr1 = NULL,
                 "Normalisation factors present in the mcool file are: ",
                 paste(Factors.present, collapse = ", "))
         }
-        Norm.factors <- Brick_list_mcool_normalisations()
-        Norm.factor <- Norm.factors[norm_factor]
-        names(Norm.factor) <- NULL
-    }else{
-        Norm.factor <- NULL
+        Norm_factors <- Brick_list_mcool_normalisations()
+        Norm_factor <- Norm_factors[norm_factor]
+        names(Norm_factor) <- NULL
     }
-    RetVar <- ._Process_mcool(Brick = Brick_filepath, File = mcool,
-        cooler.batch.size = cooler_batch_size, binsize = resolution, 
-        matrix.chunk = matrix_chunk, chr1 = chr1,
-    chr2 = chr2, dont.look.for.chr2 = dont_look_for_chr2,
-    norm.factor = Norm.factor, resolution = !is.null(resolutions))
+    RetVar <- .process_mcool(Brick = Brick, mcool = mcool, 
+        resolution = resolution, matrix_chunk = matrix_chunk, 
+        norm_factor = Norm_factor, num_cpus = num_cpus,
+        has_resolution = !is.null(resolutions))
     return(RetVar)
 }
 

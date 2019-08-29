@@ -5,8 +5,8 @@
 \title{Get the matrix metadata columns in the Brick store.}
 \usage{
 Brick_get_matrix_mcols(Brick, chr1, chr2, resolution,
-    what = c("chr1_bin_coverage", "chr2_bin_coverage", "chr1_row_sums",
-    "chr2_col_sums"))
+  what = c("chr1_bin_coverage", "chr2_bin_coverage", "chr1_row_sums",
+  "chr2_col_sums"))
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -59,9 +59,9 @@ out_dir <- file.path(tempdir(), "get_matrix_mcols_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-    experiment_name = "Vignette Test", resolution = 100000,
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
 "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 

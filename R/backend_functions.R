@@ -747,7 +747,7 @@ humanize_size <- function(x){
 }
 
 ._GetDimensions <- function(group.path = NULL, dataset.path = NULL, 
-    File = NULL, return.what = NULL){   
+    File = NULL, return.what = NULL){
     File.handler <- ._Brick_Get_Something_(Group.path = group.path, 
         Brick = File, Name = dataset.path, return.what = "dataset_handle")
     Dataspace <- H5Dget_space(File.handler)

@@ -5,7 +5,7 @@
 \title{Fetch the ranges associated to a rangekey or chromosome.}
 \usage{
 Brick_get_ranges(Brick = NA, chr = NA, rangekey = NA,
-    resolution = NA)
+  resolution = NA)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -47,11 +47,11 @@ out_dir <- file.path(tempdir(), "list_get_ranges_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-    experiment_name = "Vignette Test", resolution = 100000,
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
 
 Brick_get_ranges(Brick = My_BrickContainer, chr = "chr2L", 
-    rangekey = "Bintable", resolution = 100000)
+rangekey = "Bintable", resolution = 100000)
 
 }

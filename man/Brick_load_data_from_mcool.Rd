@@ -4,52 +4,36 @@
 \alias{Brick_load_data_from_mcool}
 \title{Load a NxN dimensional matrix into the Brick store from an mcool file.}
 \usage{
-Brick_load_data_from_mcool(Brick, mcool, chr1 = NULL, chr2 = NULL,
-    resolution = NULL, cooler_batch_size = 1e+06, matrix_chunk = 2000,
-    dont_look_for_chr2 = FALSE, remove_prior = FALSE,
-    norm_factor = "Iterative-Correction")
+Brick_load_data_from_mcool(Brick, mcool, resolution = NULL,
+  matrix_chunk = 2000, norm_factor = "Iterative-Correction",
+  remove_prior = FALSE, num_cpus = 4)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
 A string specifying the path to the Brick store created with
 Create_many_Brick.}
 
-\item{mcool}{\strong{Required}.
-Path to an mcool file.}
-
-\item{chr1}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to
-the rows of the matrix}
-
-\item{chr2}{\strong{Required}.
-A character vector of length 1 specifying the chromosome corresponding to
-the columns of the matrix}
+\item{mcool}{\strong{Required}. Path to an mcool file.}
 
 \item{resolution}{\strong{Optional}. Default NA
 When an object of class BrickContainer is provided, resolution defines the
 resolution on which the function is executed}
 
-\item{cooler_batch_size}{\strong{Optional}. Default 1000000.
-The number of values to read per iteration through a mcool file.}
-
 \item{matrix_chunk}{\strong{Optional}. Default 2000.
 The nxn matrix square to fill per iteration in a mcool file.}
-
-\item{dont_look_for_chr2}{\strong{Required}.
-At startup, the function will attempt to search for the first occurence
-of a chr2 contact value. This is done to avoid the reading of all chr1
-values for every chunk processed. If chr1 and chr2 are equivalent, consider
-setting it to FALSE.}
-
-\item{remove_prior}{\strong{Optional}. Default FALSE
-If a matrix was loaded before, it will not be replaced. Use remove_prior to
-override and replace the existing matrix.}
 
 \item{norm_factor}{\strong{Optional}. Default "Iterative-Correction".
 The normalization factor to use for normalization from an mcool file.
 norm_factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
 "Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
 the function will load only counts from the mcool file.}
+
+\item{remove_prior}{\strong{Optional}. Default FALSE
+If a matrix was loaded before, it will not be replaced. Use remove_prior to
+override and replace the existing matrix.}
+
+\item{num_cpus}{\strong{Optional}. Default 4.
+The number of cpus to use.}
 }
 \value{
 Returns TRUE if all went well.
@@ -72,16 +56,15 @@ destfile = file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool"))
 
 mcool <- file.path(out_dir,"H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
-My_BrickContainer <- CreateBrick_from_mcool(output_directory = out_dir,
+My_BrickContainer <- Create_many_Bricks_from_mcool(
+output_directory = out_dir,
 file_prefix = "Test",
 mcool = mcool,
-resolution = 10000,
+resolution = 50000,
 experiment_name = "A random 4DN dataset")
 
 Brick_load_data_from_mcool(Brick = My_BrickContainer, mcool = mcool,
-chr1 = "chr1", chr2 = "chr1", resolution = 10000,
-cooler_batch_size = 1000000, matrix_chunk = 2000,
-dont_look_for_chr2 = TRUE, remove_prior = TRUE,
+resolution = 50000, matrix_chunk = 2000, remove_prior = TRUE,
 norm_factor = "Iterative-Correction")
 
 }
@@ -89,8 +72,8 @@ norm_factor = "Iterative-Correction")
 
 }
 \seealso{
-\code{\link{CreateBrick_from_mcool}} to create matrix from an mcool
-file, \code{\link{Brick_list_mcool_resolutions}} to list available
+\code{\link{Create_many_Bricks_from_mcool}} to create matrix from
+an mcool file, \code{\link{Brick_list_mcool_resolutions}} to list available
 resolutions in an mcool file, \code{\link{Brick_list_mcool_normalisations}}
 to list available normalisation factors in the mcool file.
 }
