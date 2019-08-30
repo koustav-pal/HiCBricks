@@ -110,13 +110,25 @@
     return(list("bin1_id" = Bin1_id, "bin2_id" = Bin2_id, "counts" = Counts))
 }
 
-.create_mcool_chr1_indexes <- function(chromosomes, matrix_chunk, 
-    chr_offsets, bin_offsets){
+.create_mcool_chr1_indexes <- function(chromosomes, ignore_chrs, matrix_chunk, 
+    chr_offsets, bin_offsets, num_records_limit = 10000000){
     chr1_index_iterations_list <- .convert_chr_to_chunks(
         chr_offsets = chr_offsets, chromosomes = chromosomes,
-        matrix_chunk = matrix_chunk)
+        ignore_chrs = ignore_chrs, matrix_chunk = matrix_chunk)
+    chromosomes <- chromosomes[!(seq_along(chromosomes) %in% ignore_chrs)]
     chr1_indexes_df_list <- lapply(seq_along(chromosomes), function(x){
         chr1_index_iterations <- chr1_index_iterations_list[[x]]
+        records_read_per_iter <- chr1_index_iterations$read_to - 
+            chr1_index_iterations$read_from
+        if(any(records_read_per_iter > num_records_limit)){
+            chr1_index_iterations <- .make_chunks_from_bin_offset(
+                bin_offset = bin_offsets,
+                num_records_limit = num_records_limit,
+                chr1 = chromosomes[x],
+                chr1_start = chr1_index_iterations$start[1],
+                chr1_end = chr1_index_iterations$end[
+                    length(chr1_index_iterations$end)])
+        }
         names(chr1_index_iterations$end) <- NULL
         Bin_iter_df_list <- lapply(seq_along(chr1_index_iterations$start), 
             function(y){
@@ -130,35 +142,65 @@
                     read_to = bin_offsets[chr1_end+1],
                     stringsAsFactors = FALSE)
         })
+        Bin_iter_df_list <- Bin_iter_df_list[!vapply(Bin_iter_df_list, 
+            is.null, TRUE)]
         Bin_iter_df <- do.call(rbind, Bin_iter_df_list)
-        rownames(Bin_iter_df) <- NULL
-        Bin_iter_df
     })
-    chr1_indexes_df <- do.call(rbind, chr1_indexes_df_list) 
+    chr1_indexes_df <- do.call(rbind, chr1_indexes_df_list)
+    return(chr1_indexes_df)
+    rownames(chr1_indexes_df) <- NULL
     return(chr1_indexes_df)
 }
 
-.convert_chr_to_chunks <- function(chr_offsets, chromosomes, matrix_chunk){
+.convert_chr_to_chunks <- function(chr_offsets, chromosomes, ignore_chrs, 
+    matrix_chunk){
     names(chr_offsets) <- NULL
     chunk_list <- lapply(seq_along(chromosomes), function(x){
+        if(x %in% ignore_chrs){
+            return(NULL)
+        }
         .make_mcool_iterations(Start.pos = chr_offsets[x]+1,
         End.pos = chr_offsets[x+1],
         step = matrix_chunk)
     })
-    return(chunk_list)
+    return(chunk_list[!vapply(chunk_list, is.null, TRUE)])
 }
 
+.make_chunks_from_bin_offset <- function(bin_offset, num_records_limit, 
+    chr1, chr1_start, chr1_end){
+    chr1_seq <- seq(from = chr1_start, to = chr1_end+1, by = 1)
+    num_records_per_bin <- diff(bin_offset[chr1_seq])
+    chr1_seq <- chr1_seq[-length(chr1_seq)]
+    Total_sums <- cumsum(num_records_per_bin)
+    Divide_to_bins <- floor(Total_sums/num_records_limit) + 1
+    chr1_chunk_list <- split(chr1_seq, Divide_to_bins)
+    chr1_indexes_df_list <- lapply(chr1_chunk_list, function(chr1_chunk){
+                data.frame(
+                    chr1 = chr1,
+                    chr1_start = min(chr1_chunk),
+                    chr1_end =  max(chr1_chunk),
+                    read_from = bin_offsets[min(chr1_chunk)] + 1,
+                    read_to = bin_offsets[max(chr1_chunk)+1],
+                    stringsAsFactors = FALSE)
+    })
+    chr1_indexes_df <- do.call(rbind, chr1_indexes_df_list)
+    return(chr1_indexes_df)
+}
+
+
 .return_chr1_chr2_pairs <- function(Brick, chromosomes, matrix_chunk, 
-    chr_offsets, bin_offsets, resolution){
+    chr_offsets, ignore_chrs, bin_offsets, resolution, num_records_limit){
     chr1_bin_indexes_df <- .create_mcool_chr1_indexes(
-        chromosomes = chromosomes, matrix_chunk = matrix_chunk,
-        chr_offsets = chr_offsets, bin_offsets = bin_offsets)
-    chromosome_chunks_list <- .convert_chr_to_chunks(
-        chr_offsets = chr_offsets, chromosomes = chromosomes, 
+        chromosomes = chromosomes, ignore_chrs = ignore_chrs,
+        matrix_chunk = matrix_chunk, chr_offsets = chr_offsets, 
+        bin_offsets = bin_offsets, num_records_limit = num_records_limit)
+    chromosome_chunks_list <- .convert_chr_to_chunks(chr_offsets = chr_offsets,
+        chromosomes = chromosomes, ignore_chrs = ignore_chrs, 
         matrix_chunk = matrix_chunk)
+    chromosomes <- chromosomes[!(seq_along(chromosomes) %in% ignore_chrs)]
     names(chromosome_chunks_list) <- chromosomes
-    Files_df <- BrickContainer_list_files(Brick = Brick, 
-        resolution = resolution)
+    Files_df <- BrickContainer_list_files(Brick = Brick, chr1 = chromosomes,
+        chr2 = chromosomes, resolution = resolution)
     chr1_chr2_pairs <- split(Files_df$chrom2, Files_df$chrom1)
     chr1_chr2_rows_list <- lapply(seq_len(nrow(chr1_bin_indexes_df)), 
         function(x){
@@ -431,7 +473,7 @@ mcool_list_resolutions <- function(mcool = NULL){
 
 .process_mcool <- function(Brick = NULL, mcool_path = NULL, resolution = NULL, 
     has_resolution = FALSE, matrix_chunk = 2000, norm_factor = NULL,
-    num_cpus) {
+    cooler_read_limit = 10000000) {
     is.sparse <- FALSE
     Reference_object <- GenomicMatrix$new()
     mcool_version <- GetAttributes(Path = NULL, File = mcool_path,
@@ -451,10 +493,16 @@ mcool_list_resolutions <- function(mcool = NULL){
 
     index_chrom_offset <- offset_list[["chrom_offset"]]
     names(index_chrom_offset) <- chrom_names
+    chrom_index_differences <- diff(index_chrom_offset) - 1
+    ignore_chrs <- NULL
+    if(any(chrom_index_differences == 0)){
+        ignore_chrs <- which(chrom_index_differences == 0)
+    }
     index_bin_offset <- offset_list[["bin_offset"]]
     message("Making read indices...")
     chr1_chr2_rows_df_list <- .return_chr1_chr2_pairs(Brick = Brick, 
-        chromosomes = chrom_names, matrix_chunk = matrix_chunk, 
+        chromosomes = chrom_names, ignore_chrs = ignore_chrs, 
+        matrix_chunk = matrix_chunk, num_records_limit = cooler_read_limit, 
         chr_offsets = index_chrom_offset, bin_offsets = index_bin_offset, 
         resolution = resolution)
     chr1_chr2_df <- do.call(rbind, lapply(chr1_chr2_rows_df_list, 
@@ -488,7 +536,7 @@ mcool_list_resolutions <- function(mcool = NULL){
         Bin1_id <- values_list[["bin1_id"]] + 1
         Bin2_id <- values_list[["bin2_id"]] + 1
         Counts <- values_list[["counts"]]
-        chr2_extent_df_list <- bplapply(chr2_df_split, function(chr2_df) {
+        chr2_extent_df_list <- lapply(chr2_df_split, function(chr2_df) {
             chr2 <- unique(chr2_df$chr2)
             chr2_starts <- chr2_df$chr2_start
             chr2_ends <- chr2_df$chr2_end
@@ -557,7 +605,7 @@ mcool_list_resolutions <- function(mcool = NULL){
             chr2_start_df_list <- chr2_start_df_list[
                 !vapply(chr2_start_df_list, is.null, TRUE)]
             chr2_start_df <- do.call(rbind, chr2_start_df_list)
-        }, BPPARAM = .get_instance_biocparallel(workers = num_cpus))
+        })
         chr2_extent_df <- do.call(rbind, chr2_extent_df_list)
     })
     chr1_chr2_extent_df <- do.call(rbind, chr1_chr2_extent_df_list)

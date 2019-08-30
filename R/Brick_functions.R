@@ -1457,6 +1457,7 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #' @inheritParams Brick_load_matrix
 #'
 #' @inheritParams Create_many_Bricks_from_mcool
+#' 
 #' @param mcool \strong{Required}. Path to an mcool file.
 #'
 #' @param norm_factor \strong{Optional}. Default "Iterative-Correction".
@@ -1468,8 +1469,10 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #' @param matrix_chunk \strong{Optional}. Default 2000.
 #' The nxn matrix square to fill per iteration in a mcool file.
 #'
-#' @param num_cpus \strong{Optional}. Default 4.
-#' The number of cpus to use.
+#' @param cooler_read_limit \strong{Optional}. Default 10000000.
+#' cooler_read_limit sets the upper limit for the number of records per matrix
+#' chunk. If the number of records per chunk is higher than this value, the 
+#' matrix_chunk value will be re-evaluated dynamically.
 #' 
 #' @return Returns TRUE if all went well.
 #'
@@ -1507,8 +1510,8 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #' to list available normalisation factors in the mcool file.
 #'
 Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL, 
-    matrix_chunk = 2000, norm_factor = "Iterative-Correction", 
-    remove_prior = FALSE, num_cpus = 4){
+    matrix_chunk = 2000, cooler_read_limit = 10000000, remove_prior = FALSE,
+    norm_factor = "Iterative-Correction"){
     Reference.object <- GenomicMatrix$new()
     
     resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
@@ -1544,7 +1547,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL,
     }
     RetVar <- .process_mcool(Brick = Brick, mcool = mcool, 
         resolution = resolution, matrix_chunk = matrix_chunk, 
-        norm_factor = Norm_factor, num_cpus = num_cpus,
+        norm_factor = Norm_factor, cooler_read_limit = cooler_read_limit,
         has_resolution = !is.null(resolutions))
     return(RetVar)
 }

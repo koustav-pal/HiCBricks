@@ -92,13 +92,13 @@ BrickContainer_list_files <- function(Brick = NULL,
         }
         Files_tib <- Files_tib[Files_tib$resolution %in% resolution,]
     }
-    if(!is.na(chr1)){
+    if(all(!is.na(chr1))){
         if(!any(chr1 %in% ChromosomeList)){
             stop("chr1 was not found in chromosome list")
         }
         Files_tib <- Files_tib[Files_tib$chrom1 %in% chr1,]
     }
-    if(!is.na(chr2)){
+    if(all(!is.na(chr2))){
         if(!any(chr2 %in% ChromosomeList)){
             stop("chr2 was not found in chromosome list")
         }
