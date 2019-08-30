@@ -212,7 +212,7 @@ Similar to the previous section, we will start from the _mcool_ file content to:
 1. Create a _Brick object_ containing the HiCBricks data structure
 2. populate this HDF data structure with Hi-C data
 
-In the previous example for 2D text matrices, we used the `Create_many_Bricks` function to create _Brick objects_ for 2D matrices. Instead, to create _Brick objects_ from _mcool_ files we will use the `CreateBrick_from_mcool` function. 
+In the previous example for 2D text matrices, we used the `Create_many_Bricks` function to create _Brick objects_ for 2D matrices. Instead, to create _Brick objects_ from _mcool_ files we will use the `Create_many_Bricks_from_mcool` function. 
 
 When creating _Brick objects_ from scratch users were required to provide a bin table. Instead when starting from _mcool_ files the users do not need to provide a bin table as such information is already embedded within the _mcool_ files. Therefore, users can just provide the resolution they want to load, and the corresponding bin table information will be fetched from the _mcool_ files.
 
@@ -226,7 +226,7 @@ mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
 dir.create(out_dir)
 
-CreateBrick_from_mcool(output_directory = out_dir,
+Create_many_Bricks_from_mcool(output_directory = out_dir,
     file_prefix = "mcool_to_Brick_test", 
     mcool = mcool_path, 
     resolution = 10000,
@@ -244,7 +244,7 @@ mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 out_dir <- file.path(tempdir(), "mcool_to_Brick_test")
 
-CreateBrick_from_mcool(output_directory = out_dir,
+Create_many_Bricks_from_mcool(output_directory = out_dir,
     file_prefix = "mcool_to_Brick_test", 
     mcool = mcool_path, 
     resolution = 40000,

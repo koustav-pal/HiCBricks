@@ -1,3 +1,123 @@
+add_to_data <- function(Vector = NULL, start = NULL, end = NULL,  
+    data = NULL){ 
+    Vector[start:end] <- Vector[start:end] + data 
+    return(Vector)    
+}
+
+prepare_empty_metrics_list <- function(starts.1 = NULL, ends.1 = NULL,    
+    starts.2 = NULL, ends.2 = NULL, chrom1 = NULL, chrom2 = NULL){    
+    if(chrom1 != chrom2){ 
+        row.sums <- list(rep(0,(max(ends.1) - min(starts.1))+1),  
+            rep(0,(max(ends.2) - min(starts.2))+1))   
+        names(row.sums) <- c(chrom1,chrom2)   
+        bin.coverage <- list(rep(0,(max(ends.1) - min(starts.1))+1),  
+            rep(0,(max(ends.2) - min(starts.2))+1))   
+        names(bin.coverage) <- c(chrom1,chrom2)   
+        extent <- c(0,0)  
+    }else{    
+        row.sums <- rep(0,(max(ends.1) - min(starts.1))+1)    
+        bin.coverage <- rep(0,(max(ends.1) - min(starts.1))+1)    
+        extent <- c(0,0)  
+        # sparsity.index <- list("values" = rep(0,(   
+        # max(ends.1) - min(starts.1))+1),    
+        #     "remaining.val" = rep(0,(max(ends.1) - min(starts.1))+1),   
+        #     "remaining.val.coords" = NA)    
+    } 
+    A.list <- list("row.sums" = row.sums, "bin.coverage" = bin.coverage,  
+        "extent" = extent) #"sparsity" = sparsity.index)  
+    return(A.list)    
+}
+
+
+insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,  
+    Matrix = NULL, group.path = NULL, chrom1 = NULL, chrom2 = NULL,   
+    row.offset = NULL, col.offset = NULL, row.pos = NULL, col.pos = NULL, 
+    metrics.list = NULL){ 
+    Reference.object <- GenomicMatrix$new()   
+    real.row.coords <- seq(1,nrow(Matrix),by = 1) + row.offset    
+    real.col.coords <- seq(1,ncol(Matrix),by = 1) + col.offset    
+    Values <- Matrix[cbind(row.pos,col.pos)]  
+    dataset.name <- as.character(Reference.object$hdf.matrix.name)    
+    if(chrom1 == chrom2){ 
+        if(all(real.col.coords %in% real.row.coords)){    
+            Values <- Matrix[cbind(row.pos,col.pos)]  
+            Matrix[cbind(col.pos,row.pos)] <- Values  
+        }else{    
+            Start <- c(min(real.col.coords), min(real.row.coords))    
+            Stride <- c(1,1)  
+            Count <- dim(t(Matrix))   
+            ._Brick_Put_Something_(Group.path = group.path, Brick = Brick,    
+                Name = dataset.name, data = t(Matrix), Start = Start, 
+                Stride = Stride, Count = Count)   
+            Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0 
+            metrics.list[["row.sums"]] <- add_to_data(    
+                Vector = metrics.list[["row.sums"]],  
+                start = min(real.col.coords), 
+                end = max(real.col.coords),   
+                data = rowSums(t(Matrix)))    
+            metrics.list[["bin.coverage"]] <-add_to_data( 
+                Vector = metrics.list[["bin.coverage"]],  
+                start = min(real.col.coords), 
+                end = max(real.col.coords),   
+                data = rowSums(t(Matrix) > 0))    
+        } 
+        Start <- c(min(real.row.coords), min(real.col.coords))    
+        Stride <- c(1,1)  
+        Count <- dim(Matrix)  
+        ._Brick_Put_Something_(Group.path = group.path, Brick = Brick,    
+            Name = dataset.name, data = Matrix, Start = Start,    
+            Stride = Stride, Count = Count)   
+        Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0 
+        metrics.list[["row.sums"]] <- add_to_data(    
+            Vector = metrics.list[["row.sums"]],  
+            start = min(real.row.coords), 
+            end = max(real.row.coords),   
+            data = rowSums(Matrix))   
+        metrics.list[["bin.coverage"]] <-add_to_data( 
+            Vector = metrics.list[["bin.coverage"]],  
+            start = min(real.row.coords), 
+            end = max(real.row.coords),   
+            data = rowSums(Matrix > 0))   
+    }else{    
+        Start <- c(min(real.row.coords), min(real.col.coords))    
+        Stride <- c(1,1)  
+        Count <- dim(Matrix)  
+        ._Brick_Put_Something_(Group.path = group.path, Brick = Brick,    
+            Name = dataset.name, data = Matrix, Start = Start,    
+            Stride = Stride, Count = Count)   
+        Matrix[is.na(Matrix) | is.infinite(Matrix) | is.nan(Matrix)] <- 0 
+        metrics.list[["row.sums"]][[chrom2]] <- add_to_data(  
+                Vector = metrics.list[["row.sums"]][[chrom2]],    
+                start = min(real.col.coords), 
+                end = max(real.col.coords),   
+                data = rowSums(t(Matrix)))    
+        metrics.list[["row.sums"]][[chrom1]] <- add_to_data(  
+                Vector = metrics.list[["row.sums"]][[chrom1]],    
+                start = min(real.row.coords), 
+                end = max(real.row.coords),   
+                data = rowSums(Matrix))   
+        metrics.list[["bin.coverage"]][[chrom2]] <- add_to_data(  
+                Vector = metrics.list[["bin.coverage"]][[chrom2]],    
+                start = min(real.col.coords), 
+                end = max(real.col.coords),   
+                data = rowSums(t(Matrix) > 0))    
+        metrics.list[["bin.coverage"]][[chrom1]] <- add_to_data(  
+                Vector = metrics.list[["bin.coverage"]][[chrom1]],    
+                start = min(real.row.coords), 
+                end = max(real.row.coords),   
+                data = rowSums(Matrix > 0))   
+    } 
+    Min <- metrics.list[["extent"]][1]    
+    Max <- metrics.list[["extent"]][2]    
+    if(min(Matrix) < Min | Min == 0){ 
+        metrics.list[["extent"]][1] <- min(Matrix)    
+    } 
+    if(max(Matrix) > Max){    
+        metrics.list[["extent"]][2] <- max(Matrix)    
+    } 
+    return(metrics.list)  
+}
+
 .return_table_df <- function(file, delim, num_rows, skip_rows, col_index, 
     chr1_extent, chr2_extent){
     Table_df <- try(fread(file = file, sep = delim, nrows = num_rows, 
@@ -165,7 +285,7 @@
     position_split_chr <- split(cbind(start_positions, end_positions), 
         Chrominfo_df[,"chr"])
     chr_positions_list <- lapply(position_split_chr, function(x){
-        make_mcool_iterations(Start.pos = x[1], 
+        .make_mcool_iterations(Start.pos = x[1], 
             End.pos = x[2], 
             step = matrix_chunk)
     })
@@ -186,10 +306,10 @@
 
         metrics.list <- prepare_empty_metrics_list(
             starts.1 = chr1_starts,
-            ends.1 = chr1_ends, 
-            starts.2 = chr2_starts, 
+            ends.1 = chr1_ends,
+            starts.2 = chr2_starts,
             ends.2 = chr2_ends,
-            chrom1 = chr1, 
+            chrom1 = chr1,
             chrom2 = chr2)
 
         Brick_filepath <- Brick_files_tib$filepath[i]

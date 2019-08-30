@@ -147,7 +147,8 @@
         Bin_iter_df <- do.call(rbind, Bin_iter_df_list)
     })
     chr1_indexes_df <- do.call(rbind, chr1_indexes_df_list)
-    return(chr1_indexes_df)
+    chr1_indexes_df <- chr1_indexes_df[(chr1_indexes_df$read_to - 
+        chr1_indexes_df$read_from) >= 0,]
     rownames(chr1_indexes_df) <- NULL
     return(chr1_indexes_df)
 }
@@ -179,14 +180,13 @@
                     chr1 = chr1,
                     chr1_start = min(chr1_chunk),
                     chr1_end =  max(chr1_chunk),
-                    read_from = bin_offsets[min(chr1_chunk)] + 1,
-                    read_to = bin_offsets[max(chr1_chunk)+1],
+                    read_from = bin_offset[min(chr1_chunk)] + 1,
+                    read_to = bin_offset[max(chr1_chunk)+1],
                     stringsAsFactors = FALSE)
     })
     chr1_indexes_df <- do.call(rbind, chr1_indexes_df_list)
     return(chr1_indexes_df)
 }
-
 
 .return_chr1_chr2_pairs <- function(Brick, chromosomes, matrix_chunk, 
     chr_offsets, ignore_chrs, bin_offsets, resolution, num_records_limit){
@@ -515,7 +515,7 @@ mcool_list_resolutions <- function(mcool = NULL){
         Dimensions <- Brick_matrix_dimensions(Brick = Brick, 
             chr1 = chr1_chr2_df[x,"chr1"], chr2 = chr1_chr2_df[x,"chr2"], 
             resolution = resolution)
-        .populate_with_empty_metrics(Brick = Brick_filepath, 
+        .populate_with_empty_metrics(Brick_filepath = Brick_filepath, 
             chr1 = chr1_chr2_df[x,"chr1"], chr2 = chr1_chr2_df[x,"chr2"],
             row_length = Dimensions[1], col_length = Dimensions[2])
     })

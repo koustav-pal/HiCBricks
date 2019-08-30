@@ -5,8 +5,8 @@
 \title{Load a NxN dimensional matrix into the Brick store from an mcool file.}
 \usage{
 Brick_load_data_from_mcool(Brick, mcool, resolution = NULL,
-  matrix_chunk = 2000, norm_factor = "Iterative-Correction",
-  remove_prior = FALSE, num_cpus = 4)
+  matrix_chunk = 2000, cooler_read_limit = 1e+07,
+  remove_prior = FALSE, norm_factor = "Iterative-Correction")
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -22,18 +22,20 @@ resolution on which the function is executed}
 \item{matrix_chunk}{\strong{Optional}. Default 2000.
 The nxn matrix square to fill per iteration in a mcool file.}
 
-\item{norm_factor}{\strong{Optional}. Default "Iterative-Correction".
-The normalization factor to use for normalization from an mcool file.
-norm_factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
-"Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
-the function will load only counts from the mcool file.}
+\item{cooler_read_limit}{\strong{Optional}. Default 10000000.
+cooler_read_limit sets the upper limit for the number of records per matrix
+chunk. If the number of records per chunk is higher than this value, the
+matrix_chunk value will be re-evaluated dynamically.}
 
 \item{remove_prior}{\strong{Optional}. Default FALSE
 If a matrix was loaded before, it will not be replaced. Use remove_prior to
 override and replace the existing matrix.}
 
-\item{num_cpus}{\strong{Optional}. Default 4.
-The number of cpus to use.}
+\item{norm_factor}{\strong{Optional}. Default "Iterative-Correction".
+The normalization factor to use for normalization from an mcool file.
+norm_factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
+"Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
+the function will load only counts from the mcool file.}
 }
 \value{
 Returns TRUE if all went well.

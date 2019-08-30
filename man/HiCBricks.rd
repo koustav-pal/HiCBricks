@@ -34,8 +34,8 @@ types. You can create,
 \itemize{
 \item \code{\link{Create_many_Bricks}} - Create the HDF data structures. We 
 refer to the HDF files as Bricks
-\item \code{\link{CreateBrick_from_mcool}} - Create the complete Brick data 
-structure from an mcool file.
+\item \code{\link{Create_many_Bricks_from_mcool}} - Create the complete Brick 
+data structure from an mcool file.
 }
 }
 \section{Matrix loaders}{

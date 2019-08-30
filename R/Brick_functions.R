@@ -1545,7 +1545,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL,
         Norm_factor <- Norm_factors[norm_factor]
         names(Norm_factor) <- NULL
     }
-    RetVar <- .process_mcool(Brick = Brick, mcool = mcool, 
+    RetVar <- .process_mcool(Brick = Brick, mcool_path = mcool, 
         resolution = resolution, matrix_chunk = matrix_chunk, 
         norm_factor = Norm_factor, cooler_read_limit = cooler_read_limit,
         has_resolution = !is.null(resolutions))
