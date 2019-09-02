@@ -279,56 +279,55 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
     Object_split <- split(Object, paste(Object$groups, Object$dom.names, 
         Object$colours, sep = ":"))
     Group.list <- lapply(Object_split,function(current_domain){
-            current_domain <- unique(current_domain)
-            domain_name <- unique(current_domain[,"dom.names"])
-            Brick.x <- unique(current_domain[,"groups"])
-            colours <- current_domain$colours[
-            current_domain[,"type"] == "start"]
-            Start <- current_domain[
-            current_domain[,"type"] == "start", "position"]
-            End <- current_domain[
-            current_domain[,"type"] == "end", "position"]
+        current_domain <- unique(current_domain)
+        domain_name <- unique(current_domain[,"dom.names"])
+        Brick.x <- unique(current_domain[,"groups"])
+        colours <- current_domain$colours[
+        current_domain[,"type"] == "start"]
+        Start <- current_domain[
+        current_domain[,"type"] == "start", "position"]
+        End <- current_domain[
+        current_domain[,"type"] == "end", "position"]
 
-            Normalised.start.bin <- Start - region.start
-            Normalised.end.bin <- End - region.start
+        Normalised.start.bin <- Start - region.start
+        Normalised.end.bin <- End - region.start
 
-            if(cut_corners){
-                Max.dist <- (End - Start)/2
-                if(Max.dist > distance){
-                    Max.dist <- distance/2
-                }
-            }else{
+        if(cut_corners){
+            Max.dist <- (End - Start)/2
+            if(Max.dist > distance){
                 Max.dist <- distance/2
             }
-            Dist.up <- Max.dist
-            if((Normalised.end.bin - (Max.dist*2)) < 0){
-                Dist.up <- abs(0 - Normalised.end.bin)/2
-            }
-            x1.start <- Normalised.end.bin - Dist.up
-            y1.start <- ifelse(Brick.x == 1, Dist.up, Dist.up*-1)
-            x2.start <- Normalised.end.bin
-            y2.start <- 0
-            End.line <- data.frame(x=c(x1.start,x2.start),
-            y=c(y1.start,y2.start), colours = colours,
-            line.group = paste(Brick.x, domain_name, "end", sep = "."), 
-            group = paste("Group",Brick.x,sep = "."),
-            row.names = NULL)
+        }else{
+            Max.dist <- distance/2
+        }
+        Dist.up <- Max.dist
+        if((Normalised.end.bin - (Max.dist*2)) < 0){
+            Dist.up <- abs(0 - Normalised.end.bin)/2
+        }
+        x1.start <- Normalised.end.bin - Dist.up
+        y1.start <- ifelse(Brick.x == 1, Dist.up, Dist.up*-1)
+        x2.start <- Normalised.end.bin
+        y2.start <- 0
+        End.line <- data.frame(x=c(x1.start,x2.start),
+        y=c(y1.start,y2.start), colours = colours,
+        line.group = paste(Brick.x, domain_name, "end", sep = "."), 
+        group = paste("Group",Brick.x,sep = "."),
+        row.names = NULL)
 
-            Dist.down <- Max.dist
-            if((Normalised.start.bin + (Max.dist*2)) > Span){
-                Dist.down <- (Span - Normalised.start.bin)/ 2
-            }
-            x1.end <- Normalised.start.bin
-            y1.end <- 0
-            x2.end <- Normalised.start.bin + Dist.down
-            y2.end <- ifelse(Brick.x == 1, Dist.down, Dist.down*-1)
-            Start.line <- data.frame(x=c(x1.end,x2.end),
-                    y=c(y1.end,y2.end), colours=colours,
-                    line.group = paste(Brick.x, domain_name, 
-                        "start", sep = "."),
-                    group=paste("Group",Brick.x,sep = "."),row.names = NULL)
-            Lines <- rbind(End.line,Start.line)
-        Domain.df <- do.call(rbind,Domain.df.list)
+        Dist.down <- Max.dist
+        if((Normalised.start.bin + (Max.dist*2)) > Span){
+            Dist.down <- (Span - Normalised.start.bin)/ 2
+        }
+        x1.end <- Normalised.start.bin
+        y1.end <- 0
+        x2.end <- Normalised.start.bin + Dist.down
+        y2.end <- ifelse(Brick.x == 1, Dist.down, Dist.down*-1)
+        Start.line <- data.frame(x=c(x1.end,x2.end),
+                y=c(y1.end,y2.end), colours=colours,
+                line.group = paste(Brick.x, domain_name, 
+                    "start", sep = "."),
+                group=paste("Group",Brick.x,sep = "."),row.names = NULL)
+        Lines <- rbind(End.line,Start.line)
     })
     Group.df <- do.call(rbind,Group.list)
     return(Group.df)

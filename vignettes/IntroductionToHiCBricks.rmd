@@ -273,7 +273,7 @@ Brick_load_data_from_mcool(Brick = My_BrickContainer,
 
 ```
 
-There are a few options allowing users to manipulate data read and write speed. `cooler_batch_size` determines the data read buffer size. `matrix_chunk` determines data write buffer, i.e. the size of the matrix square that will be loaded per iteration through an _mcool_ file. If you are loading *cis* (intra-chromosomal) contact matrices, it is recommended to set the `dont_look_for_chr2` parameter to TRUE to speed up the loading of data. In cases of *trans* (inter-chromosomal) contact matrices, this option should be set to FALSE. `remove_prior` defaults to FALSE to prevent users from overwriting data already loaded into an HDF file.
+There are a few options allowing users to manipulate data read and write speed. `cooler_read_limit` determines the data read buffer upper limit. If the total number of records read per `matrix_chunk` exceeds this parameter value, `matrix_chunk` is dynamically re-evaluated such that the number of records read per matrix chunk is lower than `cooler_read_limit`. `matrix_chunk` determines data write buffer, i.e. the size of the matrix square that will be loaded per iteration through an _mcool_ file. `remove_prior` defaults to FALSE to prevent users from overwriting data already loaded into an HDF file.
 
 Note that if the end users wishes to load raw read counts from the cooler file to the Brick object, this can be achieved by specifying the `norm_factor=NULL` parameter.
 
