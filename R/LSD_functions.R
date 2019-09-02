@@ -390,6 +390,15 @@ Brick_local_score_differentiator <- function(Brick, chrs = NULL,
     if(!is.null(chrs)){
         Chromosomes <- ChromInfo[ChromInfo[,'chr'] %in% chrs,'chr']
     }
+    chr_done_filter <- vapply(Chromosomes, function(chr){
+        Brick_matrix_isdone(Brick = Brick, chr1 = chr, chr2 = chr, 
+            resolution = resolution)
+    })
+    if(!all(chr_done_filter)){
+        message("Skipping intra-chromosomal maps containing no data...")
+        message(paste(Chromosomes[!chr_done_filter], collapse = ", "), 
+            " will be skipped")
+    }
     Chrom.domains.ranges.list <- lapply(Chromosomes, function(chr){
         Ranges <- Brick_get_bintable(Brick = Brick, chr = chr, 
             resolution = resolution)

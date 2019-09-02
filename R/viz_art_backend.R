@@ -197,80 +197,72 @@ make_boundaries_for_heatmap <- function(Object = NULL, region.start = NULL,
     if(is.null(distance)){
         distance <- region.end - region.start
     }
-    # message(region.start,region.end,"\n")
-
     Unique.groups <- unique(Object[,"groups"])
-    Group.list <- lapply(Unique.groups,function(Brick.x){
-        # message(Brick.x,"\n")
-        Domain <- Object[Object[,"groups"] == Brick.x,]
-        Domain.names <- unique(Domain[,"dom.names"])
-        Dolly.the.sheep.list <- lapply(Domain.names, function(domain.name){
-            current.domain <- Domain[Domain[,"dom.names"]==domain.name,]
-            colours <- current.domain$colours[
-            current.domain[,"type"] == "start"]
-            Start <- current.domain[
-            current.domain[,"type"] == "start", "position"]
-            End <- current.domain[
-            current.domain[,"type"] == "end", "position"]
-            # message(Start)
-            # message("Region start: ",region.start)
-            # message(End)
-            # message("Region end: ",region.end)
-            if(Start < region.start & End >= region.start){
-                # message("Here")
-                Start <- region.start
-                if((End - Start) > distance){
-                    Start <- Start + distance
-                }
-                Coord.list <- list(x1 = c(Start,End),
-                    y1 = c(End,End))
-                Groups <- rep(paste(domain.name,Brick.x,c(1,2),sep = "."), 
-                    each = 2)
-            }else if(Start >= region.start & End <= region.end){
-                # message("2nd Here")
-                Coord.list <- list(x1 = c(Start - 1,Start - 1,End), 
-                    y1 = c(Start - 1,End,End))
-                Groups <- rep(paste(domain.name,Brick.x,sep = "."), 
-                    each = 3)
-                My.end <- End
-                My.Start <- Start
-                if((End - Start) > distance){
-                    My.end <- Start + distance
-                    My.Start <- End - distance
-                }
-                Coord.list <- list(x1 = c(Start - 1,Start - 1,
-                    My.Start - 1,End), 
-                    y1 = c(Start - 1,My.end,End,End))
-                Groups <- rep(paste(domain.name,Brick.x,
-                    c(1,2),
-                    sep = "."), each = 2)
-            }else if(Start <= region.end & End > region.end){
-                # message("3rd Here")
-                End <- region.end
-                if((End - Start) > distance){
-                    End <- Start + distance
-                }
-                Coord.list <- list(x1 = c(Start - 1,Start - 1),
-                y1 = c(Start - 1,End))
-                Groups <- rep(paste(domain.name,Brick.x,sep = "."),2)
+    Object_split <- split(Object, paste(Object$groups, Object$dom.names, 
+        Object$colours, sep = ":"))
+    Group.list <- lapply(Object_split,function(current_domain){
+        current_domain <- unique(current_domain)
+        Brick.x <- unique(current_domain$groups)
+        colours <- current_domain$colours[
+        current_domain[,"type"] == "start"]
+        domain_name <- current_domain$dom.names[
+        current_domain[,"type"] == "start"]
+        Start <- current_domain[
+        current_domain[,"type"] == "start", "position"]
+        End <- current_domain[
+        current_domain[,"type"] == "end", "position"]
+        if(Start < region.start & End >= region.start){
+            # message("Here")
+            Start <- region.start
+            if((End - Start) > distance){
+                Start <- Start + distance
             }
-            if(Brick.x == 2){
-                Coord.list <- rev(Coord.list)
+            Coord.list <- list(x1 = c(Start,End),
+                y1 = c(End,End))
+            Groups <- rep(paste(domain_name,Brick.x,c(1,2),sep = "."), 
+                each = 2)
+        }else if(Start >= region.start & End <= region.end){
+            # message("2nd Here")
+            Coord.list <- list(x1 = c(Start - 1,Start - 1,End), 
+                y1 = c(Start - 1,End,End))
+            Groups <- rep(paste(domain_name,Brick.x,sep = "."), 
+                each = 3)
+            My.end <- End
+            My.Start <- Start
+            if((End - Start) > distance){
+                My.end <- Start + distance
+                My.Start <- End - distance
             }
-            Line <- data.frame(x = Coord.list[[1]], 
-                y = Coord.list[[2]], colours = colours,
-                line.group = Groups, group = paste("Group",Brick.x,sep = "."))
-            if(length(Unique.groups)==1){
-                Coord.list <- rev(Coord.list)
-                Line.2 <- data.frame(x = Coord.list[[1]],
-                y = Coord.list[[2]], colours = colours,
-                line.group = Groups, group = paste("Group",Brick.x+1,sep = "."))
-                Line <- rbind(Line,Line.2)
+            Coord.list <- list(x1 = c(Start - 1,Start - 1,
+                My.Start - 1,End), 
+                y1 = c(Start - 1,My.end,End,End))
+            Groups <- rep(paste(domain_name,Brick.x,
+                c(1,2),
+                sep = "."), each = 2)
+        }else if(Start <= region.end & End > region.end){
+            # message("3rd Here")
+            End <- region.end
+            if((End - Start) > distance){
+                End <- Start + distance
             }
-            Line
-        })
-        Dolly.the.sheep <- do.call(rbind,Dolly.the.sheep.list)
-        Dolly.the.sheep
+            Coord.list <- list(x1 = c(Start - 1,Start - 1),
+            y1 = c(Start - 1,End))
+            Groups <- rep(paste(domain_name,Brick.x,sep = "."),2)
+        }
+        if(Brick.x == 2){
+            Coord.list <- rev(Coord.list)
+        }
+        Line <- data.frame(x = Coord.list[[1]], 
+            y = Coord.list[[2]], colours = colours,
+            line.group = Groups, group = paste("Group",Brick.x,sep = "."))
+        if(length(Unique.groups)==1){
+            Coord.list <- rev(Coord.list)
+            Line.2 <- data.frame(x = Coord.list[[1]],
+            y = Coord.list[[2]], colours = colours,
+            line.group = Groups, group = paste("Group",Brick.x+1,sep = "."))
+            Line <- rbind(Line,Line.2)
+        }
+        Line
     })
     Group.df <- do.call(rbind,Group.list)
 }
@@ -284,17 +276,18 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
     Shift.seed <- 0.5
     Span <- region.end - region.start
     Unique.groups <- unique(Object[,"groups"])
-    Group.list <- lapply(Unique.groups,function(Brick.x){
-        Domain <- Object[Object[,"groups"] == Brick.x,]
-        Domain.names <- unique(Domain[,"dom.names"])
-        Domain.df.list <- lapply(Domain.names,function(x){
-            current.domain <- Domain[Domain[,"dom.names"]==x,]
-            colours <- current.domain$colours[
-            current.domain[,"type"] == "start"]
-            Start <- current.domain[
-            current.domain[,"type"] == "start", "position"]
-            End <- current.domain[
-            current.domain[,"type"] == "end", "position"]
+    Object_split <- split(Object, paste(Object$groups, Object$dom.names, 
+        Object$colours, sep = ":"))
+    Group.list <- lapply(Object_split,function(current_domain){
+            current_domain <- unique(current_domain)
+            domain_name <- unique(current_domain[,"dom.names"])
+            Brick.x <- unique(current_domain[,"groups"])
+            colours <- current_domain$colours[
+            current_domain[,"type"] == "start"]
+            Start <- current_domain[
+            current_domain[,"type"] == "start", "position"]
+            End <- current_domain[
+            current_domain[,"type"] == "end", "position"]
 
             Normalised.start.bin <- Start - region.start
             Normalised.end.bin <- End - region.start
@@ -317,7 +310,7 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
             y2.start <- 0
             End.line <- data.frame(x=c(x1.start,x2.start),
             y=c(y1.start,y2.start), colours = colours,
-            line.group = paste(Brick.x, x, "end", sep = "."), 
+            line.group = paste(Brick.x, domain_name, "end", sep = "."), 
             group = paste("Group",Brick.x,sep = "."),
             row.names = NULL)
 
@@ -331,10 +324,10 @@ make_boundaries_for_rotated_heatmap <- function(Object = NULL,
             y2.end <- ifelse(Brick.x == 1, Dist.down, Dist.down*-1)
             Start.line <- data.frame(x=c(x1.end,x2.end),
                     y=c(y1.end,y2.end), colours=colours,
-                    line.group = paste(Brick.x, x, "start", sep = "."),
+                    line.group = paste(Brick.x, domain_name, 
+                        "start", sep = "."),
                     group=paste("Group",Brick.x,sep = "."),row.names = NULL)
             Lines <- rbind(End.line,Start.line)
-        })
         Domain.df <- do.call(rbind,Domain.df.list)
     })
     Group.df <- do.call(rbind,Group.list)

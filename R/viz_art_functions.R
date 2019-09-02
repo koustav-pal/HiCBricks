@@ -294,7 +294,6 @@ Brick_vizart_plot_heatmap = function(File, Bricks, resolution,
             region.end = as.numeric(x.coord.parsed['end']), distance = distance,
             rotate = rotate)
     }
-
     if(rotate){
         ids <- xcoords <- ycoords <- NULL
         ThePlot <- ggplot(Entire.rotated.map, aes(x = xcoords, y = ycoords))
