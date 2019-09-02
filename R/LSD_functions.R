@@ -393,7 +393,7 @@ Brick_local_score_differentiator <- function(Brick, chrs = NULL,
     chr_done_filter <- vapply(Chromosomes, function(chr){
         Brick_matrix_isdone(Brick = Brick, chr1 = chr, chr2 = chr, 
             resolution = resolution)
-    })
+    }, TRUE)
     if(!all(chr_done_filter)){
         message("Skipping intra-chromosomal maps containing no data...")
         message(paste(Chromosomes[!chr_done_filter], collapse = ", "), 

@@ -200,7 +200,7 @@ Then users can query the mcool files to find out if a given normalisation factor
 mcool_out_dir <- file.path(tempdir(), "mcool_out_dir")
 mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 Brick_mcool_normalisation_exists(mcool = mcool_path, 
-    norm.factor = "Iterative-Correction",
+    norm_factor = "Iterative-Correction",
     resolution = 10000)
 
 ```
@@ -265,12 +265,9 @@ mcool_path=file.path(mcool_out_dir, "H1-hESC-HiC-4DNFI7JNCNFB.mcool")
 
 Brick_load_data_from_mcool(Brick = My_BrickContainer,
     mcool = mcool_path,
-    chr1 = "chr1",
-    chr2 = "chr1",
     resolution = 10000,
-    cooler_batch_size = 1000000,
+    cooler_read_limit = 10000000,
     matrix_chunk = 2000,
-    dont_look_for_chr2 = TRUE,
     remove_prior = TRUE,
     norm_factor = "Iterative-Correction")
 
