@@ -576,20 +576,26 @@ mcool_list_resolutions <- function(mcool = NULL){
                     "; Col segment: ", 
                     paste(chr2, chr2_start, chr2_end, sep = ":"))
                 Matrix[cbind(Bin1_id_mat_id, Bin2_id_mat_id)] <- Counts_submat
-                Start <- c(chr1_start - index_chrom_offset[chr1], 
-                    chr2_start - index_chrom_offset[chr2])
+                chr1_file_start <- chr1_start - index_chrom_offset[chr1]
+                chr2_file_start <- chr2_start - index_chrom_offset[chr2]
+                Start <- c(chr1_file_start, chr2_file_start)
                 Stride <- c(1, 1)
                 Count <- Dim
+                if(chr1 == chr2){
+                    if(chr1_file_start == chr2_file_start){
+                        Matrix[cbind(Bin2_id_mat_id, Bin1_id_mat_id)] <- 
+                        Counts_submat
+                    }
+                    ._Brick_Put_Something_(Group.path = chr2_group_path,
+                        data = t(Matrix), Brick = Brick_filepath,
+                        Start = rev(Start), Stride = Stride,
+                        Count = rev(Count),
+                        Name = Reference_object$hdf.matrix.name)
+                }
                 ._Brick_Put_Something_(Group.path = chr2_group_path, 
                     data = Matrix, Brick = Brick_filepath, Start = Start, 
                     Name = Reference_object$hdf.matrix.name, Stride = Stride, 
                     Count = Count)
-                if(chr1 == chr2){
-                    ._Brick_Put_Something_(Group.path = chr2_group_path,
-                        data = t(Matrix), Brick = Brick_filepath, 
-                        Start = rev(Start), Stride = Stride, Count = rev(Count), 
-                        Name = Reference_object$hdf.matrix.name)
-                }
                 matrix_extent <- .add_metrics(Brick_filepath = Brick_filepath,
                     group_path = chr2_group_path, a_matrix = Matrix, 
                     dimensions = dim(Matrix), 
