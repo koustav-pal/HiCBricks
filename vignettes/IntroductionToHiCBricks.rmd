@@ -346,7 +346,7 @@ cooler load -f coo \
 
 To create a multi resolution .mcool file, it possibile to use the zoomify command
 
-```bash
+```{r eval = FALSE}
 
 cooler zoomify -p 1 \
   -r 200000,500000 \
