@@ -4,6 +4,8 @@ author:
 - name: Koustav Pal
   affiliation: 
     - IFOM - FIRC Institute of Molecular Oncology, Milan, Italy
+- name: Ilario Tagliaferri
+  affiliation: IFOM - FIRC Institute of Molecular Oncology, Milan, Italy
 - name: Carmen Maria Livi
   affiliation: IFOM - FIRC Institute of Molecular Oncology, Milan, Italy
 output: 
@@ -280,6 +282,81 @@ Note that if the end users wishes to load raw read counts from the cooler file t
 ## Creating Brick objects from .hic binary files
 
 The method to create a Brick object from a `.hic` file is still a work in progress and will be a part of the package in a future release. Meanwhile, if users wish to create a `.hic` file into a _Brick object_, they should first use the `hic2cool` utility (version > 0.7) to create an `mcool` file and then read that `mcool` file into a _Brick object_. This utility is available at 4D nucleome [github repository](https://github.com/4dn-dcic/hic2cool).
+
+## Exporting data from Brick objects
+
+Users can export entire resolutions out of BrickContainers using the `Brick_export_to_sparse` function. This function will provide as output an delimited file containing upper triangle sparse matrix non-zero values. This tsv along with the bintable from the BrickContainer can then be converted to the mcool format using the cooler command-line tool. 
+
+```{r eval = FALSE}
+
+# load the Brick Container
+BrickContainer_dir <- file.path(tempdir(), "HiCBricks_vignette_test")
+My_BrickContainer <- load_BrickContainer(project_dir = BrickContainer_dir)
+
+# export the contact matrix to a a sparse matrix format and save it on a file
+Brick_export_to_sparse(Brick=My_BrickContainer,
+  out_file="brick_export.tsv",
+  remove_file=TRUE,
+  resolution=100000,
+  sep="\t") 
+
+# create a dataframe containing the bintable
+bintable<-Brick_get_bintable(My_BrickContainer, resolution = 100000)
+  
+require(GenomicRanges)
+
+df1<-data.frame(seqnames=seqnames(bintable),
+  start(bintable)-1,
+  ends=end(bintable),
+  names=c(rep(".",length(bintable))),
+  scores=c(rep(".", length(bintable))),
+  strands=strand(bintable)) 
+
+# save the bintable as a bed file
+write.table(df1,
+  file="bintable.bed",
+  quote=FALSE,
+  row.names=FALSE,
+  col.names=FALSE,
+  sep="\t") 
+```
+
+## Converting sparse matrix to mcool
+
+All code from this point on must be executed from the user's command-line and not from within an R session. After writing both the table and the bintable files, the user should remove the headers from the sparse matrix.
+
+```{r eval = FALSE}
+
+sed -e "1d" brick_export.tsv | cut -f3-5 > exported_bins_no_header.tsv
+
+```
+
+Finally, users can create the mcool files using the cooler binary program. This operation leverages on [cooler](https://github.com/mirnylab/cooler).
+
+```{r eval = FLASE}
+
+cooler load -f coo \
+  --count-as-float \
+  --one-based \
+  bintable.bed \
+  exported_bins_no_header.tsv \
+  test_cool_from_hicbricks.cool
+
+```
+
+To create a multi resolution .mcool file, it possibile to use the zoomify command
+
+```bash
+
+cooler zoomify -p 1 \
+  -r 200000,500000 \
+  -o 2_test_cool_from_hicbricks.mcool \
+  test_cool_from_hicbricks.cool
+
+```
+
+As noted in the cooler documentation, zoomify allows you to _coarsen_ your matrix starting from the finest resolution.
+
 
 # Accessing data in Brick objects
 
