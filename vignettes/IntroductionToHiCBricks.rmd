@@ -333,7 +333,7 @@ sed -e "1d" brick_export.tsv | cut -f3-5 > exported_bins_no_header.tsv
 
 Finally, users can create the mcool files using the cooler binary program. This operation leverages on [cooler](https://github.com/mirnylab/cooler).
 
-```{r eval = FLASE}
+```{r eval = FALSE}
 
 cooler load -f coo \
   --count-as-float \
