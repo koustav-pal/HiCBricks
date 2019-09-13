@@ -2510,6 +2510,65 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
     }
 }
 
+#' Return an entire matrix for provided chromosome pair for a resolution.
+#'
+#' `Brick_get_entire_matrix` will return the entire matrix for the entire 
+#' chromosome pair provided an object of class BrickContainer, and values for 
+#' chr1, chr2 and resolution values.
+#'
+#' @inheritParams Brick_get_chrominfo
+#'
+#' @inheritParams Brick_load_matrix
+#'
+#' @return Returns an object of class matrix with dimensions corresponding to
+#' chr1 binned length by chr2 binned length.
+#'
+#' @examples
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_vector_val_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_get_entire_matrix(Brick = My_BrickContainer, chr1 = "chr2L",
+#' chr2 = "chr2L", resolution = 100000)
+#'
+Brick_get_entire_matrix = function(Brick, chr1, chr2, resolution){
+    Reference_object <- GenomicMatrix$new()
+    ChromInfo <- Brick_get_chrominfo(Brick = Brick, resolution = resolution)
+    ChromosomeList <- ChromInfo[,"chr"]
+    if(!is.character(chr1) | !is.character(chr2)){
+        stop("Provided Chromosomes does not appear to be of class character")
+    }
+    if(!Brick_matrix_isdone(Brick = Brick, chr1 = chr1, chr2 = chr2,
+        resolution = resolution)){
+        stop(chr1,chr2," matrix is yet to be loaded.")
+    }
+    Group_path <- Create_Path(c(Reference_object$hdf.matrices.root, 
+        chr1, chr2))
+    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
+        chr1 = chr1, chr2 = chr2, resolution = resolution)
+    dataset_handle <- ._Brick_Get_Something_(Group.path = Group_path, 
+        Brick = Brick_filepath, Name = Reference_object$hdf.matrix.name, 
+        return.what = "dataset_handle")
+    entire_matrix <- dataset_handle[]
+    CloseH5Con(Handle = dataset_handle, type = "dataset")
+    return(entire_matrix)
+}
+
 #' Get the matrix metadata columns in the Brick store.
 #'
 #' `Brick_get_matrix_mcols` will get the specified matrix metadata column for
@@ -2719,4 +2778,72 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
     close(open_connection)
     return(read.table(file = out_file, header = TRUE, sep = sep, 
             stringsAsFactors = FALSE, nrows = 100))
+}
+
+
+#' Identify compartments in the Hi-C data
+#'
+#' `Brick_call_compartments` identifies compartments in Hi-C data. Reference
+#' Lieberman-Aiden et al. 2009.
+#' 
+#' @inheritParams Brick_get_values_by_distance
+#' 
+#' @return A dataframe containing the chromosome genomic coordinates and the 
+#' first three principal components.
+#' 
+#' @examples
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_vector_val_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_call_compartments(Brick = My_BrickContainer, chr = "chr2L",
+#' resolution = 100000)
+#' 
+Brick_call_compartments <- function(Brick, chr, resolution){
+    configuration_length_check(chr, "chr", 1)
+    configuration_length_check(resolution, "resolution", 1)
+    BrickContainer_class_check(Brick)
+    a_matrix <- .remove_nas(Brick_get_entire_matrix(Brick = Brick, 
+        chr1 = chr, chr2 = chr, resolution = resolution))
+    normalised_matrix <- .normalize_by_distance_values(a_matrix)
+    correlation_list <- lapply(seq_len(nrow(normalised_matrix)), 
+        function(x){
+        a_row <- normalised_matrix[x,]
+        if(all(a_row == 0)){
+            return(a_row)
+        }
+        row_with_cor <- vapply(seq_len(ncol(normalised_matrix)), 
+            function(y){
+            a_col <- normalised_matrix[,y]
+            if(all(a_col == 0)){
+                return(0)
+            }
+            return(cor(a_row, a_col))
+        },1)
+        return(row_with_cor)
+    })
+    correlation_matrix <- do.call(rbind, correlation_list)
+    bintable_df <- as.data.frame(Brick_get_bintable(Brick = Brick, 
+        chr = chr, resolution = resolution))
+    bintable_df <- bintable_df[,c("seqnames", "start", "end")]
+    pca_list <- prcomp(correlation_matrix)
+    bintable_df$pc1 <- pca_list[["x"]][,"PC1"]
+    bintable_df$pc2 <- pca_list[["x"]][,"PC2"]
+    bintable_df$pc3 <- pca_list[["x"]][,"PC3"]
+    return(bintable_df)
 }

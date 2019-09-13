@@ -570,8 +570,8 @@ get_legend_breaks <- function(Object = NULL, mid.val = 0.5,
         # message(Colour.labs,"\n")
     }else{
         Colour.breaks <- seq(min(values),max(values),length.out = 5)
-        Colour.labs <- round(seq(min(original.values),
-            max(original.values),length.out = 5),2)
+        Colour.labs <- format(seq(min(original.values),
+            max(original.values),length.out = 5), scientific = TRUE)
         if(!is.null(value_cap)){
             Colour.labs[length(Colour.labs)] <- paste(">",
                 Colour.labs[length(Colour.labs)], sep = "")
