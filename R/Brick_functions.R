@@ -2821,23 +2821,8 @@ Brick_call_compartments <- function(Brick, chr, resolution){
     a_matrix <- .remove_nas(Brick_get_entire_matrix(Brick = Brick, 
         chr1 = chr, chr2 = chr, resolution = resolution))
     normalised_matrix <- .normalize_by_distance_values(a_matrix)
-    correlation_list <- lapply(seq_len(nrow(normalised_matrix)), 
-        function(x){
-        a_row <- normalised_matrix[x,]
-        if(all(a_row == 0)){
-            return(a_row)
-        }
-        row_with_cor <- vapply(seq_len(ncol(normalised_matrix)), 
-            function(y){
-            a_col <- normalised_matrix[,y]
-            if(all(a_col == 0)){
-                return(0)
-            }
-            return(cor(a_row, a_col))
-        },1)
-        return(row_with_cor)
-    })
-    correlation_matrix <- do.call(rbind, correlation_list)
+    correlation_matrix <- cor(normalised_matrix)
+    correlation_matrix <- .remove_nas(correlation_matrix)
     bintable_df <- as.data.frame(Brick_get_bintable(Brick = Brick, 
         chr = chr, resolution = resolution))
     bintable_df <- bintable_df[,c("seqnames", "start", "end")]
