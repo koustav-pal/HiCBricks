@@ -35,7 +35,7 @@ vignette: |
 
 HiCBricks is a library designed for handling large high-resolution Hi-C datasets. Over the years, the Hi-C field has experienced a rapid increase in the size and complexity of datasets. HiCBricks is meant to overcome the challenges related to the analysis of such large datasets within the R environment.
 
-HiCBricks leverages HDF (Hierarchical Data Format) files to allow efficient handling of large Hi-C contact matrices. HiCBricks implements a Hi-C specific HDF data structure, referred to as a _Brick object_ and presents accessor functions allowing users to access and manipulate Hi-C data without all the difficulties of dealing with the complex structure of HDF files.
+HiCBricks leverages HDF (Hierarchical Data Format) files to allow efficient handling of large Hi-C contact matrices. HiCBricks, implements a Hi-C specific HDF data structure referred to as a _Brick object_, introduces a simple S4 class _BrickContainer_ for tracking the Brick objects across resolutions and presents accessor functions allowing users to access and manipulate Hi-C data without all the difficulties of dealing with the complex structure of HDF files.
 
 The HiCBricks package, its set of data retrieval functions along with the _Brick objects_ are meant to serve as building blocks for custom Hi-C analysis procedures as well as the development of new R or Bioconductor packages.
 
