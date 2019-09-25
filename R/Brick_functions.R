@@ -599,8 +599,8 @@ Brick_make_ranges = function(chrom, start, end, strand = NA,
         names <- paste(chrom, as.integer(start), as.integer(end),
             sep = Reference.object$Ranges.separator)
     }
-    if(is.na(strand)){
-        strand<-rep("*", length(chrom))
+    if(all(is.na(strand))){
+        strand <- rep("*", length(chrom))
     }
     Object<-GenomicRanges::GRanges(
         seqnames=Rle(chrom),
