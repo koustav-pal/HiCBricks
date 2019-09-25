@@ -735,7 +735,7 @@ Brick_matrix_filename(Brick = My_BrickContainer,
 ## Call Topologically Associated Domains with Local score differentiator (LSD)
 
 Local score differentiator (LSD) is a TAD calling procedure based on the directionality index introduced by Dixon et al., 2012^[Topological domains in mammalian genomes identified by analysis of chromatin interactions.
-Dixon JR, Selvaraj S, Yue F, Kim A, Li Y, Shen Y, Hu M, Liu JS and Ren B. Nature 2012]. LSD is based on the computation of the directionality index (DI), as described in the original article, but the genome is partitioned into TADs based on the local directionality index distribution. Briefly, transition points between negative and positive values marking TAD boundaries 
+Dixon JR, Selvaraj S, Yue F, Kim A, Li Y, Shen Y, Hu M, Liu JS and Ren B. Nature 2012]. LSD is based on the computation of the directionality index (DI), as described in the original article, but differently from the original procedure, the genome is partitioned into TADs based on the local directionality index distribution rather than its global segmentation. Briefly, transition points between negative and positive values marking TAD boundaries 
 are identified as the local extreme values in the first derivative of DI computed within a local window of user defined size. This has been implemented into _HiCBricks_ as a test case example to show how custom data analysis procedures can be integrated inside the _HiCBricks_ framework by taking advantage of its accessor functions.
 
 ```{r}
