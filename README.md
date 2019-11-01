@@ -60,16 +60,17 @@ To start working with **HiCBricks**, please checkout the vignette (tutorial) [he
 
 ## Development Notes
 
-**HiCBricks** v1.x.x is still a relatively new package. I am always looking for and fixing new bugs. If you come across a potential bug, please open an issue and let me know. I will fix it ASAP.
+- **HiCBricks** API is now stable. While we may move to sparse or feather representations later, this API will not change.
+- With Bioconductor release 3.10, a formal S4 class has been implemented for a better user experience.
 
 ## Future Roadmap
 
 There are many new developments which are planned for future releases of HiCBricks. Broadly speaking, 
 
-- In v1, I will try to implement `read and export functions` for as many new Hi-C data formats as possible. On top priority is the `sparse matrix` and `.hic` data format. `.hic` ETD: **January 2020**
-- Going into v2, I will introduce a formal S4 class for HiCBricks as a new package. This class will not replace the package, but rather complement it.
+- In v1, I will try to implement `read and export functions` for as many new Hi-C data formats as possible. On top priority is the `sparse matrix`, HiCExplorer and diffHiC, in that exact order. After much trepidation, I have decided that `.hic` import will not be supported as that one is an extremely niche format.
+
 
 ## Contributing 
 
-If you would like to help out with the data import/export functions, let me know via email.
+If you would like to help out, let me know via email.
 
