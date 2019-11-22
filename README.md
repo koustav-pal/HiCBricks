@@ -31,7 +31,7 @@ To install the most stable development version from Bioconductor, run this from 
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("HiCBricks", version = "3.9")
+BiocManager::install("HiCBricks", version = "3.10")
 ```
 
 
@@ -40,7 +40,7 @@ To install the stable release version from Bioconductor, run this from a R conso
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("HiCBricks", version = "3.8")
+BiocManager::install("HiCBricks", version = "3.10")
 ```
 
 To install the most cutting-edge stable version of HiCBricks, do this from a R console to download it directly from GitHub. 
