@@ -67,7 +67,7 @@ To start working with **HiCBricks**, please checkout the vignette (tutorial) [he
 
 There are many new developments which are planned for future releases of HiCBricks. Broadly speaking, 
 
-- In v1, I will try to implement `read and export functions` for as many new Hi-C data formats as possible. On top priority is the `sparse matrix`, HiCExplorer and diffHiC, in that exact order. After much trepidation, I have decided that `.hic` import will not be supported as that one is an extremely niche format.
+- In v1, I will try to implement `read and export functions` for as many new Hi-C data formats as possible. On top priority is the `sparse matrix`, HiCExplorer and diffHiC, in that exact order. Support for `.hic` is planned and requires some time.
 
 
 ## Contributing 
