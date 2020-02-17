@@ -379,7 +379,7 @@
     Bintable.chr <- Bintable.keys[2]
     Scaffold.group <- Scaffold.keys[1]
     Scaffold.name <- Scaffold.keys[3]
-    if(resolution){
+    if(resolution){ 
         Bintable.group.path <- Create_Path(
             c(Reference_object$mcool.resolutions.name,
                 binsize,

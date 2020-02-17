@@ -132,7 +132,8 @@ GenomicMatrix <- R6Class("GenomicMatrix",
             "project_directory", "experiment_name", "resolutions", 
             "chromosomes", "lengths", "queues"),
         Configurator_JSON_matrix_names = c("chrom1", 
-            "chrom2", "resolution", "dimensions", "mat_type", "filename")
+            "chrom2", "resolution", "dimensions", "lengths",
+             "mat_type", "filename")
     ),
     private = list(
         Attribute.List=NA,
@@ -679,6 +680,8 @@ humanize_size <- function(x){
         chromosomes = NULL)
     Dims <- c(Chrom_info_df[Chrom_info_df$chr == chrom1,"nrow"],
         Chrom_info_df[Chrom_info_df$chr == chrom2,"nrow"])
+    max_size <- c(Chrom_info_df[Chrom_info_df$chr == chrom1,"size"],
+        Chrom_info_df[Chrom_info_df$chr == chrom2,"size"])
     mat_type <- ifelse(chrom1 == chrom2, "cis", "trans")
     hdf_file <- file.path(output_directory, filename)
     if(file.exists(hdf_file)){
@@ -689,6 +692,8 @@ humanize_size <- function(x){
                 chrom2 = chrom2,
                 chrom1_binned_length = Dims[1],
                 chrom2_binned_length = Dims[2],
+                chrom1_max_size = max_size[1],
+                chrom2_max_size = max_size[2],
                 type = mat_type,
                 filename = filename))
         }
@@ -742,6 +747,8 @@ humanize_size <- function(x){
         chrom2 = chrom2,
         chrom1_binned_length = Dims[1],
         chrom2_binned_length = Dims[2],
+        chrom1_max_size = max_size[1],
+        chrom2_max_size = max_size[2],
         type = mat_type,
         filename = filename))
 }

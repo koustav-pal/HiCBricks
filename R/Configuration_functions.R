@@ -72,7 +72,8 @@ setGeneric("return_configuration_header",
 }
 
 .create_configuration_matrix_info <- function(resolution, chrom1, chrom2,
-    chrom1_binned_length, chrom2_binned_length, type, filename){
+    chrom1_binned_length, chrom2_binned_length, chrom1_max_size, 
+    chrom2_max_size, type, filename){
     Reference.object <- GenomicMatrix$new()
     matrix_colnames <- Reference.object$Configurator_JSON_matrix_names
     chrom1_chrom2_list <- list(
@@ -80,6 +81,7 @@ setGeneric("return_configuration_header",
         chrom2,
         resolution,
         c(chrom1_binned_length, chrom2_binned_length),
+        c(chrom1_max_size, chrom2_max_size),
         type,
         filename
     )
@@ -94,12 +96,12 @@ setGeneric("return_configuration_header",
         a_tibble <- data.frame(a_row[matrix_colnames[1]], 
         a_row[matrix_colnames[2]],
         a_row[matrix_colnames[3]],
-        a_row[matrix_colnames[5]],
-        a_row[matrix_colnames[6]], 
+        a_row[matrix_colnames[6]],
+        a_row[matrix_colnames[7]], 
         stringsAsFactors = FALSE)
     })
     Matrix_df <- do.call(rbind, Matrix_df_list)
-    colnames(Matrix_df) <- matrix_colnames[c(1,2,3,5,6)]
+    colnames(Matrix_df) <- matrix_colnames[c(1,2,3,6,7)]
     Matrix_tibble <- as_tibble(Matrix_df)
     return(Matrix_tibble)
 }
