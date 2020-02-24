@@ -87,7 +87,7 @@ BrickContainer_list_files <- function(Brick = NULL,
     out_dir <- return_output_directory(Brick)
     if(!is.na(resolution)){
         resolution <- .format_resolution(resolution)
-        if(!any(format(resolution, scientific = FALSE) %in% ResolutionList)){
+        if(!any(resolution %in% ResolutionList)){
             stop("all resolutions were not found in resolution list")
         }
         Files_tib <- Files_tib[Files_tib$resolution %in% resolution,]

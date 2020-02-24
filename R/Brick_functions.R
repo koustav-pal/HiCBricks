@@ -550,13 +550,33 @@ Brick_get_chrominfo <- function(Brick, resolution = NA){
     configuration_null_check(resolution, "resolution")
     configuration_na_check(resolution, "resolution")
     configuration_length_check(resolution, "resolution", 1)
-    Brick_filepath <- BrickContainer_get_path_to_file(Brick = Brick, 
-        resolution = resolution)[1]
-    Dataset <- ._Brick_Get_Something_(
-        Group.path = Reference.object$hdf.metadata.root,
-        Brick = Brick_filepath, Name = Reference.object$metadata.chrom.dataset,
-        return.what = "data")
-    return(Dataset)
+    resolution <- .format_resolution(resolution)
+    Matrix_info <- return_configuration_matrix_info(Brick)
+    current_resolution <- vapply(Matrix_info, function(a_list){
+        a_list$resolution == resolution
+    },TRUE)
+    if(!any(current_resolution)){
+        stop(resolution," not found in provided BrickContainer")
+    }
+    chrom1_binned_length <- vapply(Matrix_info[current_resolution], 
+        function(a_list){
+        a_list$dimensions[1]
+    }, 100)
+    chrom1s <- vapply(Matrix_info[current_resolution], 
+        function(a_list){
+        a_list$chrom1
+    }, "chr1")
+    chrom1_max_sizes <- vapply(Matrix_info[current_resolution], 
+        function(a_list){
+        a_list$lengths[1]
+    }, 100) 
+    chrom1_not_duplicated <- !duplicated(chrom1s)
+    Chrom_info_df <- data.frame(chr = chrom1s[chrom1_not_duplicated],
+    nrow = chrom1_binned_length[chrom1_not_duplicated],
+    size = chrom1_max_sizes[chrom1_not_duplicated],
+    stringsAsFactors = FALSE)
+    rownames(Chrom_info_df) <- NULL
+    return(Chrom_info_df)
 }
 
 #' Creates a ranges object from provided vectors.
