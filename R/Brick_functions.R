@@ -2563,8 +2563,8 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 #' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
-#' Brick_get_entire_matrix(Brick = My_BrickContainer, chr1 = "chr2L",
-#' chr2 = "chr2L", resolution = 100000)
+#' Entire_matrix <- Brick_get_entire_matrix(Brick = My_BrickContainer, 
+#' chr1 = "chr2L", chr2 = "chr2L", resolution = 100000)
 #'
 Brick_get_entire_matrix = function(Brick, chr1, chr2, resolution){
     Reference_object <- GenomicMatrix$new()
@@ -2831,8 +2831,8 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
 #' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
 #' remove_prior = TRUE, resolution = 100000)
 #' 
-#' Brick_call_compartments(Brick = My_BrickContainer, chr = "chr2L",
-#' resolution = 100000)
+#' Compartments_df <- Brick_call_compartments(Brick = My_BrickContainer, 
+#' chr = "chr2L", resolution = 100000)
 #' 
 Brick_call_compartments <- function(Brick, chr, resolution){
     configuration_length_check(chr, "chr", 1)

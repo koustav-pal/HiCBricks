@@ -157,6 +157,10 @@ Brick_load_cis_matrix_till_distance(Brick = My_BrickContainer,
 
 ```
 
+## Creating Brick objects from sparse matrices
+
+Since version 1.6.0, HiCBricks allows the loading of _sparse matrices_ into _Brick_ objects. _sparse matrices_ are text files containing 3 columns. The first two columns corresponds to the bin number of interacting regions. Both the first and the second column contains _bin locations_ corresponding to the line number on which the genomic intervals (bin) reside in a lexicographically sorted genome-wide binning table. Furthermore, sparse matrices are in upper triangle format, such that the _bin locations_ in the second column are greater than or equal to the _bin locations_ present in the first column. The third column in a _sparse matrix_ corresponds to the Hi-C interaction values between the bin pairs listed in columns one and two. Finally, _sparse matrices_ contain only the non-zero part of Hi-C data, i.e. where a positive interaction value is present for each bin pair. 
+
 ## Creating Brick objects from _.mcool_ binary files
 
 HiCBricks functions allow converting files with the _mcool_ or _cool_ (cooler) formats into HDF files with the _Brick_ format. On a technical side, it must be noted that _cooler_ file formats are also based on HDF, but the conversion to `HiCBricks` data structure allowed us to design more efficient data accessors. `mcool`, is a data formats adopted by the 4D nucleome project to disseminate data. These files contain Hi-C contact matrices in a sparse format, storing the non-zero values of the upper triangular matrix in the HDF file. `mcool` files can include multiple normalisations and resolutions within the same file. HiCBricks, on the other hand stores a single normalisation for multiple resolutions.
