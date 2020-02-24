@@ -2832,3 +2832,69 @@ Brick_call_compartments <- function(Brick, chr, resolution){
     bintable_df$pc3 <- pca_list[["x"]][,"PC3"]
     return(bintable_df)
 }
+
+#' Identify compartments in the Hi-C data
+#'
+#' `Brick_load_data_from_table` loads data from a table like file, such as
+#' sparse matrices.
+#' 
+#' @inheritParams Brick_load_matrix
+#' 
+#' @param table_file Path to the file that will be loaded
+#' 
+#' @param col_index \strong{Optional}. Default "c(1,2,3)".
+#' A character vector of length 3 containing the indexes of the required
+#' columns in the table file. the first index, corresponds to bin1, the 
+#' second to bin2 and the third to the signal value.
+#' 
+#' @return A dataframe containing the chromosome genomic coordinates and the 
+#' first three principal components.
+#' 
+#' @examples
+#' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
+#' package = "HiCBricks")
+#' 
+#' out_dir <- file.path(tempdir(), "get_vector_val_test")
+#' dir.create(out_dir)
+#' 
+#' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
+#'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+#'   experiment_name = "Vignette Test", resolution = 100000,
+#'   remove_existing = TRUE)
+#' 
+#' Matrix_file <- system.file(file.path("extdata", 
+#' "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr2L.txt.gz"), 
+#' package = "HiCBricks")
+#' 
+#' Brick_load_matrix(Brick = My_BrickContainer, chr1 = "chr2L", 
+#' chr2 = "chr2L", matrix_file = Matrix_file, delim = " ", 
+#' remove_prior = TRUE, resolution = 100000)
+#' 
+#' Brick_export_to_sparse(Brick = My_BrickContainer, 
+#' out_file = file.path(out_dir, "example_out.txt"), 
+#' remove_file = TRUE, sep = " ", 
+#' resolution = 100000)
+#' 
+#' Brick_load_data_from_sparse(Brick = My_BrickContainer, 
+#' table_file = file.path(out_dir, "example_out.txt"), 
+#' delim = " ", resolution = 100000)
+#' 
+Brick_load_data_from_sparse <- function(Brick, table_file, delim = " ", 
+    resolution = NULL, batch_size = 1000000, matrix_chunk = 2000, 
+    remove_prior = FALSE) {
+    Reference.object <- GenomicMatrix$new()
+    col_index <- c(1, 2, 3)
+    BrickContainer_class_check(Brick)
+    Resolutions <- BrickContainer_list_resolutions(Brick)
+    resolution <- .format_resolution(resolution)
+
+    if(!(resolution %in% Resolutions)) {
+        stop("resolution does not exist in the BrickContainer")
+    }
+
+    RetVar <- .process_tsv(Brick = Brick, table_file = table_file, 
+        delim = delim, resolution = resolution, matrix_chunk = matrix_chunk, 
+        batch_size = batch_size, remove_prior = remove_prior, 
+        col_index = col_index, is_sparse = FALSE)
+    return(RetVar)
+}
