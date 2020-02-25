@@ -2878,7 +2878,6 @@ Brick_call_compartments <- function(Brick, chr, resolution){
 #' first three principal components.
 #' 
 #' @examples
-#' \dontrun{
 #' Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
 #' package = "HiCBricks")
 #' 
@@ -2908,7 +2907,7 @@ Brick_call_compartments <- function(Brick, chr, resolution){
 #' Brick_load_data_from_sparse(Brick = My_BrickContainer, 
 #' table_file = file.path(out_dir, "example_out.txt"), 
 #' delim = " ", resolution = 100000, col_index = c(3,4,5))
-#' }
+#' 
 Brick_load_data_from_sparse <- function(Brick, table_file, delim = " ", 
     resolution = NULL, batch_size = 1000000, matrix_chunk = 2000,
     col_index = c(1, 2, 3), remove_prior = FALSE) {
