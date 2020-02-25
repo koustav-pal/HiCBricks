@@ -47,6 +47,7 @@ first three principal components.
 sparse matrices.
 }
 \examples{
+\dontrun{
 Bintable.path <- system.file(file.path("extdata", "Bintable_100kb.bins"), 
 package = "HiCBricks")
 
@@ -76,5 +77,7 @@ resolution = 100000)
 Brick_load_data_from_sparse(Brick = My_BrickContainer, 
 table_file = file.path(out_dir, "example_out.txt"), 
 delim = " ", resolution = 100000, col_index = c(3,4,5))
+    
+}
 
 }
