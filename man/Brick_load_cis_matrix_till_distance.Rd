@@ -5,10 +5,18 @@
 \title{Load a NxN dimensional sub-distance \emph{cis} matrix into
 the Brick store.}
 \usage{
-Brick_load_cis_matrix_till_distance(Brick = NA, chr = NA,
-  resolution = NA, matrix_file, delim = " ", distance,
-  remove_prior = FALSE, num_rows = 2000, is_sparse = FALSE,
-  sparsity_bins = 100)
+Brick_load_cis_matrix_till_distance(
+    Brick = NA,
+    chr = NA,
+    resolution = NA,
+    matrix_file,
+    delim = " ",
+    distance,
+    remove_prior = FALSE,
+    num_rows = 2000,
+    is_sparse = FALSE,
+    sparsity_bins = 100
+)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

@@ -4,9 +4,15 @@
 \alias{Brick_load_data_from_mcool}
 \title{Load a NxN dimensional matrix into the Brick store from an mcool file.}
 \usage{
-Brick_load_data_from_mcool(Brick, mcool, resolution = NULL,
-  matrix_chunk = 2000, cooler_read_limit = 1e+07,
-  remove_prior = FALSE, norm_factor = "Iterative-Correction")
+Brick_load_data_from_mcool(
+    Brick,
+    mcool,
+    resolution = NULL,
+    matrix_chunk = 2000,
+    cooler_read_limit = 1e+07,
+    remove_prior = FALSE,
+    norm_factor = "Iterative-Correction"
+)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

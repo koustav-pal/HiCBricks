@@ -5,8 +5,13 @@
 \title{Export an entire resolution from a given BrickContainer as a
 upper triangle sparse matrix}
 \usage{
-Brick_export_to_sparse(Brick, out_file, remove_file = FALSE, resolution,
-  sep = " ")
+Brick_export_to_sparse(
+    Brick,
+    out_file,
+    remove_file = FALSE,
+    resolution,
+    sep = " "
+)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

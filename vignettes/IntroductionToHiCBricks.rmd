@@ -161,6 +161,65 @@ Brick_load_cis_matrix_till_distance(Brick = My_BrickContainer,
 
 Since version 1.6.0, HiCBricks allows the loading of _sparse matrices_ into _Brick_ objects. _sparse matrices_ are text files containing 3 columns. The first two columns corresponds to the bin number of interacting regions. Both the first and the second column contains _bin locations_ corresponding to the line number on which the genomic intervals (bin) reside in a lexicographically sorted genome-wide binning table. Furthermore, sparse matrices are in upper triangle format, such that the _bin locations_ in the second column are greater than or equal to the _bin locations_ present in the first column. The third column in a _sparse matrix_ corresponds to the Hi-C interaction values between the bin pairs listed in columns one and two. Finally, _sparse matrices_ contain only the non-zero part of Hi-C data, i.e. where a positive interaction value is present for each bin pair. 
 
+For this exercise we will use a relatively small dataset available GEO. The dataset corresponds to the C2C12 mouse myoblast cell line. The provided matrix contains ICE normalised values, but is not in sparse format. Furthermore, each bin number in the matrix corresponds to the genomic interval present at that specific line number in the bin table.   
+
+```{r eval = FALSE}
+require(curl)
+ftp_location = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE104nnn/GSE104427/suppl"
+
+sparse_matrix_file = file.path(ftp_location,"GSE104427_c2c12_40000_iced.matrix.gz")
+sparse_out_dir <- file.path(tempdir(), "sparse_out_dir")
+if(!dir.exists(sparse_out_dir)){
+  dir.create(sparse_out_dir)  
+}
+curl_download(url = sparse_matrix_file,
+    destfile = file.path(sparse_out_dir, "GSE104427_c2c12_40000_iced.matrix.gz"))
+
+sparse_bintable_file = file.path(ftp_location,"GSE104427_c2c12_40000_abs.bed.gz")
+curl_download(url = sparse_matrix_file,
+    destfile = file.path(sparse_out_dir, "GSE104427_c2c12_40000_abs.bed.gz"))
+```
+
+Since the file contains bin pairs where column one values are greater than or equal to column two values, we need to remove these values to create a sparse matrix. 
+
+```{r eval = FALSE}
+
+Read_file_df <- read.table(file.path(sparse_out_dir, "GSE104427_c2c12_40000_iced.matrix.gz"))
+Read_file_df <- Read_file_df[Read_file_df[,2] >= Read_file_df[,1],]
+write.table(x = Read_file_df, file = file.path(sparse_out_dir, "GSE104427_c2c12_40000_iced_uppertri.matrix"),
+  quote = FALSE, sep = " ", row.names = FALSE, col.names = FALSE)
+
+```
+
+Furthermore, the bintable contains genome intervals which are continuous, i.e. end position and start positions of neighbouring intervals overlap by 1bp. Also, since R is 1 based, users will find that using the `GenomicRanges::width` function on these intervals leads to a width offset by +1bp. This normally causes issues in `GenomicRanges` functions when users create a "within" overlap operation. So the start coordinates must be offset by +1bp to ensure that the bintable is discontinuous. 
+
+```{r eval = FALSE}
+
+Read_bintable_df <- read.table(file.path(sparse_out_dir, "GSE104427_c2c12_40000_abs.bed.gz"))
+Read_bintable_df[,2] <- Read_bintable_df[,2] + 1
+write.table(x = Read_bintable_df[, c(1, 2, 3)], file = file.path(sparse_out_dir, "GSE104427_c2c12_40000_abs_discontinuous.bed"),
+  quote = FALSE, sep = " ", row.names = FALSE, col.names = FALSE)
+
+```
+
+Finally, as before we can now create the Brick object as described previously using the `Create_many_Bricks` function and load data into the Brick objects using the function `Brick_load_data_from_sparse`. 
+
+```{r eval = FALSE}
+
+Bintable_path <- file.path(sparse_out_dir, "GSE104427_c2c12_40000_abs_discontinuous.bed")
+
+My_sparse_brick_object <- Create_many_Bricks(BinTable = Bintable_path, 
+    bin_delim=" ", output_directory = out_dir, 
+    file_prefix = "HiCBricks_vignette_test", remove_existing=TRUE, 
+    experiment_name = "HiCBricks vignette test", resolution = 40000)
+
+Matrix_path <- file.path(sparse_out_dir, "GSE104427_c2c12_40000_iced_uppertri.matrix")
+
+Load_all_sparse <- Brick_load_data_from_sparse(Brick = My_sparse_brick_object, 
+  table_file = Matrix_path, delim = " ", resolution = 40000)
+
+```
+
 ## Creating Brick objects from _.mcool_ binary files
 
 HiCBricks functions allow converting files with the _mcool_ or _cool_ (cooler) formats into HDF files with the _Brick_ format. On a technical side, it must be noted that _cooler_ file formats are also based on HDF, but the conversion to `HiCBricks` data structure allowed us to design more efficient data accessors. `mcool`, is a data formats adopted by the 4D nucleome project to disseminate data. These files contain Hi-C contact matrices in a sparse format, storing the non-zero values of the upper triangular matrix in the HDF file. `mcool` files can include multiple normalisations and resolutions within the same file. HiCBricks, on the other hand stores a single normalisation for multiple resolutions.

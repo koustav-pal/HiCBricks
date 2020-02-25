@@ -4,8 +4,13 @@
 \alias{BrickContainer_list_files}
 \title{Get the list of HDF files present in the Brick container.}
 \usage{
-BrickContainer_list_files(Brick = NULL, chr1 = NA, chr2 = NA,
-  type = NA, resolution = NA)
+BrickContainer_list_files(
+    Brick = NULL,
+    chr1 = NA,
+    chr2 = NA,
+    type = NA,
+    resolution = NA
+)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

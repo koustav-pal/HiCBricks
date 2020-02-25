@@ -4,8 +4,13 @@
 \alias{BrickContainer_get_path_to_file}
 \title{Get the path to HDF files present in the Brick container.}
 \usage{
-BrickContainer_get_path_to_file(Brick = NULL, chr1 = NA, chr2 = NA,
-  type = NA, resolution = NA)
+BrickContainer_get_path_to_file(
+    Brick = NULL,
+    chr1 = NA,
+    chr2 = NA,
+    type = NA,
+    resolution = NA
+)
 }
 \arguments{
 \item{Brick}{\strong{Required}.

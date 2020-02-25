@@ -4,8 +4,7 @@
 \alias{BrickContainer_change_output_directory}
 \title{Change the location of HDF files in the BrickContainer object}
 \usage{
-BrickContainer_change_output_directory(Brick = NULL,
-  output_directory = NULL)
+BrickContainer_change_output_directory(Brick = NULL, output_directory = NULL)
 }
 \arguments{
 \item{Brick}{\strong{Required}.
@@ -31,9 +30,9 @@ out_dir <- file.path(tempdir(), "BrickContainer_out_dir_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-  bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
-  experiment_name = "Vignette Test", resolution = 100000, 
-  remove_existing = TRUE)
+    bin_delim = " ", output_directory = out_dir, file_prefix = "Test", 
+    experiment_name = "Vignette Test", resolution = 100000, 
+    remove_existing = TRUE)
 
 BrickContainer_change_output_directory(Brick = My_BrickContainer, 
 output_directory = tempdir())

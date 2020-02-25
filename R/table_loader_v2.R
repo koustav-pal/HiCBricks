@@ -176,14 +176,12 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
     chrs, col_index, starts, ends){
     Test_table_df <- .return_table_df(file = file, delim = delim, 
         num_rows = 10, skip_rows = 0, col_index = col_index)
-    # .check_column_classes(a_dataframe = Test_table_df)
+    .check_column_classes(a_dataframe = Test_table_df)
     message("Indexing the file...")
     indexes_list <- list()
-    records_read <- 0
     chr_start_shift <- 0
-    # i = 1
     Table_df <- .return_table_df(file = file, delim = delim, 
-        num_rows = big_seek, skip_rows = records_read, 
+        num_rows = big_seek, skip_rows = chr_start_shift, 
         col_index = col_index)
     while(nrow(Table_df) > 0) {
         .check_upper_triangle(a_dataframe = Table_df)
@@ -196,7 +194,6 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
             if(all(!chr1_filter)){
                 next
             }
-            # start_pos <- min(which(chr1_filter))
             Table_df_subset <- Table_df[chr1_filter,]
             chr1_run_lengths <- rle(Table_df_subset[,"chr1"])
             chr1_end_positions <- cumsum(chr1_run_lengths$lengths) + 
@@ -232,7 +229,6 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
             chr_start_shift <- chr_start_shift + nrow(Table_df_subset)
             indexes_list[[chr1]] <- temp_df
         }
-        # message("Read ", chr_start_shift,"...")
         Table_df <- .return_table_df(file = file, delim = delim, 
             num_rows = big_seek, skip_rows = chr_start_shift, 
             col_index = col_index)
@@ -321,6 +317,10 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
         chr1_offset <- start_positions[chr1] - 1
 
         Indexes_chr1_filter <- chr1_indexes_df$chr1 == chr1
+        if(!any(Indexes_chr1_filter)){
+            message("Skipping ",chr1," due to missing data...")
+            next
+        }
 
         chr2 <- Brick_files_tib$chrom2[i]
         chr2_starts <- chr_positions_list[[chr2]]$start
@@ -328,11 +328,8 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
         chr2_widths <- cumsum(chr2_ends - chr2_starts + 1)
         chr2_hdf_offsets <- c(0, chr2_widths[-length(chr2_widths)])
         chr2_offset <- start_positions[chr2] - 1
-        message(chr1, " vs ", chr2)
-        message("chr1 starts: ", paste(chr1_starts, collapse = ", "))
-        message("chr1 ends: ", paste(chr1_ends, collapse = ", "))
-        message("chr2 starts: ", paste(chr2_starts, collapse = ", "))
-        message("chr2 ends: ", paste(chr2_ends, collapse = ", "))
+        message("Loading data for ",chr1, " vs ", chr2,"...")
+
         metrics.list <- prepare_empty_metrics_list(
             starts.1 = chr1_starts,
             ends.1 = chr1_ends,
@@ -379,6 +376,8 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
             if(!any(Filter)){
                 next
             }
+            message("Loading data for ", chr1, ":", chr1_start, ":", chr1_end, 
+                " vs ", chr2, ":", chr2_start, ":", chr2_end)
             Temp_table_df <- Table_df[Filter,]
             Temp_table_df$chr1 <- Temp_table_df$chr1 - 
                 chr1_offset - ((chr1_start - chr1_offset) - 1)

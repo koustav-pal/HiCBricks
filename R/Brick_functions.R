@@ -2464,7 +2464,10 @@ Brick_fetch_row_vector = function(Brick, chr1, chr2, resolution,
 #' package = "HiCBricks")
 #' 
 #' out_dir <- file.path(tempdir(), "get_vector_val_test")
-#' dir.create(out_dir)
+#' 
+#' if(!file.exists(out_dir)){
+#'     dir.create(out_dir)
+#' }
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
@@ -2548,7 +2551,9 @@ Brick_get_vector_values = function(Brick, chr1, chr2, resolution,
 #' package = "HiCBricks")
 #' 
 #' out_dir <- file.path(tempdir(), "get_vector_val_test")
-#' dir.create(out_dir)
+#' if(!file.exists(out_dir)){
+#'     dir.create(out_dir)
+#' }
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
@@ -2816,7 +2821,9 @@ Brick_export_to_sparse <- function(Brick, out_file, remove_file = FALSE,
 #' package = "HiCBricks")
 #' 
 #' out_dir <- file.path(tempdir(), "get_vector_val_test")
-#' dir.create(out_dir)
+#' if(!file.exists(out_dir)){
+#'     dir.create(out_dir)
+#' }
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
@@ -2875,7 +2882,9 @@ Brick_call_compartments <- function(Brick, chr, resolution){
 #' package = "HiCBricks")
 #' 
 #' out_dir <- file.path(tempdir(), "get_vector_val_test")
-#' dir.create(out_dir)
+#' if(!file.exists(out_dir)){
+#'     dir.create(out_dir)
+#' }
 #' 
 #' My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
 #'   bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
@@ -2897,13 +2906,12 @@ Brick_call_compartments <- function(Brick, chr, resolution){
 #' 
 #' Brick_load_data_from_sparse(Brick = My_BrickContainer, 
 #' table_file = file.path(out_dir, "example_out.txt"), 
-#' delim = " ", resolution = 100000)
+#' delim = " ", resolution = 100000, col_index = c(3,4,5))
 #' 
 Brick_load_data_from_sparse <- function(Brick, table_file, delim = " ", 
-    resolution = NULL, batch_size = 1000000, matrix_chunk = 2000, 
-    remove_prior = FALSE) {
+    resolution = NULL, batch_size = 1000000, matrix_chunk = 2000,
+    col_index = c(1, 2, 3), remove_prior = FALSE) {
     Reference.object <- GenomicMatrix$new()
-    col_index <- c(1, 2, 3)
     BrickContainer_class_check(Brick)
     Resolutions <- BrickContainer_list_resolutions(Brick)
     resolution <- .format_resolution(resolution)
