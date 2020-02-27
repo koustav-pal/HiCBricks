@@ -29,6 +29,12 @@ The delimiter of the matrix file.}
 When an object of class BrickContainer is provided, resolution defines the
 resolution on which the function is executed}
 
+\item{batch_size}{{\strong{Optional} Default 1000000
+Number of rows to read with each iteration from a sparse matrix.}
+
+\item{matrix_chunk}{{\strong{Optional} Default 2000
+The nxn matrix square to fill per iteration to a Brick object.}
+
 \item{col_index}{\strong{Optional}. Default "c(1,2,3)".
 A character vector of length 3 containing the indexes of the required
 columns in the table file. the first index, corresponds to bin1, the

@@ -2869,6 +2869,12 @@ Brick_call_compartments <- function(Brick, chr, resolution){
 #' 
 #' @param table_file Path to the file that will be loaded
 #' 
+#' @param batch_size Number of rows to read with each iteration from a 
+#' sparse matrix
+#'
+#' @param matrix_chunk \strong{Optional}. Default 2000.
+#' The nxn matrix square to fill per iteration.
+#' 
 #' @param col_index \strong{Optional}. Default "c(1,2,3)".
 #' A character vector of length 3 containing the indexes of the required
 #' columns in the table file. the first index, corresponds to bin1, the 
