@@ -1,1 +1,15 @@
-Pal, K., Tagliaferri, I., Livi, C. M. & Ferrari, F. HiCBricks: building blocks for efficient handling of large Hi-C datasets. Bioinformatics 171, 557 (2019)
+bibentry(
+    bibtype = "Article",
+    author = c(
+        person(c("Koustav"), "Pal"),
+        person(c("Ilario"), "Tagliaferri"),
+        person(c("Carmen", "M."), "Livi"),
+        person(c("Francesco"), "Ferrari")
+    ),
+    title = "HiCBricks: building blocks for efficient handling of large Hi-C datasets.",
+    journal = "Bioinformatics",
+    year = "2019",
+    volume = "171",
+    pages = "557",
+    doi =  "10.1093/bioinformatics/btz808"
+)
