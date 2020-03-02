@@ -29,10 +29,10 @@ The delimiter of the matrix file.}
 When an object of class BrickContainer is provided, resolution defines the
 resolution on which the function is executed}
 
-\item{batch_size}{{\strong{Optional} Default 1000000
+\item{batch_size}{\strong{Optional} Default 1000000
 Number of rows to read with each iteration from a sparse matrix.}
 
-\item{matrix_chunk}{{\strong{Optional} Default 2000
+\item{matrix_chunk}{\strong{Optional} Default 2000
 The nxn matrix square to fill per iteration to a Brick object.}
 
 \item{col_index}{\strong{Optional}. Default "c(1,2,3)".
@@ -44,12 +44,14 @@ second to bin2 and the third to the signal value.}
 If a matrix was loaded before, it will not be replaced. Use remove_prior to
 override and replace the existing matrix.}
 }
+
 \value{
 A dataframe containing the chromosome genomic coordinates and the
 first three principal components.
 }
+
 \description{
-\code{Brick_load_data_from_table} loads data from a table like file, such as
+\code{Brick_load_data_from_sparse} loads data from a table like file, such as
 sparse matrices.
 }
 \examples{
