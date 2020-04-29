@@ -20,7 +20,7 @@ HiCBricks is a **R/Bioconductor** package for handling high-resolution Hi-C data
 
 ## Features
 
-- Import Hi-C data in multiple data formats. Currently, NxN dimensional matrices and _mcool_ files are supported, with more to come.
+- Import Hi-C data in multiple data formats. Currently, NxN dimensional matrices, _mcool_ files and sparse matrices are supported, with more to come.
 - Fetch different subset of the Hi-C data by their features with easy to use functions. Feature examples: by distance, matrix squares, rows or columns.
 - Keep user-defined annotations associated to the HDF files.
 - Use HiCBricks accessors to build more complex analysis such as TAD calling and visualizations.
@@ -31,7 +31,7 @@ To install the most stable development version from Bioconductor, run this from 
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("HiCBricks", version = "3.10")
+BiocManager::install("HiCBricks", version = "3.11")
 ```
 
 
@@ -40,7 +40,7 @@ To install the stable release version from Bioconductor, run this from a R conso
 ```
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("HiCBricks", version = "3.10")
+BiocManager::install("HiCBricks", version = "3.11")
 ```
 
 To install the most cutting-edge stable version of HiCBricks, do this from a R console to download it directly from GitHub. 
@@ -56,21 +56,22 @@ To start working with **HiCBricks**, please checkout the vignette (tutorial) [he
 
 - Loading data from text 2D files.
 - Loading data from mcool files.
+- Loading data from sparse matrices.
 - Making TAD calls and spohisticated heatmaps with example functions built using HiCBricks accessor functions.
 
 ## Development Notes
 
 - **HiCBricks** API is now stable. While we may move to sparse or feather representations later, this API will not change.
 - With Bioconductor release 3.10, a formal S4 class has been implemented for a better user experience.
+- With Bioconductor release 3.11, sparse matrix support has been implemented.
 
 ## Future Roadmap
 
 There are many new developments which are planned for future releases of HiCBricks. Broadly speaking, 
 
-- In v1, I will try to implement `read and export functions` for as many new Hi-C data formats as possible. On top priority is the `sparse matrix`, HiCExplorer and diffHiC, in that exact order. Support for `.hic` is planned and requires some time.
-
+- I will try to implement `read and export functions` for as many new Hi-C data formats as possible. On top priority is HiCExplorer and .hic.
 
 ## Contributing 
 
-If you would like to help out, let me know via email.
+If you would like to help out, let me know via email at koustav.pal@ifom.eu.
 
