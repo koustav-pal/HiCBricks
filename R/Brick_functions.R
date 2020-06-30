@@ -209,6 +209,7 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
         read.delim = bin_delim, col.index = col_index, 
         impose.discontinuity = impose_discontinuity)
     bintable_df <- Bintable.list[['main.tab']]
+
     # Create the 0 level directories in the HDF file
     ChromosomeList <- unique(bintable_df[,'chr'])
     Chrom_info_df <- return_chrominfo_df(bintable_df = bintable_df, 
@@ -234,6 +235,8 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
         # Files_list <- BrickContainer_list_files(Container)
         Configuration_matrix_list <- return_configuration_matrix_info(
             Container)
+        Configuration_resolution_list <- 
+            return_configuration_resolution_info(Container)
         if(!remove_existing){
             if(any(grepl(pattern = resolution, 
                     x = Resolutions, 
@@ -244,7 +247,18 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
         }
         Resolutions <- unique(c(Resolutions, resolution))
     }
-    
+
+    bintable_filename <- paste(file_prefix, resolution,
+            Reference.object$bintable_ranges_name, sep = "_")
+    saveRDS(x = bintable_df, 
+        filename = file.path(output_directory, bintable_filename)
+    rangekeys <- Reference.object$bintable_rangekey
+
+    chrominfo_filename <- paste(file_prefix, resolution,
+            Reference.object$chrominfo_name, sep = "_")
+    saveRDS(x = Chrom_info_df, 
+        filename = file.path(output_directory, chrominfo_filename)
+
     Configuration_header <- .create_configuration_header(
         file_prefix = file_prefix, 
         output_directory = output_directory, 
@@ -253,32 +267,37 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
         chromosomes = ChromosomeList, 
         chromosome_lengths = chromosome_lengths)
 
+    Configuration_resolution_list[[paste("Resolution", 
+        resolution, sep = "_")]] <- 
+        .create_configuration_resolution_info(
+            rangekey = rangekeys,
+            ranges_filename = bintable_filename,
+            chrominfo_filename = chrominfo_filename)
     Chromosome.pairs.list <- return_chromosome_pairs(
         chromosomes = ChromosomeList,
         type = type)
-    Root.folders <- Reference.object$GetRootFolders()
 
     for (chrom1 in names(Chromosome.pairs.list)) {
         for (chrom2 in Chromosome.pairs.list[[chrom1]]) {
-            hdf_filename <- paste(paste(file_prefix, 
+            parquet_filename <- paste(paste(file_prefix, 
                 resolution,
                 chrom1, "vs", chrom2, sep = "_"), 
             Reference.object$brick.extension, sep = ".")
             Configuration_matrix_list[[paste(chrom1, chrom2, 
                 resolution, sep = "_")]] <- 
                 .create_brick(output_directory = output_directory, 
-                    filename = hdf_filename, 
+                    filename = parquet_filename, 
                     chrom1 = chrom1, 
                     chrom2 = chrom2, 
                     resolution = resolution, 
-                    bintable_df = bintable_df, 
-                    hdf_chunksize = hdf_chunksize, 
+                    chrom_info_df = Chrom_info_df,
                     remove_existing = remove_existing,
                     link_existing = link_existing)
         }
     }
     Container <- .prepare_BrickContainer(Configuration_header, 
-        Configuration_matrix_list, 
+        Configuration_matrix_list,
+        Configuration_resolution_list, 
         Config_filepath)
     .write_configuration_file(Container, Config_filepath)
     return(Container)
@@ -551,30 +570,16 @@ Brick_get_chrominfo <- function(Brick, resolution = NA){
     configuration_na_check(resolution, "resolution")
     configuration_length_check(resolution, "resolution", 1)
     resolution <- .format_resolution(resolution)
-    Matrix_info <- return_configuration_matrix_info(Brick)
-    current_resolution <- vapply(Matrix_info, function(a_list){
-        a_list$resolution == resolution
-    },TRUE)
-    if(!any(current_resolution)){
+    resolution_info <- return_configuration_resolution_info(Brick)
+    output_dir <- BrickContainer_list_output_directory(Brick)
+    Resolutions <- BrickContainer_list_resolutions(Brick_object)
+    if(!(resolution %in% Resolutions)){
         stop(resolution," not found in provided BrickContainer")
     }
-    chrom1_binned_length <- vapply(Matrix_info[current_resolution], 
-        function(a_list){
-        a_list$dimensions[1]
-    }, 100)
-    chrom1s <- vapply(Matrix_info[current_resolution], 
-        function(a_list){
-        a_list$chrom1
-    }, "chr1")
-    chrom1_max_sizes <- vapply(Matrix_info[current_resolution], 
-        function(a_list){
-        a_list$lengths[1]
-    }, 100) 
-    chrom1_not_duplicated <- !duplicated(chrom1s)
-    Chrom_info_df <- data.frame(chr = chrom1s[chrom1_not_duplicated],
-    nrow = chrom1_binned_length[chrom1_not_duplicated],
-    size = chrom1_max_sizes[chrom1_not_duplicated],
-    stringsAsFactors = FALSE)
+    chrominfo_filename <- resolution_info[[
+        paste("Resolution", resolution, sep = "_")]][[
+        chrominfo_filename]]
+    Chrom_info_df <- readRDS(chrominfo_filename)
     rownames(Chrom_info_df) <- NULL
     return(Chrom_info_df)
 }
@@ -700,21 +705,48 @@ Brick_add_ranges = function(Brick, ranges, rangekey, resolution = NA,
         all_resolutions = all_resolutions,
         message = paste("rangekey already exists!",
             "Unable to overwrite existing rangekeys!"))
-    Brick_paths <- BrickContainer_get_path_to_file(Brick = Brick,
-        resolution = resolution)
-    ranges_list <- .prepare_ranges_df_for_add(ranges)
-    Ranges.df.coords <- ranges_list[["ranges"]]
-    Metadata.list <- ranges_list[["metadata"]]
-    Param <- .get_instance_biocparallel(workers = num_cpus)
-    bplapply(Brick_paths, function(Brick_path){
-        ._Brick_Add_Ranges_(Brick = Brick_path,
-        Group.path = Create_Path(c(Reference.object$hdf.ranges.root,
-            rangekey)),
-        ranges.df = Ranges.df.coords,
-        name = rangekey,
-        mcol.list = Metadata.list)
-    }, BPPARAM = Param)
-    return(TRUE)
+    if(!is.na(resolution)){
+        Resolutions <- BrickContainer_list_resolutions(Brick)
+        Resolutions <- resolution[resolution %in% Resolutions]
+        if(length(Resolutions) == 0){
+            stop("all resolutions were not found in resolution list")
+        }
+    }else if(all_resolutions){
+        Resolutions <- BrickContainer_list_resolutions(Brick)
+    }
+    Configuration_header <- return_configuration_header(Brick)
+    Configuration_resolution_list <- return_configuration_resolution_info(Brick)
+    Configuration_matrix_list <- return_configuration_matrix_info(Brick)
+
+    file_prefix <- Configuration_header$file_prefix
+    output_directory <- return_output_directory(Brick)
+
+    for (a_resolution in Resolutions) {
+        rangekeys <- c(Configuration_resolution_list$rangekeys, rangekey)
+        ranges_filenames <- Configuration_resolution_list$ranges_filename
+        chrominfo_filename <- Configuration_resolution_list$chrominfo_filename
+        if((all_resolutions & a_resolution == Resolutions[1]) | 
+            !all_resolutions){
+            ranges_filename <- paste(file_prefix, a_resolution, 
+                    paste(rangekey, "rds", sep = "."), sep = "_")
+            saveRDS(x = ranges, 
+                filename = file.path(output_directory, ranges_filename))
+        }
+        ranges_filenames <- c(ranges_filenames, ranges_filename)
+        Configuration_resolution_list[[paste("Resolution", 
+            a_resolution, sep = "_")]] <- 
+            .create_configuration_resolution_info(
+                rangekey = rangekeys,
+                ranges_filename = ranges_filenames,
+                chrominfo_filename = chrominfo_filename)
+    }
+    Config_filepath <- .make_configuration_path(output_directory)
+    Container <- .prepare_BrickContainer(Configuration_header, 
+        Configuration_matrix_list,
+        Configuration_resolution_list, 
+        Config_filepath)
+    .write_configuration_file(Container, Config_filepath)
+    return(Container)
 }
 
 #' List the matrix pairs present in the Brick store.
@@ -809,13 +841,18 @@ Brick_list_rangekeys = function(Brick, resolution = NA,
     all_resolutions = FALSE){
     Reference.object <- GenomicMatrix$new()
     BrickContainer_resolution_check(resolution, all_resolutions)
-    Brick_filepaths <- BrickContainer_get_path_to_file(Brick,
-    resolution = resolution)
-    Handler <- ._Brick_Get_Something_(
-        Group.path = Create_Path(Reference.object$hdf.ranges.root),
-        Brick = Brick_filepaths[1], return.what = "group_handle")
-    GroupList <- h5ls(Handler, datasetinfo = FALSE, recursive = FALSE)[,"name"]
-    return(GroupList)
+    resolution_info <- return_configuration_resolution_info(Container)
+    Resolutions <- .format_resolution(resolution)
+    if(all_resolutions){
+        Resolutions <- BrickContainer_list_resolutions(Brick)
+    }
+    rangekeys_list <- lapply(Resolutions, function(a_resolution){
+        name <- paste("Resolution", a_resolution, sep = "_")
+        rangekeys <- resolution_info[[name]][["rangekeys"]]
+        return(rangekeys)
+    })
+    rangekeys <- do.call(rbind, rangekeys_list)
+    return(rangekeys)
 }
 
 #' Check to see if the Brick contains a ranges with a certain name.
@@ -2931,4 +2968,65 @@ Brick_load_data_from_sparse <- function(Brick, table_file, delim = " ",
         batch_size = batch_size, remove_prior = remove_prior, 
         col_index = col_index, is_sparse = FALSE)
     return(RetVar)
+}
+
+Brick_get_set_of_distances <- function(Brick, chr, from = NA, to = NA, distances = NA, FUN, resolution, domain_ranges, remove_regions = NA){
+
+    if(is.na(from) & is.na(to) & is.na(distances)){
+        stop("Either one of from and to or distances must be provided!")
+    }
+    
+    domain_exists <- FALSE
+    domain_distances_list <- NULL
+    if(all(!is.na(domain_ranges)) & "GenomicRanges" %in% class(domain_ranges)){
+        domain_ranges <- domain_ranges[seqnames(domain_ranges) == chr]
+        domain_ranges_with_indexes <- Brick_fetch_range_indexes(chr = seqnames(domain_ranges), start = start(domain_ranges), end = end(domain_ranges))
+        domain_distances_list <- lapply(distances, function(dist){
+            max_range <- max_distance - dist
+            diag_for_dist_list <- lapply(domain_ranges_with_indexes$Indexes, function(an_index){
+                if((dist+1) > length(an_index)){
+                    return(NULL)
+                }
+                index_within_dist <- an_index[seq(from = 1, to = (length(an_index)-dist))]
+                index_within_bounds <- index_within_dist[index_within_dist <= max_range]
+                return(index_within_bounds)
+            })
+            diag_for_dist <- do.call(c, diag_for_dist_list)
+            return(diag_for_dist)
+        })
+        domain_exists <- TRUE
+    }
+
+    max_distance <- Brick_matrix_maxdist(Brick = My_Brick_object, chr1 = chr, chr2 = chr, resolution = resolution)
+    if(!is.na(from) & !is.na(to)){
+        distances = seq(from = from, to = to)
+    }
+
+    a_matrix <- Brick_get_entire_matrix(Brick = Brick, chr1 = chr, chr2 = chr, resolution = resolution)
+
+    distance_values_list <- lapply(distances, function(dist){
+        Rows <- seq(from = 1, to = nrow(a_matrix) - dist)
+        Rows <- Rows[!(Rows %in% remove_rows)]
+        Cols <- Rows + dist
+        values <- a_matrix[Rows, Cols]
+
+        if(!domain_exists){
+            average_val <- FUN(values)
+            return(data.frame(distance = dist, value = average_val, group_by = "None"))
+        }
+        within_domain <- values[domain_distances_list[[dist+1]]]
+        within_domain_df <- NULL
+        if(length(within_domain) > 0){
+            within_domain_avg <- FUN(within_domain)
+            within_domain_df <- data.frame(distance = dist, value = within_domain_avg, group_by = "within_domain")
+        }
+        outside_domain <- values[!(Rows %in% domain_distances_list[[dist+1]])]
+        outside_domain_df <- NULL
+        if(length(outside_domain) > 0){
+            outside_domain_avg <- FUN(outside_domain)
+            outside_domain_df <- data.frame(distance = dist, value = outside_domain_avg, group_by = "outside_domain")
+        }
+        return(rbind(within_domain_df, outside_domain_df))
+    })
+    distance_values_df <- do.call(rbind, distance_values_list)
 }

@@ -41,6 +41,11 @@ read_configuration_file <- function(config_file){
     return(Configuration_list)
 }
 
+setGeneric("return_configuration_resolution_info",
+    function(config_file) {
+    Configuration_list <- read_configuration_file(config_file)
+    return(Configuration_list[["resolution_info"]])
+})
 
 setGeneric("return_configuration_matrix_info",
     function(config_file) {
@@ -71,9 +76,22 @@ setGeneric("return_configuration_header",
     return(headers)
 }
 
+.create_configuration_resolution_info <- function(rangekeys, 
+    ranges_filenames, chrominfo_filename){
+    Reference.object <- GenomicMatrix$new()
+    resolution_colnames <- 
+        Reference.object$Configurator_JSON_resolution_names
+    resolution_list <- list(
+        rangekeys,
+        ranges_filenames,
+        chrominfo_filename)
+    names(resolution_list) <- resolution_colnames
+    return(resolution_list)
+}
+
 .create_configuration_matrix_info <- function(resolution, chrom1, chrom2,
     chrom1_binned_length, chrom2_binned_length, chrom1_max_size, 
-    chrom2_max_size, type, filename){
+    chrom2_max_size, attributes_list, type, filename){
     Reference.object <- GenomicMatrix$new()
     matrix_colnames <- Reference.object$Configurator_JSON_matrix_names
     chrom1_chrom2_list <- list(
@@ -82,6 +100,7 @@ setGeneric("return_configuration_header",
         resolution,
         c(chrom1_binned_length, chrom2_binned_length),
         c(chrom1_max_size, chrom2_max_size),
+        attributes_list,
         type,
         filename
     )
@@ -96,17 +115,18 @@ setGeneric("return_configuration_header",
         a_tibble <- data.frame(a_row[matrix_colnames[1]], 
         a_row[matrix_colnames[2]],
         a_row[matrix_colnames[3]],
-        a_row[matrix_colnames[6]],
-        a_row[matrix_colnames[7]], 
+        a_row[matrix_colnames[7]],
+        a_row[matrix_colnames[8]], 
         stringsAsFactors = FALSE)
     })
     Matrix_df <- do.call(rbind, Matrix_df_list)
-    colnames(Matrix_df) <- matrix_colnames[c(1,2,3,6,7)]
+    colnames(Matrix_df) <- matrix_colnames[c(1,2,3,7,8)]
     Matrix_tibble <- as_tibble(Matrix_df)
     return(Matrix_tibble)
 }
 
-.prepare_BrickContainer <- function(header, matrix_info, config_path){
+.prepare_BrickContainer <- function(header, matrix_info, 
+    resolution_info, config_path){
     File_tib <- .create_file_list(matrix_info)
     BrickContainer <- new("BrickContainer",
     name = header$experiment_name,
@@ -116,6 +136,7 @@ setGeneric("return_configuration_header",
     chromosome_length = header$lengths,
     file_list = File_tib,
     headers = header,
+    resolution_info = resolution_info,
     matrix_info = matrix_info)
     return(BrickContainer)
 }
