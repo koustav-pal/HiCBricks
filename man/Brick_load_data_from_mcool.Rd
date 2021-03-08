@@ -11,7 +11,9 @@ Brick_load_data_from_mcool(
     matrix_chunk = 2000,
     cooler_read_limit = 1e+07,
     remove_prior = FALSE,
-    norm_factor = "Iterative-Correction"
+    norm_factor = "Iterative-Correction",
+    chr1 = NA, 
+    chr2 = NA
 )
 }
 \arguments{
@@ -42,6 +44,16 @@ The normalization factor to use for normalization from an mcool file.
 norm_factor currently accepts one of "Iterative-Correction", "Knight-Ruitz",
 "Vanilla-coverage", "Vanilla-coverage-square-root" and NULL. If NULL,
 the function will load only counts from the mcool file.}
+
+\item{chr1}{\strong{Optional}. Default NA.
+chr1 and chr2 values specify the specific pair of chromosomes to be loaded
+chr1 corresponds to row axis chromosomes while chr2 corresponds to column
+axis chromosomes. Both must have equal length}
+
+\item{chr2}{\strong{Optional}. Default NA.
+chr1 and chr2 values specify the specific pair of chromosomes to be loaded
+chr1 corresponds to row axis chromosomes while chr2 corresponds to column
+axis chromosomes. Both must have equal length}
 }
 \value{
 Returns TRUE if all went well.

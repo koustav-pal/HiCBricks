@@ -473,7 +473,7 @@ mcool_list_resolutions <- function(mcool = NULL){
 
 .process_mcool <- function(Brick = NULL, mcool_path = NULL, resolution = NULL, 
     has_resolution = FALSE, matrix_chunk = 2000, norm_factor = NULL,
-    cooler_read_limit = 10000000) {
+    cooler_read_limit = 10000000, keep_chr1 = NA, keep_chr2 = NA) {
     is.sparse <- FALSE
     Reference_object <- GenomicMatrix$new()
     mcool_version <- GetAttributes(Path = NULL, File = mcool_path,
@@ -519,6 +519,10 @@ mcool_list_resolutions <- function(mcool = NULL){
             chr1 = chr1_chr2_df[x,"chr1"], chr2 = chr1_chr2_df[x,"chr2"],
             row_length = Dimensions[1], col_length = Dimensions[2])
     })
+    if(!is.na(keep_chr1)){
+        keep_chr2_split <- split(keep_chr2, keep_chr1)
+    }
+
     chr1_chr2_extent_df_list <- lapply(chr1_chr2_rows_df_list, 
         function(a_row){
         chr1 <- unique(a_row$chr1)
@@ -528,6 +532,13 @@ mcool_list_resolutions <- function(mcool = NULL){
         read_to <- unique(a_row$read_to)
         chr2_df_split <- split(a_row[,c("chr2", "chr2_start", "chr2_end")],
             a_row[,"chr2"])
+        if(!is.na(keep_chr1)){
+            if(!(chr1 %in% names(keep_chr2_split))){
+                return(NULL)
+            }
+            chr2_df_split <- chr2_df_split[names(chr2_df_split) %in% 
+                keep_chr2_split[[chr1]]]
+        }
         values_list <- .return_values_list(mcool_path = mcool_path, 
             mcool_version = mcool_version, read_from = read_from,
             read_to = (read_to - read_from + 1), resolution = resolution,

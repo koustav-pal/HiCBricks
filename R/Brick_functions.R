@@ -1493,6 +1493,16 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #' cooler_read_limit sets the upper limit for the number of records per matrix
 #' chunk. If the number of records per chunk is higher than this value, the 
 #' matrix_chunk value will be re-evaluated dynamically.
+#'
+#' @param chr1 \strong{Optional}. Default NA.
+#' chr1 and chr2 values specify the specific pair of chromosomes to be loaded
+#' chr1 corresponds to row axis chromosomes while chr2 corresponds to column
+#' axis chromosomes. Both must have equal length
+#' 
+#' @param chr2 \strong{Optional}. Default NA.
+#' chr1 and chr2 values specify the specific pair of chromosomes to be loaded
+#' chr1 corresponds to row axis chromosomes while chr2 corresponds to column
+#' axis chromosomes. Both must have equal length
 #' 
 #' @return Returns TRUE if all went well.
 #'
@@ -1531,9 +1541,24 @@ Brick_load_cis_matrix_till_distance = function(Brick = NA, chr = NA,
 #'
 Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL, 
     matrix_chunk = 2000, cooler_read_limit = 10000000, remove_prior = FALSE,
-    norm_factor = "Iterative-Correction"){
+    norm_factor = "Iterative-Correction", chr1 = NA, chr2 = NA){
     Reference.object <- GenomicMatrix$new()
-    
+    if(!is.na(chr1) | !is.na(chr2)){
+        if(length(chr1) != length(chr2)){
+            stop("chr1 and chr2 vectors must be of same length!")
+        }
+        Matrix_info_df <- Brick_list_matrices(Brick = Brick, 
+            resolution = resolution)
+        chr_order <- match(paste(chr1, chr2, sep = "_"), 
+            paste(Matrix_info_df$chr1, Matrix_info_df$chr2, sep = "_"))
+        if(any(is.na(chr_order))){
+            na_place <- which(is.na(chr_order))
+            stop("Matrix doesn't exist for", paste(paste(chr1[na_place], 
+                chr2[na_place], paste = "_"), collapse = ", "), 
+                "pair. Make sure chromosome pairs are selected from",
+                "upper triangle only!")
+        }
+    }
     resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
     if(!is.null(resolutions) & is.null(resolution)){
         stop("resolution must be provided when",
@@ -1568,7 +1593,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL,
     RetVar <- .process_mcool(Brick = Brick, mcool_path = mcool, 
         resolution = resolution, matrix_chunk = matrix_chunk, 
         norm_factor = Norm_factor, cooler_read_limit = cooler_read_limit,
-        has_resolution = !is.null(resolutions))
+        has_resolution = !is.null(resolutions), chr1 = chr1, chr2 = chr2)
     return(RetVar)
 }
 
