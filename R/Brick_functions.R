@@ -1542,7 +1542,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL,
     matrix_chunk = 2000, cooler_read_limit = 10000000, remove_prior = FALSE,
     norm_factor = "Iterative-Correction", chr1 = NA, chr2 = NA){
     Reference.object <- GenomicMatrix$new()
-    if(!is.na(chr1) | !is.na(chr2)){
+    if(any(!is.na(chr1)) | any(!is.na(chr2))){
         if(length(chr1) != length(chr2)){
             stop("chr1 and chr2 vectors must be of same length!")
         }
