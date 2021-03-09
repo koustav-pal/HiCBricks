@@ -1547,7 +1547,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL,
             stop("chr1 and chr2 vectors must be of same length!")
         }
         Matrix_info_df <- Brick_list_matrices(Brick = Brick, 
-            resolution = resolution)
+            chr1 = chr1, chr2 = chr2, resolution = resolution)
         chr_order <- match(paste(chr1, chr2, sep = "_"), 
             paste(Matrix_info_df$chr1, Matrix_info_df$chr2, sep = "_"))
         if(any(is.na(chr_order))){
