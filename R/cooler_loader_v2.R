@@ -1,3 +1,43 @@
+.find_mcool_chr_order_from_version <- function(mcool = NULL, 
+    resolution = NULL){
+    Reference.object <- GenomicMatrix$new()
+    if(is.null(mcool)){
+        stop("mcool must be provided as mcool= /path/to/something")
+    }
+    if(!file.exists(mcool)){
+        stop("mcool not found!")   
+    }
+    resolutions <- Brick_list_mcool_resolutions(mcool = mcool)
+    if(!is.null(resolutions)){
+        mcool.version <- GetAttributes(Path = Create_Path(
+            c(Reference.object$mcool.resolutions.name, resolutions[1])), 
+            File=mcool, Attributes="format-version", on = "group",
+            ignore.fun.cast = TRUE)[,"format-version"]
+        if(is.null(resolution)){
+            stop("resolution cannot be NULL when resolutions are present..\n")
+        }
+        if(length(resolution) > 1){
+            stop("resolution cannot have more than one value\n")
+        }
+        resolution <- .format_resolution(resolution)
+        if(!(resolution %in% resolutions)){
+            stop("all resolutions were not found in this mcool file. See all",
+                " resolutions available with Brick_list_mcool_resolutions\n")
+        }
+    }else{
+        mcool.version <- GetAttributes(Path = NULL, File=mcool, 
+            Attributes="format-version", on = "file",
+            ignore.fun.cast = TRUE)[,"format-version"]
+    }
+    mcool.version <- as.numeric(as.character(mcool.version))
+    message("Provided mcool is a version ", mcool.version," file.")
+    cooler.remap.chrom <- ._mcool_remap_chromosomes(File = mcool,
+        mcool.version = mcool.version, resolution = !is.null(resolutions),
+        binsize = resolution)
+    return(list(mcool_version = mcool.version, 
+        mcool_remap_df = cooler.remap.chrom))
+}
+
 .create_matrix_group_path <- function(has_resolution = FALSE, 
     mcool_version, resolution){
     Reference_object <- GenomicMatrix$new()

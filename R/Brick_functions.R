@@ -326,7 +326,6 @@ Create_many_Bricks <- function(BinTable, bin_delim="\t", col_index=c(1,2,3),
 Create_many_Bricks_from_mcool <- function(output_directory = NA, 
     file_prefix = NA, mcool = NULL, resolution = NULL, 
     experiment_name = NA, remove_existing = FALSE){
-
     Reference.object <- GenomicMatrix$new()
     if(is.null(mcool)){
         stop("mcool must be provided as mcool= /path/to/something")
@@ -1593,7 +1592,7 @@ Brick_load_data_from_mcool <- function(Brick, mcool, resolution = NULL,
     RetVar <- .process_mcool(Brick = Brick, mcool_path = mcool, 
         resolution = resolution, matrix_chunk = matrix_chunk, 
         norm_factor = Norm_factor, cooler_read_limit = cooler_read_limit,
-        has_resolution = !is.null(resolutions), chr1 = chr1, chr2 = chr2)
+        has_resolution = !is.null(resolutions), keep_chr1 = chr1, keep_chr2 = chr2)
     return(RetVar)
 }
 
