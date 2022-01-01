@@ -297,9 +297,9 @@ GenomicMatrix <- R6Class("GenomicMatrix",
     }
     Brick.handler <- ._Brick_Get_Something_(Group.path = Path, Brick = Brick, 
         Name = name, return.what = "group_handle")
-    h5writeDataset.array(h5loc = Brick.handler, 
-            obj = object, 
-            name = name)
+    h5writeDataset(h5loc = Brick.handler, obj = object, name = name,
+            index = NULL, start=NULL, stride=NULL, block=NULL, count=NULL,
+            size=NULL, level=6)
     H5Gclose(Brick.handler)
 }
 
