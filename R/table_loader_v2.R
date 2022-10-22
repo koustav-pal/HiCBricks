@@ -158,8 +158,9 @@ insert_data_and_computemetrics_both_matrices <- function(Brick = NULL,
     chr1_class <- class(a_dataframe[,1])
     chr2_class <- class(a_dataframe[,2])
     value_class <- class(a_dataframe[,3])
-    if(!all(c("numeric", "numeric", "numeric") %in% 
-            c(chr1_class, chr2_class, value_class))){
+    if(c("character") %in% chr1_class | 
+        c("character") %in% chr2_class |
+        c("character") %in% value_class){
         stop("Expected numeric values for chr1, chr2 bins and values.")
     }    
 }
