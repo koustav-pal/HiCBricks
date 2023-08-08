@@ -10,6 +10,7 @@ Brick_vizart_plot_heatmap(
     resolution,
     x_coords,
     y_coords,
+    invert_coords = FALSE,
     FUN = NULL,
     value_cap = NULL,
     distance = NULL,
@@ -67,6 +68,10 @@ the data.}
 \item{y_coords}{\strong{Required}
 A character vector of length 1 specifying the coordinates from where to fetch
 the data.}
+
+\item{invert_coords}} {\strong{Optional}. Default FALSE.
+A boolean (TRUE or FALSE) of length 1 specifying whether the coordinates in the
+upper triangle of the data should be plotted transposed in the lower triangle.}
 
 \item{FUN}{\strong{Optional}. Default NULL
 If any sort of transformations should be applied to the data before plotting.
