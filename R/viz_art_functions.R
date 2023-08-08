@@ -212,37 +212,37 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
         stop("Bricks expects an argument of type list.",
              " Please refer to the vignette to understand the parameter.")
     }
-    Matrix.df <- HiCBricks:::Get_one_or_two_brick_regions(Bricks = Bricks,
+    Matrix.df <- Get_one_or_two_brick_regions(Bricks = Bricks,
         resolution = resolution, x_coords = x_coords, y_coords = y_coords,
         distance = distance, value_cap = value_cap, FUN = FUN)
     if (nrow(Matrix.df) == 0) {
         stop("The matrix was empty!")
     }
     list_of_coords <- list(x_coords = x_coords, y_coords = y_coords)
-    Parsed_string <- HiCBricks:::._Parse_genomic_coordinates(list_of_coords)
+    Parsed_string <- ._Parse_genomic_coordinates(list_of_coords)
     x.coord.parsed <- Parsed_string[["x_coords"]]
     y.coord.parsed <- Parsed_string[["y_coords"]]
-    x.coord.breaks <- HiCBricks:::make_axis_coord_breaks(from = min(Matrix.df$row),
+    x.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$row),
         to = max(Matrix.df$row), how.many = x_axis_num_breaks,
         two.sample = FALSE)
-    x_axis.coord.labs <- HiCBricks:::Make_axis_labels(Brick = Bricks[[1]],
+    x_axis.coord.labs <- Make_axis_labels(Brick = Bricks[[1]],
         resolution = resolution, chr = x.coord.parsed["chr"],
         positions = x.coord.breaks)
     two.sample <- (rotate & length(Bricks) == 2)
-    y.coord.breaks <- HiCBricks:::make_axis_coord_breaks(from = min(Matrix.df$col),
+    y.coord.breaks <- make_axis_coord_breaks(from = min(Matrix.df$col),
         to = max(Matrix.df$col), how.many = y_axis_num_breaks,
         two.sample = two.sample)
-    y_axis.coord.labs <- HiCBricks:::Make_axis_labels(Brick = Bricks[[1]],
+    y_axis.coord.labs <- Make_axis_labels(Brick = Bricks[[1]],
         resolution = resolution, chr = y.coord.parsed["chr"],
         positions = abs(y.coord.breaks))
-    Colours <- HiCBricks:::Make_colours(palette = palette, extrapolate_on = extrapolate_on,
+    Colours <- Make_colours(palette = palette, extrapolate_on = extrapolate_on,
         direction = col_direction)
     two.sample <- (length(Bricks) == 2)
-    Matrix.df$rescale <- HiCBricks:::rescale_values_for_colours(Object = Matrix.df,
+    Matrix.df$rescale <- rescale_values_for_colours(Object = Matrix.df,
         two.sample = two.sample)
-    Value.dist <- HiCBricks:::make_colour_breaks(Object = Matrix.df, how.many = length(Colours),
+    Value.dist <- make_colour_breaks(Object = Matrix.df, how.many = length(Colours),
         two.sample = two.sample)
-    Legend.breaks.list <- HiCBricks:::get_legend_breaks(Object = Matrix.df,
+    Legend.breaks.list <- get_legend_breaks(Object = Matrix.df,
         how.many = 5, value_cap = value_cap, colours = Colours,
         two.sample = two.sample)
     Colour.breaks <- Legend.breaks.list[["col.breaks"]]
@@ -265,22 +265,22 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
             y_axis.coord.labs <- c(rev(y_axis.coord.labs), y_axis.coord.labs)
         } else {
             Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0, ]
-            Entire.rotated.map <- HiCBricks:::RotateHeatmap(Matrix = Upper.tri.map,
+            Entire.rotated.map <- RotateHeatmap(Matrix = Upper.tri.map,
                 value.var = "rescale", upper = TRUE)
             y.coord.breaks <- y.coord.breaks/2
         }
     }
-    Brick_theme <- HiCBricks:::Get_heatmap_theme(x_axis = x_axis, y_axis = y_axis,
+    Brick_theme <- Get_heatmap_theme(x_axis = x_axis, y_axis = y_axis,
         text_size = text_size, x_axis_text_size = x_axis_text_size,
         y_axis_text_size = y_axis_text_size, legend_title_text_size = legend_title_text_size,
         legend_text_size = legend_text_size, title_size = title_size,
         legend_key_width = legend_key_width, legend_key_height = legend_key_height)
-    Labels <- HiCBricks:::Get_heatmap_titles(title = title, x_axis_title = x_axis_title,
+    Labels <- Get_heatmap_titles(title = title, x_axis_title = x_axis_title,
         y_axis_title = y_axis_title, legend_title = legend_title,
         x_coords = x_coords, y_coords = y_coords, rotate = rotate)
     Boundaries.obj <- NULL
     if (!is.null(tad_ranges)) {
-        Boundaries.obj <- HiCBricks:::Format_boundaries_normal_heatmap(Bricks = Bricks,
+        Boundaries.obj <- Format_boundaries_normal_heatmap(Bricks = Bricks,
             resolution = resolution, Ranges = tad_ranges, group_col = group_col,
             cut_corners = cut_corners, colour.col = tad_colour_col,
             colours = colours, colours_names = colours_names,
