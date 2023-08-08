@@ -1,6 +1,6 @@
 Package: HiCBricks
 Title: Framework for Storing and Accessing Hi-C Data Through HDF Files
-Version: 1.15.1
+Version: 1.15.1.9001
 Description: HiCBricks is a library designed for handling large high-resolution Hi-C datasets. Over the years, the Hi-C field has experienced a rapid increase in the size and complexity of datasets. HiCBricks is meant to overcome the challenges related to the analysis of such large datasets within the R environment. HiCBricks offers user-friendly and efficient solutions for handling large high-resolution Hi-C datasets. The package provides an R/Bioconductor framework with the bricks to build more complex data analysis pipelines and algorithms. HiCBricks already incorporates example algorithms for calling domain boundaries and functions for high quality data visualization.
 Date: 2019-08-24
 Type: Package
