@@ -191,7 +191,7 @@
 #' legend_key_height = unit(0.3,"cm"))
 #' 
 Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
-    x_coords, y_coords, FUN = NULL, value_cap = NULL,
+    x_coords, y_coords, invert_coords = FALSE, FUN = NULL, value_cap = NULL,
     distance = NULL, rotate = FALSE, x_axis = TRUE,  x_axis_title = NULL,
     y_axis = TRUE, y_axis_title = NULL, title = NULL, legend_title = NULL,
     return_object = FALSE, x_axis_num_breaks = 5, y_axis_num_breaks = 5,
@@ -202,6 +202,12 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
     colours_names = NULL, cut_corners = FALSE, highlight_points = NULL,
     width = 10, height = 6, line_width = 0.5, units = "cm",
     legend_key_width = unit(3, "cm"), legend_key_height = unit(0.5,"cm")){
+    if (invert_coords == TRUE){
+        new_x_coords <- y_coords
+        new_y_coords <- x_coords
+        x_coords <- new_x_coords
+        y_coords <- new_y_coords
+    }
     if (!is.list(Bricks)) {
         stop("Bricks expects an argument of type list.",
              " Please refer to the vignette to understand the parameter.")
@@ -257,8 +263,7 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
             y.coord.breaks <- y.coord.breaks/2
             y.coord.breaks <- c(rev(y.coord.breaks) * -1, y.coord.breaks)
             y_axis.coord.labs <- c(rev(y_axis.coord.labs), y_axis.coord.labs)
-        }
-        else {
+        } else {
             Upper.tri.map <- Matrix.df[Matrix.df$dist >= 0, ]
             Entire.rotated.map <- HiCBricks:::RotateHeatmap(Matrix = Upper.tri.map,
                 value.var = "rescale", upper = TRUE)
@@ -285,8 +290,13 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
     }
     if (rotate) {
         ids <- xcoords <- ycoords <- NULL
-        ThePlot <- ggplot(Entire.rotated.map, aes(x = xcoords,
-            y = ycoords))
+        if (invert_coords == TRUE) {
+            ThePlot <- ggplot(Entire.rotated.map, aes(x = ycoords,
+                y = xcoords))
+        } else {
+            ThePlot <- ggplot(Entire.rotated.map, aes(x = xcoords,
+                y = ycoords))
+        }
         ThePlot <- ThePlot + geom_polygon(aes(fill = values,
             group = ids))
         xlims <- c(0, max(Entire.rotated.map[, "xcoords"]))
@@ -296,11 +306,14 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
             "ycoords"])), ceiling(max(Entire.rotated.map[, "ycoords"])),
             length.out = y_axis_num_breaks)
         y_axis.coord.labs <- y.coord.breaks * 2
-    }
-    else {
+    } else {
         Matrix.df$row <- Matrix.df$row - 0.5
         Matrix.df$col <- Matrix.df$col - 0.5
-        ThePlot <- ggplot(Matrix.df, aes(x = row, y = col))
+        if (invert_coords == TRUE) {
+            ThePlot <- ggplot(Matrix.df, aes(x = col, y = row))
+        } else {
+            ThePlot <- ggplot(Matrix.df, aes(x = row, y = col))
+        }
         ThePlot <- ThePlot + geom_tile(aes(fill = rescale))
         xlims <- c(min(Matrix.df$row) - 0.5, max(Matrix.df$row) +
             0.5)
@@ -308,27 +321,45 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
             0.5)
     }
     if (!is.null(tad_ranges)) {
-        line.group <- x <- y <- NULL
-        ThePlot <- ThePlot + geom_line(data = Boundaries.obj,
-            aes(x = x, y = y, group = line.group, colour = colours),
-            size = line_width)
+        if (invert_coords == TRUE) {
+            line.group <- y <- x <- NULL
+            ThePlot <- ThePlot + geom_line(data = Boundaries.obj,
+                aes(x = y, y = x, group = line.group, colour = colours),
+                size = line_width)
+        } else {
+            line.group <- x <- y <- NULL
+            ThePlot <- ThePlot + geom_line(data = Boundaries.obj,
+                aes(x = x, y = y, group = line.group, colour = colours),
+                size = line_width)
+        }
         ThePlot <- ThePlot + scale_colour_manual(values = colours)
     }
-    ThePlot <- ThePlot + scale_x_continuous(limits = xlims, expand = c(0,
-        0), breaks = x.coord.breaks, labels = x_axis.coord.labs)
-    ThePlot <- ThePlot + scale_y_continuous(limits = ylims, expand = c(0,
-        0), breaks = y.coord.breaks, labels = y_axis.coord.labs)
+    if (invert_coords == TRUE) {
+        ThePlot <- ThePlot + scale_x_continuous(limits = ylims, expand = c(0,
+            0), breaks = y.coord.breaks, labels = y_axis.coord.labs)
+        ThePlot <- ThePlot + scale_y_continuous(limits = xlims, expand = c(0,
+            0), breaks = x.coord.breaks, labels = x_axis.coord.labs)
+    } else {
+        ThePlot <- ThePlot + scale_x_continuous(limits = xlims, expand = c(0,
+            0), breaks = x.coord.breaks, labels = x_axis.coord.labs)
+        ThePlot <- ThePlot + scale_y_continuous(limits = ylims, expand = c(0,
+            0), breaks = y.coord.breaks, labels = y_axis.coord.labs)
+    }
     ThePlot <- ThePlot + scale_fill_gradientn(legend_title, values = Value.dist,
         breaks = Colour.breaks, labels = Colour.labs, colors = Colours)
     ThePlot <- ThePlot + Brick_theme
-    ThePlot <- ThePlot + labs(title = Labels["title"], x = Labels["x_axis"],
-        y = Labels["y_axis"])
+    if (invert_coords == TRUE) {
+        ThePlot <- ThePlot + labs(title = Labels["title"], x = Labels["y_axis"],
+            y = Labels["x_axis"])
+    } else {
+        ThePlot <- ThePlot + labs(title = Labels["title"], x = Labels["x_axis"],
+            y = Labels["y_axis"])
+    }
     ggsave(filename = File, plot = ThePlot, width = width, height = height,
         units = units)
     if (return_object) {
         return(ThePlot)
-    }
-    else {
+    } else {
         return(TRUE)
     }
 }
