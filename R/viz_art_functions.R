@@ -213,30 +213,22 @@ Brick_vizart_plot_heatmap <- function (File, Bricks, resolution,
         stop("The matrix was empty!")
     }
     list_of_coords <- list(x_coords = x_coords, y_coords = y_coords)
-    print(list_of_coords)
     Parsed_string <- HiCBricks:::._Parse_genomic_coordinates(list_of_coords)
     x.coord.parsed <- Parsed_string[["x_coords"]]
     y.coord.parsed <- Parsed_string[["y_coords"]]
-    print(x.coord.parsed)
-    print(y.coord.parsed)
     x.coord.breaks <- HiCBricks:::make_axis_coord_breaks(from = min(Matrix.df$row),
         to = max(Matrix.df$row), how.many = x_axis_num_breaks,
         two.sample = FALSE)
-    print(x.coord.breaks)
     x_axis.coord.labs <- HiCBricks:::Make_axis_labels(Brick = Bricks[[1]],
         resolution = resolution, chr = x.coord.parsed["chr"],
         positions = x.coord.breaks)
-    print(x_axis.coord.labs)
     two.sample <- (rotate & length(Bricks) == 2)
-    print(str(Matrix.df))
     y.coord.breaks <- HiCBricks:::make_axis_coord_breaks(from = min(Matrix.df$col),
         to = max(Matrix.df$col), how.many = y_axis_num_breaks,
         two.sample = two.sample)
-   print(y.coord.breaks)
     y_axis.coord.labs <- HiCBricks:::Make_axis_labels(Brick = Bricks[[1]],
         resolution = resolution, chr = y.coord.parsed["chr"],
         positions = abs(y.coord.breaks))
-    print(y_axis.coord.labs)
     Colours <- HiCBricks:::Make_colours(palette = palette, extrapolate_on = extrapolate_on,
         direction = col_direction)
     two.sample <- (length(Bricks) == 2)
