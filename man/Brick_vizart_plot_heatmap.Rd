@@ -5,47 +5,47 @@
 \title{Create the entire HDF5 structure and load the bintable}
 \usage{
 Brick_vizart_plot_heatmap(
-    File,
-    Bricks,
-    resolution,
-    x_coords,
-    y_coords,
-    invert_coords = FALSE,
-    FUN = NULL,
-    value_cap = NULL,
-    distance = NULL,
-    rotate = FALSE,
-    x_axis = TRUE,
-    x_axis_title = NULL,
-    y_axis = TRUE,
-    y_axis_title = NULL,
-    title = NULL,
-    legend_title = NULL,
-    return_object = FALSE,
-    x_axis_num_breaks = 5,
-    y_axis_num_breaks = 5,
-    palette,
-    col_direction = 1,
-    extrapolate_on = NULL,
-    x_axis_text_size = 10,
-    y_axis_text_size = 10,
-    text_size = 10,
-    legend_title_text_size = 8,
-    legend_text_size = 8,
-    title_size = 10,
-    tad_ranges = NULL,
-    group_col = NULL,
-    tad_colour_col = NULL,
-    colours = NULL,
-    colours_names = NULL,
-    cut_corners = FALSE,
-    highlight_points = NULL,
-    width = 10,
-    height = 6,
-    line_width = 0.5,
-    units = "cm",
-    legend_key_width = unit(3, "cm"),
-    legend_key_height = unit(0.5, "cm")
+  File,
+  Bricks,
+  resolution,
+  x_coords,
+  y_coords,
+  invert_coords = FALSE,
+  FUN = NULL,
+  value_cap = NULL,
+  distance = NULL,
+  rotate = FALSE,
+  x_axis = TRUE,
+  x_axis_title = NULL,
+  y_axis = TRUE,
+  y_axis_title = NULL,
+  title = NULL,
+  legend_title = NULL,
+  return_object = FALSE,
+  x_axis_num_breaks = 5,
+  y_axis_num_breaks = 5,
+  palette,
+  col_direction = 1,
+  extrapolate_on = NULL,
+  x_axis_text_size = 10,
+  y_axis_text_size = 10,
+  text_size = 10,
+  legend_title_text_size = 8,
+  legend_text_size = 8,
+  title_size = 10,
+  tad_ranges = NULL,
+  group_col = NULL,
+  tad_colour_col = NULL,
+  colours = NULL,
+  colours_names = NULL,
+  cut_corners = FALSE,
+  highlight_points = NULL,
+  width = 10,
+  height = 6,
+  line_width = 0.5,
+  units = "cm",
+  legend_key_width = unit(3, "cm"),
+  legend_key_height = unit(0.5, "cm")
 )
 }
 \arguments{
@@ -69,7 +69,8 @@ the data.}
 A character vector of length 1 specifying the coordinates from where to fetch
 the data.}
 
-\item{invert_coords}} {\strong{Optional}. Default FALSE.
+\item{invert_coords}{\strong{Optional}
+Default FALSE.
 A boolean (TRUE or FALSE) of length 1 specifying whether the coordinates in the
 upper triangle of the data should be plotted transposed in the lower triangle.}
 
@@ -229,9 +230,9 @@ out_dir <- file.path(tempdir(), "vizart_test")
 dir.create(out_dir)
 
 My_BrickContainer <- Create_many_Bricks(BinTable = Bintable.path, 
-    bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
-    experiment_name = "Vignette Test", resolution = 100000,
-    remove_existing = TRUE)
+  bin_delim = " ", output_directory = out_dir, file_prefix = "Test",
+  experiment_name = "Vignette Test", resolution = 100000,
+  remove_existing = TRUE)
 
 Matrix_file <- system.file(file.path("extdata", 
 "Sexton2012_yaffetanay_CisTrans_100000_corrected_chr3R.txt.gz"), 
