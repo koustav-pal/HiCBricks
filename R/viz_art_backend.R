@@ -462,18 +462,18 @@ Get_heatmap_theme <- function(x_axis=TRUE, y_axis=TRUE,
                 panel.grid.minor=element_blank(),
                 panel.grid.major=element_blank(),
                 panel.background = element_blank(),
-                axis.title.x=x_axis.text,
-                axis.title.y=y_axis.text,
+                axis.title.x = x_axis.text,
+                axis.title.y = y_axis.text,
                 axis.text.x = x_axis.text,
-                axis.text.y = x_axis.text,
+                axis.text.y = y_axis.text,
                 axis.ticks.x = x_axis.ticks,
                 axis.ticks.y = y_axis.ticks,
                 legend.position="bottom",
                 legend.key.height = legend_key_height,
                 legend.key.width = legend_key_width,
-                legend.title=element_text(size=legend_title_text_size),
-                legend.text=element_text(size=legend_text_size),
-                plot.title=element_text(size=title_size))
+                legend.title = element_text(size=legend_title_text_size),
+                legend.text = element_text(size=legend_text_size),
+                plot.title = element_text(size=title_size))
     return(Brick_theme)
 }
 
